@@ -35,6 +35,7 @@ class FullAuditReportController extends Controller
         $format  = strtolower($validated['format'] ?? 'json');
 
         $reportId = DB::table('full_audit_reports')->insertGetId([
+            'user_id'     => auth()->id(),
             'site_url'    => $pageUrl,
             'status'      => 'running',
             'executed_at' => now(),

@@ -8,10 +8,16 @@
     "require": {
         "php": "^8.3",
         "barryvdh/laravel-dompdf": "^3.1",
+        "inertiajs/inertia-laravel": "^2.0",
+        "laravel/breeze": "^2.4",
+        "laravel/cashier": "^16.5",
         "laravel/framework": "^13.8",
+        "laravel/horizon": "^5.47",
+        "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
         "spatie/browsershot": "^5.4",
-        "symfony/dom-crawler": "^8.1"
+        "symfony/dom-crawler": "^8.1",
+        "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

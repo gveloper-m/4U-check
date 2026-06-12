@@ -151,65 +151,6 @@ class TrackingAuditController extends Controller
     }
 
     /**
-     * Fetch the HTML content of a page.
-     *
-     * @param string $url
-     * @return string
-     * @throws \Exception
-     */
-    private function fetchPageContent(string $url): string
-    {
-        try {
-            // Add small delay to avoid rate limiting
-            usleep(random_int(100000, 500000)); // 100-500ms delay
-            
-            $response = Http::withHeaders($this->getBrowserHeaders())
-                ->timeout(20)
-                ->get($url);
-
-            if (!$response->successful()) {
-                throw new \Exception("Failed to fetch page. HTTP Status: {$response->status()}");
-            }
-
-            return $response->body();
-
-        } catch (\Exception $e) {
-            // If HTTP request fails (403, timeout, etc), try with browser automation
-            try {
-                \Log::info("Retrying with browser automation for: $url");
-                $html = Browsershot::url($url)
-                    ->setChromePath('/usr/bin/google-chrome')
-                    ->noSandbox()
-                    ->disableImages()
-                    ->timeout(20000)
-                    ->bodyHtml();
-                return $html;
-            } catch (\Exception $browserError) {
-                \Log::error("Both HTTP and browser methods failed for $url: " . $browserError->getMessage());
-                throw new \Exception("Error fetching page content: " . $e->getMessage());
-            }
-        }
-    }
-
-    private function getBrowserHeaders(): array
-    {
-        return [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Language' => 'en-US,en;q=0.9',
-            'Accept-Encoding' => 'gzip, deflate, br',
-            'DNT' => '1',
-            'Connection' => 'keep-alive',
-            'Upgrade-Insecure-Requests' => '1',
-            'Sec-Fetch-Dest' => 'document',
-            'Sec-Fetch-Mode' => 'navigate',
-            'Sec-Fetch-Site' => 'none',
-            'Cache-Control' => 'max-age=0',
-            'Pragma' => 'no-cache',
-        ];
-    }
-
-    /**
      * Extract internal links from HTML.
      *
      * @param string $htmlContent

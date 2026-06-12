@@ -15,24 +15,6 @@ class PerformanceAuditController extends Controller
 {
     use FetchesWebPages;
 
-    private function getBrowserHeaders(): array
-    {
-        return [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-            'Accept-Language' => 'en-US,en;q=0.9',
-            'Accept-Encoding' => 'gzip, deflate, br',
-            'DNT' => '1',
-            'Connection' => 'keep-alive',
-            'Upgrade-Insecure-Requests' => '1',
-            'Sec-Fetch-Dest' => 'document',
-            'Sec-Fetch-Mode' => 'navigate',
-            'Sec-Fetch-Site' => 'none',
-            'Cache-Control' => 'max-age=0',
-            'Pragma' => 'no-cache',
-        ];
-    }
-
     /**
      * Audit a site for performance metrics across multiple pages.
      *
@@ -311,7 +293,7 @@ class PerformanceAuditController extends Controller
             usleep(random_int(100000, 500000)); // 100-500ms delay
             
             $startTime = microtime(true) * 1000;
-            $response = Http::withHeaders($this->getBrowserHeaders())
+            $response = Http::withHeaders($this->browserHeaders())
                 ->timeout(30)
                 ->head($url);
             $endTime = microtime(true) * 1000;
