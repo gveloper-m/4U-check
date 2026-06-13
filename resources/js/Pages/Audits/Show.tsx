@@ -1,7 +1,17 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import { PageProps, FullAuditReport } from '@/types';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+
+interface StatusResponse {
+  status: string;
+  progress: {
+    completed: number;
+    total: number;
+    auditors: Record<string, 'done' | 'running'>;
+  };
+}
 import {
   Search,
   Shield,
@@ -39,11 +49,12 @@ function healthRingColor(score?: number): string {
 }
 
 function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
+  const { t } = useTranslation();
   if (status === 'completed') {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-400 border border-emerald-500/20">
         <CheckCircle2 className="h-4 w-4" />
-        Completed
+        {t('audits.completed')}
       </span>
     );
   }
@@ -51,14 +62,14 @@ function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
     return (
       <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/10 px-3 py-1 text-sm font-medium text-violet-400 border border-violet-500/20">
         <Loader2 className="h-4 w-4 animate-spin" />
-        Running
+        {t('audits.running')}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500/10 px-3 py-1 text-sm font-medium text-red-400 border border-red-500/20">
       <XCircle className="h-4 w-4" />
-      Failed
+      {t('audits.failed')}
     </span>
   );
 }
@@ -100,6 +111,20 @@ function Section({ title, icon: Icon, color, bg, border, children, defaultOpen =
       )}
     </div>
   );
+}
+
+function ModuleError({ result }: { result: Record<string, unknown> | undefined | null }) {
+  if (!result) return null;
+  const status = result['status'];
+  if (status === 'error' || status === 'timeout') {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+        <XCircle className="h-4 w-4 shrink-0" />
+        {status === 'timeout' ? 'Module timed out — try re-running the scan.' : `Module error: ${String(result['error'] ?? 'unknown')}`}
+      </div>
+    );
+  }
+  return null;
 }
 
 function MetaRow({ label, value, ok }: { label: string; value: React.ReactNode; ok?: boolean }) {
@@ -150,29 +175,38 @@ function getArr(obj: Record<string, unknown> | undefined | null, key: string): u
   return [];
 }
 
-export default function AuditShow({ report: initialReport }: ShowProps) {
-  const [report, setReport] = useState<FullAuditReport>(initialReport);
+function hasKey(obj: Record<string, unknown> | null | undefined, key: string): boolean {
+  return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+export default function AuditShow({ report }: ShowProps) {
+  const { t } = useTranslation();
+  const [progress, setProgress] = useState<StatusResponse['progress'] | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (report.status !== 'running') return;
-    const interval = setInterval(async () => {
+
+    const poll = async () => {
       try {
         const res = await fetch(`/audits/${report.id}/status`, {
           headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
         });
         if (!res.ok) return;
-        const data = (await res.json()) as FullAuditReport;
-        setReport(data);
+        const data = (await res.json()) as StatusResponse;
+        setProgress(data.progress);
         if (data.status !== 'running') {
-          clearInterval(interval);
-          // Full reload to get all module data
+          if (intervalRef.current) clearInterval(intervalRef.current);
           router.reload({ only: ['report'] });
         }
       } catch {
-        // ignore network errors
+        // ignore transient network errors
       }
-    }, 3000);
-    return () => clearInterval(interval);
+    };
+
+    poll(); // immediate first check
+    intervalRef.current = setInterval(poll, 3000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [report.id, report.status]);
 
   const seo = report.seo_schema_result;
@@ -183,34 +217,52 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
   const tracking = report.tracking_result;
 
   // SEO helpers
-  const seoMeta = getObj(seo, 'meta_title') ?? getObj(seo, 'meta');
+  const seoMeta = getObj(seo, 'meta_title');
   const seoDesc = getObj(seo, 'meta_description');
-  const seoH1 = getObj(seo, 'h1_tags') ?? seo;
+  const seoH1 = getObj(seo, 'h1_tags');
   const seoCanonical = getObj(seo, 'canonical');
-  const seoSchema = getObj(seo, 'schema_validation') ?? getObj(seo, 'schema');
+  const seoSchema = getObj(seo, 'schema_validation');
   const seoOg = getObj(seo, 'open_graph');
+  const seoAlt = getObj(seo, 'image_alt_text');
+  const seoTech = getObj(seo, 'technical_seo');
+  const seoRobots = getObj(seoTech, 'robots_txt');
+  const seoSitemap = getObj(seoTech, 'sitemap_xml');
 
-  // Security helpers
-  const secHeaders = getObj(sec, 'security_headers');
+  // Security helpers — data lives in nested objects
+  const secSsl      = getObj(sec, 'ssl');
+  const secMixed    = getObj(sec, 'mixed_content');
+  const secHeaders  = getObj(sec, 'security_headers');
+  const secDns      = getObj(sec, 'dns_security');
+  const secRedirect = getObj(sec, 'https_redirect');
+  const secHdrsPresent = getObj(secHeaders, 'headers_present');
 
-  // Performance helpers
-  const perfPages = getNum(perf, 'pages_tested');
-  const perfTtfb = getNum(perf, 'avg_ttfb');
-  const perfFcp = getNum(perf, 'fcp') ?? getNum(perf, 'avg_fcp');
-  const perfLcp = getNum(perf, 'lcp') ?? getNum(perf, 'avg_lcp');
-  const perfCompression = getBool(perf, 'compression_detected');
+  // Performance helpers — real keys: metrics.ttfb_ms, metrics.desktop.fcp_ms, page_analysis.*
+  const perfMetrics     = getObj(perf, 'metrics');
+  const perfDesktop     = getObj(perfMetrics, 'desktop');
+  const perfMobile      = getObj(perfMetrics, 'mobile');
+  const perfPageAnalysis = getObj(perf, 'page_analysis');
+  const perfPages       = getNum(perf, 'pages_tested');
+  const perfTtfb        = getNum(perfMetrics, 'ttfb_ms');
+  const perfFcp         = getNum(perfDesktop, 'fcp_ms') ?? getNum(perfMobile, 'fcp_ms');
+  const perfLcp         = getNum(perfDesktop, 'lcp_ms') ?? getNum(perfMobile, 'lcp_ms');
+  const perfCompression = getBool(perfPageAnalysis, 'compression_enabled');
 
   // Broken resources helpers
-  const brokenSummary = getObj(broken, 'summary') ?? broken;
-  const brokenLinks = getArr(broken, 'broken_links');
+  const brokenSummary = getObj(broken, 'summary');
+  const brokenLinks   = getArr(broken, 'broken_links');
+  const brokenImages  = getArr(broken, 'broken_images');
 
   // Catalog helpers
-  const catalogBrokenPct = getNum(catalog, 'broken_percentage');
+  const catalogBrokenPct    = getNum(catalog, 'broken_percentage');
+  const catalogResults      = getArr(catalog, 'results') as Record<string, unknown>[];
+  const catalogPriceIssues  = catalogResults.filter(r => r.has_price_error).length;
+  const catalogStockMismatches = catalogResults.filter(r => r.stock_mismatch).length;
 
-  // Tracking helpers
-  const trackGa4 = getObj(tracking, 'ga4');
-  const trackFb = getObj(tracking, 'facebook_pixel');
-  const trackTt = getObj(tracking, 'tiktok_pixel');
+  // Tracking helpers — data lives under tracking_scripts
+  const trackScripts = getObj(tracking, 'tracking_scripts');
+  const trackGa4 = getObj(trackScripts, 'ga4');
+  const trackFb  = getObj(trackScripts, 'facebook_pixel');
+  const trackTt  = getObj(trackScripts, 'tiktok_pixel');
 
   return (
     <AppLayout>
@@ -223,7 +275,7 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
           className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to audits
+          {t('show.backToAudits')}
         </Link>
 
         {/* Header */}
@@ -236,7 +288,7 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
               <span className={`text-lg font-extrabold leading-none ${healthColor(report.health_score)}`}>
                 {report.health_score ?? '?'}
               </span>
-              <span className="text-[10px] text-gray-500">score</span>
+              <span className="text-[10px] text-gray-500">{t('show.score')}</span>
             </div>
             <div>
               <h1 className="text-xl font-bold text-white break-all">
@@ -269,26 +321,56 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
               >
                 <FileDown className="h-4 w-4" />
-                PDF
+                {t('show.pdf')}
               </a>
               <a
                 href={`/audits/${report.id}/export/csv`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
               >
                 <FileDown className="h-4 w-4" />
-                CSV
+                {t('show.csv')}
               </a>
             </div>
           )}
         </div>
 
-        {/* Running state notice */}
+        {/* Running state — live progress */}
         {report.status === 'running' && (
-          <div className="flex items-center gap-3 rounded-xl border border-violet-500/20 bg-violet-500/10 px-5 py-4">
-            <Loader2 className="h-5 w-5 animate-spin text-violet-400" />
-            <p className="text-sm text-violet-300">
-              Audit is running — results will appear automatically when ready.
-            </p>
+          <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <Loader2 className="h-5 w-5 animate-spin text-violet-400 shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-medium text-violet-300">
+                  {t('show.running')} — {progress ? `${progress.completed}/${progress.total}` : '0/6'} {t('show.runningModules')}
+                </p>
+                <div className="mt-2 h-1.5 w-full rounded-full bg-violet-900/40">
+                  <div
+                    className="h-1.5 rounded-full bg-violet-500 transition-all duration-500"
+                    style={{ width: `${progress ? (progress.completed / progress.total) * 100 : 0}%` }}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+              {[
+                { key: 'seo_schema', label: t('show.sections.seo') },
+                { key: 'security', label: t('show.sections.security') },
+                { key: 'performance', label: t('show.sections.performance') },
+                { key: 'broken_resources', label: t('show.sections.broken') },
+                { key: 'catalog_integrity', label: t('show.sections.catalog') },
+                { key: 'marketing_tracking', label: t('show.sections.tracking') },
+              ].map(({ key, label }) => {
+                const done = progress?.auditors?.[key] === 'done';
+                return (
+                  <div key={key} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium border ${done ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-gray-800/50 border-gray-700 text-gray-500'}`}>
+                    {done
+                      ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
+                      : <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />}
+                    {label}
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -297,7 +379,7 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
           <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5">
             <div className="flex items-center gap-2 mb-3">
               <AlertTriangle className="h-4 w-4 text-amber-400" />
-              <h3 className="text-sm font-semibold text-amber-400">Score Deductions</h3>
+              <h3 className="text-sm font-semibold text-amber-400">{t('show.deductionsTitle')}</h3>
             </div>
             <ul className="space-y-1">
               {report.score_deductions.map((d, i) => (
@@ -313,7 +395,7 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
         <div className="space-y-3">
           {/* SEO & Schema */}
           <Section
-            title="SEO & Schema"
+            title={t('show.sections.seo')}
             icon={Search}
             color="text-violet-400"
             bg="bg-violet-500/10"
@@ -323,43 +405,61 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
             {seo ? (
               <div className="divide-y divide-gray-800">
                 <MetaRow
-                  label="Meta Title"
-                  value={getStr(seoMeta, 'status') || getStr(seo, 'meta_title_status') || getStr(seo, 'meta_title')}
-                  ok={getStr(seoMeta, 'status') === 'ok' || getStr(seo, 'meta_title_status') === 'ok'}
+                  label={t('show.seo.metaTitle')}
+                  value={getStr(seoMeta, 'status')}
+                  ok={getStr(seoMeta, 'status') === 'OK'}
                 />
                 <MetaRow
-                  label="Meta Description"
-                  value={getStr(seoDesc, 'status') || getStr(seo, 'meta_description_status')}
-                  ok={getStr(seoDesc, 'status') === 'ok' || getStr(seo, 'meta_description_status') === 'ok'}
+                  label={t('show.seo.metaDesc')}
+                  value={getStr(seoDesc, 'status')}
+                  ok={getStr(seoDesc, 'status') === 'OK'}
                 />
                 <MetaRow
-                  label="H1 Tags"
-                  value={getNum(seo, 'h1_count') ?? getNum(seoH1, 'count') ?? getStr(seo, 'h1_tags')}
+                  label={t('show.seo.h1')}
+                  value={`${getNum(seoH1, 'count') ?? '?'} (${getStr(seoH1, 'status')})`}
+                  ok={getStr(seoH1, 'status') === 'OK'}
                 />
                 <MetaRow
-                  label="Canonical URL"
-                  value={getStr(seoCanonical, 'status') || getStr(seo, 'canonical_status')}
-                  ok={getStr(seoCanonical, 'status') === 'ok' || getStr(seo, 'canonical_status') === 'ok'}
+                  label={t('show.seo.canonical')}
+                  value={getStr(seoCanonical, 'status')}
+                  ok={getStr(seoCanonical, 'status') === 'OK'}
                 />
                 <MetaRow
-                  label="Schema Markup"
-                  value={getBool(seoSchema, 'has_valid_schema') ? 'Valid' : getBool(seoSchema, 'has_valid_schema') === false ? 'Missing/Invalid' : getStr(seo, 'schema_status')}
+                  label={t('show.seo.schema')}
+                  value={getBool(seoSchema, 'has_valid_schema') ? 'Valid' : 'Missing/Invalid'}
                   ok={getBool(seoSchema, 'has_valid_schema') ?? undefined}
                 />
                 <MetaRow
-                  label="Open Graph"
-                  value={getStr(seoOg, 'status') || getStr(seo, 'open_graph_status')}
-                  ok={getStr(seoOg, 'status') === 'ok' || getStr(seo, 'open_graph_status') === 'ok'}
+                  label={t('show.seo.og')}
+                  value={getStr(seoOg, 'status')}
+                  ok={getStr(seoOg, 'status') === 'OK'}
+                />
+                <MetaRow
+                  label={t('show.seo.images')}
+                  value={seoAlt
+                    ? `${getNum(seoAlt, 'missing_alt') ?? 0} missing / ${getNum(seoAlt, 'total_images') ?? '?'} total`
+                    : t('common.na')}
+                  ok={seoAlt ? getStr(seoAlt, 'status') === 'OK' : undefined}
+                />
+                <MetaRow
+                  label={t('show.seo.robots')}
+                  value={getBool(seoRobots, 'exists') === true ? 'Found' : getBool(seoRobots, 'exists') === false ? 'Missing' : t('common.na')}
+                  ok={getBool(seoRobots, 'exists') ?? undefined}
+                />
+                <MetaRow
+                  label={t('show.seo.sitemap')}
+                  value={getBool(seoSitemap, 'exists') === true ? 'Found' : getBool(seoSitemap, 'exists') === false ? 'Missing' : t('common.na')}
+                  ok={getBool(seoSitemap, 'exists') ?? undefined}
                 />
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No data available.</p>
+              <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
           </Section>
 
           {/* Security */}
           <Section
-            title="Security"
+            title={t('show.sections.security')}
             icon={Shield}
             color="text-blue-400"
             bg="bg-blue-500/10"
@@ -367,72 +467,134 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
           >
             {sec ? (
               <div className="divide-y divide-gray-800">
+                {/* SSL */}
                 <MetaRow
-                  label="SSL Status"
-                  value={getStr(sec, 'ssl_status')}
-                  ok={getStr(sec, 'ssl_status') === 'ok' || getStr(sec, 'ssl_status') === 'valid'}
+                  label={t('show.security.ssl')}
+                  value={
+                    getBool(secSsl, 'ssl_valid')
+                      ? `Valid — ${getStr(secSsl, 'ssl_issuer')} (${getNum(secSsl, 'ssl_days_left')} days left, expires ${getStr(secSsl, 'ssl_expiry')})`
+                      : getStr(secSsl, 'error') || 'N/A'
+                  }
+                  ok={getBool(secSsl, 'ssl_valid') ?? undefined}
+                />
+                {/* HTTPS redirect */}
+                <MetaRow
+                  label="HTTPS Redirect"
+                  value={getBool(secRedirect, 'redirects_to_https') === true ? 'Yes' : getBool(secRedirect, 'redirects_to_https') === false ? 'No' : 'N/A'}
+                  ok={getBool(secRedirect, 'redirects_to_https') ?? undefined}
+                />
+                {/* Mixed content */}
+                <MetaRow
+                  label={t('show.security.mixed')}
+                  value={getBool(secMixed, 'has_mixed_content') ? 'Detected' : 'None'}
+                  ok={getBool(secMixed, 'has_mixed_content') === false}
+                />
+                {/* Security headers — headers_present only contains headers that ARE present */}
+                <MetaRow
+                  label="HSTS"
+                  value={hasKey(secHdrsPresent, 'Strict-Transport-Security')
+                    ? String(secHdrsPresent!['Strict-Transport-Security'])
+                    : 'Missing'}
+                  ok={hasKey(secHdrsPresent, 'Strict-Transport-Security')}
                 />
                 <MetaRow
-                  label="Mixed Content"
-                  value={getBool(sec, 'mixed_content') ? 'Detected' : 'None'}
-                  ok={!getBool(sec, 'mixed_content')}
+                  label="CSP"
+                  value={hasKey(secHdrsPresent, 'Content-Security-Policy') ? 'Present' : 'Missing'}
+                  ok={hasKey(secHdrsPresent, 'Content-Security-Policy')}
                 />
-                {secHeaders && (
-                  <>
-                    <MetaRow label="HSTS" value={getStr(secHeaders, 'hsts') || getStr(secHeaders, 'Strict-Transport-Security')} ok={!!getStr(secHeaders, 'hsts')} />
-                    <MetaRow label="CSP" value={getStr(secHeaders, 'csp') || getStr(secHeaders, 'Content-Security-Policy')} ok={!!getStr(secHeaders, 'csp')} />
-                    <MetaRow label="X-Frame-Options" value={getStr(secHeaders, 'x_frame_options') || getStr(secHeaders, 'X-Frame-Options')} ok={!!getStr(secHeaders, 'x_frame_options')} />
-                  </>
-                )}
-                {!secHeaders && (
-                  <MetaRow label="Security Headers" value={getStr(sec, 'security_headers_summary') || 'See details'} />
-                )}
+                <MetaRow
+                  label="X-Frame-Options"
+                  value={hasKey(secHdrsPresent, 'X-Frame-Options')
+                    ? String(secHdrsPresent!['X-Frame-Options'])
+                    : 'Missing'}
+                  ok={hasKey(secHdrsPresent, 'X-Frame-Options')}
+                />
+                {/* DNS */}
+                <MetaRow
+                  label="SPF"
+                  value={getBool(secDns, 'spf_record_exists') ? getStr(secDns, 'spf_record') : 'Missing'}
+                  ok={getBool(secDns, 'spf_record_exists') ?? undefined}
+                />
+                <MetaRow
+                  label="DMARC"
+                  value={getBool(secDns, 'dmarc_record_exists') ? 'Present' : 'Missing'}
+                  ok={getBool(secDns, 'dmarc_record_exists') ?? undefined}
+                />
+                <MetaRow
+                  label="DKIM"
+                  value={getBool(secDns, 'dkim_found') ? `Found (selector: ${getStr(secDns, 'dkim_selector')})` : 'Not found'}
+                  ok={getBool(secDns, 'dkim_found') ?? undefined}
+                />
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No data available.</p>
+              <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
           </Section>
 
           {/* Performance */}
           <Section
-            title="Performance"
+            title={t('show.sections.performance')}
             icon={BarChart3}
             color="text-emerald-400"
             bg="bg-emerald-500/10"
             border="border-emerald-500/20"
           >
             {perf ? (
-              <div className="divide-y divide-gray-800">
-                <MetaRow label="Pages Tested" value={perfPages ?? 'N/A'} />
+              <div className="space-y-2">
+                <ModuleError result={perf} />
+                <div className="divide-y divide-gray-800">
+                <MetaRow label={t('show.performance.pages')} value={perfPages ?? t('common.na')} />
                 <MetaRow
-                  label="Avg TTFB"
-                  value={perfTtfb !== null ? `${perfTtfb} ms` : 'N/A'}
+                  label={t('show.performance.ttfb')}
+                  value={perfTtfb !== null ? `${perfTtfb} ms` : t('common.na')}
                   ok={perfTtfb !== null ? perfTtfb < 800 : undefined}
                 />
                 <MetaRow
-                  label="FCP"
-                  value={perfFcp !== null ? `${perfFcp} ms` : 'N/A'}
+                  label={`${t('show.performance.fcp')} (Desktop)`}
+                  value={perfFcp !== null ? `${perfFcp} ms` : t('common.na')}
                   ok={perfFcp !== null ? perfFcp < 1800 : undefined}
                 />
+                {perfMobile && getNum(perfMobile, 'fcp_ms') !== null && (
+                  <MetaRow
+                    label={`${t('show.performance.fcp')} (Mobile)`}
+                    value={`${getNum(perfMobile, 'fcp_ms')} ms`}
+                    ok={(getNum(perfMobile, 'fcp_ms') ?? 9999) < 1800}
+                  />
+                )}
                 <MetaRow
-                  label="LCP"
-                  value={perfLcp !== null ? `${perfLcp} ms` : 'N/A'}
+                  label={`${t('show.performance.lcp')} (Desktop)`}
+                  value={perfLcp !== null ? `${perfLcp} ms` : t('common.na')}
                   ok={perfLcp !== null ? perfLcp < 2500 : undefined}
                 />
+                {perfMobile && getNum(perfMobile, 'lcp_ms') !== null && (
+                  <MetaRow
+                    label={`${t('show.performance.lcp')} (Mobile)`}
+                    value={`${getNum(perfMobile, 'lcp_ms')} ms`}
+                    ok={(getNum(perfMobile, 'lcp_ms') ?? 9999) < 2500}
+                  />
+                )}
                 <MetaRow
-                  label="Compression"
-                  value={perfCompression === true ? 'Enabled' : perfCompression === false ? 'Not detected' : 'N/A'}
+                  label={t('show.performance.compression')}
+                  value={perfCompression === true ? t('show.performance.enabled') : perfCompression === false ? t('show.performance.disabled') : t('common.na')}
                   ok={perfCompression ?? undefined}
                 />
+                {perfPageAnalysis && (getArr(perfPageAnalysis, 'render_blocking_scripts').length + getArr(perfPageAnalysis, 'render_blocking_styles').length) > 0 && (
+                  <MetaRow
+                    label="Render Blocking"
+                    value={`${getNum(perfPageAnalysis, 'total_render_blocking') ?? 0} resources`}
+                    ok={getNum(perfPageAnalysis, 'total_render_blocking') === 0}
+                  />
+                )}
+                </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No data available.</p>
+              <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
           </Section>
 
           {/* Broken Resources */}
           <Section
-            title="Broken Resources"
+            title={t('show.sections.broken')}
             icon={Link2}
             color="text-red-400"
             bg="bg-red-500/10"
@@ -440,44 +602,45 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
           >
             {broken ? (
               <div className="space-y-4">
+                <ModuleError result={broken} />
                 <div className="divide-y divide-gray-800">
                   <MetaRow
-                    label="Total Links Checked"
-                    value={getNum(brokenSummary, 'total_links_checked') ?? getNum(broken, 'total_links_checked') ?? 'N/A'}
+                    label={t('show.broken.totalLinks')}
+                    value={getNum(brokenSummary, 'total_links_checked') ?? t('common.na')}
                   />
                   <MetaRow
-                    label="Broken Links"
+                    label={t('show.broken.brokenLinks')}
                     value={(() => {
-                      const count = getNum(brokenSummary, 'broken_links_count') ?? getNum(broken, 'broken_links_count');
-                      const total = getNum(brokenSummary, 'total_links_checked') ?? getNum(broken, 'total_links_checked');
-                      if (count === null) return 'N/A';
+                      const count = getNum(brokenSummary, 'broken_links_count');
+                      const total = getNum(brokenSummary, 'total_links_checked');
+                      if (count === null) return t('common.na');
                       if (total && total > 0) return `${count} (${Math.round((count / total) * 100)}%)`;
                       return String(count);
                     })()}
-                    ok={(getNum(brokenSummary, 'broken_links_count') ?? getNum(broken, 'broken_links_count') ?? 1) === 0}
+                    ok={(getNum(brokenSummary, 'broken_links_count') ?? 1) === 0}
                   />
                   <MetaRow
-                    label="Total Images Checked"
-                    value={getNum(brokenSummary, 'total_images_checked') ?? getNum(broken, 'total_images_checked') ?? 'N/A'}
+                    label={t('show.broken.totalImages')}
+                    value={getNum(brokenSummary, 'total_images_checked') ?? t('common.na')}
                   />
                   <MetaRow
-                    label="Broken Images"
-                    value={getNum(brokenSummary, 'broken_images_count') ?? getNum(broken, 'broken_images_count') ?? 'N/A'}
-                    ok={(getNum(brokenSummary, 'broken_images_count') ?? getNum(broken, 'broken_images_count') ?? 1) === 0}
+                    label={t('show.broken.brokenImages')}
+                    value={getNum(brokenSummary, 'broken_images_count') ?? t('common.na')}
+                    ok={(getNum(brokenSummary, 'broken_images_count') ?? 1) === 0}
                   />
                 </div>
 
                 {brokenLinks.length > 0 && (
                   <div>
                     <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Broken Links ({brokenLinks.length})
+                      {t('show.broken.topBroken')} ({brokenLinks.length})
                     </p>
                     <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-800">
                       {brokenLinks.map((link, i) => {
                         const l = link as Record<string, unknown>;
                         return (
                           <div key={i} className="flex items-center justify-between gap-3 border-b border-gray-800 px-3 py-2 last:border-0">
-                            <span className="truncate text-xs text-gray-400">{String(l.url ?? l.href ?? link)}</span>
+                            <span className="truncate text-xs text-gray-400">{String(l.url ?? link)}</span>
                             {l.status_code != null && (
                               <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs text-red-400">
                                 {String(l.status_code)}
@@ -489,65 +652,124 @@ export default function AuditShow({ report: initialReport }: ShowProps) {
                     </div>
                   </div>
                 )}
+
+                {brokenImages.length > 0 && (
+                  <div>
+                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      {t('show.broken.brokenImages')} ({brokenImages.length})
+                    </p>
+                    <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-800">
+                      {brokenImages.map((img, i) => {
+                        const im = img as Record<string, unknown>;
+                        return (
+                          <div key={i} className="flex items-center justify-between gap-3 border-b border-gray-800 px-3 py-2 last:border-0">
+                            <span className="truncate text-xs text-gray-400">{String(im.url ?? img)}</span>
+                            {im.status_code != null && (
+                              <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs text-red-400">
+                                {String(im.status_code)}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No data available.</p>
+              <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
           </Section>
 
           {/* Catalog */}
           <Section
-            title="E-commerce Catalog"
+            title={t('show.sections.catalog')}
             icon={ShoppingCart}
             color="text-amber-400"
             bg="bg-amber-500/10"
             border="border-amber-500/20"
           >
             {catalog ? (
-              <div className="divide-y divide-gray-800">
-                <MetaRow label="Pages Crawled" value={getNum(catalog, 'pages_crawled') ?? 'N/A'} />
-                <MetaRow label="Products Audited" value={getNum(catalog, 'products_audited') ?? 'N/A'} />
+              <div className="space-y-2">
+                <ModuleError result={catalog} />
+                <div className="divide-y divide-gray-800">
+                <MetaRow label={t('show.catalog.crawled')} value={getNum(catalog, 'pages_crawled') ?? t('common.na')} />
+                <MetaRow label="Product Pages Found" value={getNum(catalog, 'product_pages_found') ?? t('common.na')} />
+                <MetaRow label={t('show.catalog.products')} value={getNum(catalog, 'products_audited') ?? t('common.na')} />
                 <MetaRow
-                  label="Broken %"
-                  value={catalogBrokenPct !== null ? `${catalogBrokenPct}%` : 'N/A'}
+                  label={t('show.catalog.broken')}
+                  value={getNum(catalog, 'broken_products_count') ?? t('common.na')}
+                  ok={(getNum(catalog, 'broken_products_count') ?? 1) === 0}
+                />
+                <MetaRow
+                  label={t('show.catalog.pct')}
+                  value={catalogBrokenPct !== null ? `${catalogBrokenPct}%` : t('common.na')}
                   ok={catalogBrokenPct !== null ? catalogBrokenPct === 0 : undefined}
                 />
-                <MetaRow label="Price Issues" value={getNum(catalog, 'price_issues') ?? getStr(catalog, 'price_status')} />
-                <MetaRow label="Stock Mismatches" value={getNum(catalog, 'stock_mismatches') ?? getStr(catalog, 'stock_status')} />
+                {catalogResults.length > 0 && (
+                  <>
+                    <MetaRow
+                      label="Price Issues"
+                      value={catalogPriceIssues}
+                      ok={catalogPriceIssues === 0}
+                    />
+                    <MetaRow
+                      label="Stock Mismatches"
+                      value={catalogStockMismatches}
+                      ok={catalogStockMismatches === 0}
+                    />
+                  </>
+                )}
+                </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No data available.</p>
+              <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
           </Section>
 
           {/* Marketing Tracking */}
           <Section
-            title="Marketing Tracking"
+            title={t('show.sections.tracking')}
             icon={Tag}
             color="text-pink-400"
             bg="bg-pink-500/10"
             border="border-pink-500/20"
           >
             {tracking ? (
-              <div className="divide-y divide-gray-800">
+              <div className="space-y-2">
+                <ModuleError result={tracking} />
+                <div className="divide-y divide-gray-800">
                 <MetaRow
-                  label="GA4 Detected"
-                  value={getBool(trackGa4, 'detected') ? `Yes (${getStr(trackGa4 ?? {}, 'id') || 'ID found'})` : getBool(trackGa4, 'detected') === false ? 'No' : getStr(tracking, 'ga4_status')}
+                  label={t('show.tracking.ga4')}
+                  value={(() => {
+                    if (!trackGa4) return t('common.na');
+                    const ids = getArr(trackGa4, 'ids');
+                    return getBool(trackGa4, 'detected') ? `Yes${ids.length ? ` (${ids.join(', ')})` : ''}` : 'Not detected';
+                  })()}
                   ok={getBool(trackGa4, 'detected') ?? undefined}
                 />
                 <MetaRow
-                  label="Facebook Pixel"
-                  value={getBool(trackFb, 'detected') ? `Yes (${getStr(trackFb ?? {}, 'id') || 'ID found'})` : getBool(trackFb, 'detected') === false ? 'No' : getStr(tracking, 'facebook_pixel_status')}
+                  label={t('show.tracking.fb')}
+                  value={(() => {
+                    if (!trackFb) return t('common.na');
+                    const ids = getArr(trackFb, 'ids');
+                    return getBool(trackFb, 'detected') ? `Yes${ids.length ? ` (${ids.join(', ')})` : ''}` : 'Not detected';
+                  })()}
                   ok={getBool(trackFb, 'detected') ?? undefined}
                 />
                 <MetaRow
-                  label="TikTok Pixel"
-                  value={getBool(trackTt, 'detected') ? `Yes (${getStr(trackTt ?? {}, 'id') || 'ID found'})` : getBool(trackTt, 'detected') === false ? 'No' : getStr(tracking, 'tiktok_pixel_status')}
+                  label={t('show.tracking.tt')}
+                  value={(() => {
+                    if (!trackTt) return t('common.na');
+                    const ids = getArr(trackTt, 'ids');
+                    return getBool(trackTt, 'detected') ? `Yes${ids.length ? ` (${ids.join(', ')})` : ''}` : 'Not detected';
+                  })()}
                   ok={getBool(trackTt, 'detected') ?? undefined}
                 />
+                </div>
               </div>
             ) : (
-              <p className="text-sm text-gray-500">No data available.</p>
+              <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
           </Section>
         </div>

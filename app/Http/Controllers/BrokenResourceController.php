@@ -50,8 +50,10 @@ class BrokenResourceController extends Controller
         $inQueue        = [$pageUrl => true];
         $queue          = [$pageUrl];
         $pagesProcessed = 0;
+        $deadline       = microtime(true) + 210; // hard 3.5-minute budget
+        $maxPages       = 60;
 
-        while (! empty($queue)) {
+        while (! empty($queue) && $pagesProcessed < $maxPages && microtime(true) < $deadline) {
             // Pull up to 20 unvisited URLs for concurrent fetch
             $batch = [];
             while (! empty($queue) && count($batch) < 20) {

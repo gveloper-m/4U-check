@@ -38,19 +38,19 @@ class AuditController extends Controller
     }
 
     /**
-     * POST /audits — start a new scan
+     * POST /audits — start a new scan, then redirect to show page for live polling
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $validated = $request->validate([
-            'page_url' => 'required|url',
+            'site_url' => 'required|url',
             'name'     => 'nullable|string|max:255',
         ]);
 
         $reportId = DB::table('full_audit_reports')->insertGetId([
             'user_id'     => auth()->id(),
             'name'        => $validated['name'] ?? null,
-            'site_url'    => $validated['page_url'],
+            'site_url'    => $validated['site_url'],
             'status'      => 'running',
             'executed_at' => now(),
             'created_at'  => now(),
@@ -58,14 +58,10 @@ class AuditController extends Controller
         ]);
 
         foreach (self::AUDITORS as $key => $controllerClass) {
-            RunAuditorJob::dispatch($reportId, $key, $controllerClass, $validated['page_url']);
+            RunAuditorJob::dispatch($reportId, $key, $controllerClass, $validated['site_url']);
         }
 
-        return response()->json([
-            'success'   => true,
-            'report_id' => $reportId,
-            'poll_url'  => route('audits.status', $reportId),
-        ], 202);
+        return redirect()->route('audits.show', $reportId);
     }
 
     /**

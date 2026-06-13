@@ -14,15 +14,17 @@ class ScheduledScan extends Model
         'site_url',
         'interval',
         'is_active',
+        'notify_email',
         'last_run_at',
         'next_run_at',
         'last_report_id',
     ];
 
     protected $casts = [
-        'is_active'   => 'boolean',
-        'last_run_at' => 'datetime',
-        'next_run_at' => 'datetime',
+        'is_active'    => 'boolean',
+        'notify_email' => 'boolean',
+        'last_run_at'  => 'datetime',
+        'next_run_at'  => 'datetime',
     ];
 
     public function user(): BelongsTo

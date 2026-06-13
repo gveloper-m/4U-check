@@ -1,10 +1,16 @@
 import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
 import { Zap } from 'lucide-react';
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 
 export default function Guest({ children }: PropsWithChildren) {
     return (
         <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4">
+            {/* Language switcher top-right */}
+            <div className="fixed top-4 right-4">
+                <LanguageSwitcher />
+            </div>
+
             <div className="mb-8 text-center">
                 <Link href="/" className="inline-flex items-center gap-2">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600">

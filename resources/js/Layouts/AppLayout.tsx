@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { PageProps } from '@/types';
 import {
     LayoutDashboard,
@@ -10,84 +11,62 @@ import {
     User,
     LogOut,
     Menu,
-    X,
     Zap,
     ChevronDown,
 } from 'lucide-react';
-
-interface NavItem {
-    label: string;
-    href: string;
-    icon: React.ComponentType<{ className?: string }>;
-    routeName: string;
-}
-
-const navItems: NavItem[] = [
-    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, routeName: 'dashboard' },
-    { label: 'New Scan', href: '/audits', icon: Search, routeName: 'audits.index' },
-    { label: 'Scan History', href: '/audits', icon: History, routeName: 'audits.index' },
-    { label: 'Scheduled Scans', href: '/scheduled-scans', icon: Clock, routeName: 'scheduled-scans.index' },
-    { label: 'Billing', href: '/billing', icon: CreditCard, routeName: 'billing' },
-];
+import LanguageSwitcher from '@/Components/LanguageSwitcher';
 
 export default function AppLayout({ children }: PropsWithChildren) {
     const { auth } = usePage<PageProps>().props;
+    const { t } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
 
+    const navItems = [
+        { label: t('nav.dashboard'),  href: '/dashboard',       icon: LayoutDashboard, routeName: 'dashboard' },
+        { label: t('nav.newScan'),    href: '/audits',           icon: Search,          routeName: 'audits.new' },
+        { label: t('nav.history'),    href: '/audits',           icon: History,         routeName: 'audits.index' },
+        { label: t('nav.scheduled'),  href: '/scheduled-scans',  icon: Clock,           routeName: 'scheduled-scans.index' },
+        { label: t('nav.billing'),    href: '/billing',          icon: CreditCard,      routeName: 'billing' },
+    ];
+
     const currentRoute = () => {
-        try {
-            return route().current() ?? '';
-        } catch {
-            return '';
-        }
+        try { return route().current() ?? ''; } catch { return ''; }
     };
 
     const isActive = (routeName: string) => {
         const cr = currentRoute();
-        return cr === routeName || cr.startsWith(routeName.replace('.index', ''));
+        return cr === routeName || cr.startsWith(routeName.replace('.index', '').replace('.new', ''));
     };
 
     return (
         <div className="min-h-screen bg-gray-950 text-gray-100">
-            {/* Mobile overlay */}
             {sidebarOpen && (
-                <div
-                    className="fixed inset-0 z-20 bg-black/60 lg:hidden"
-                    onClick={() => setSidebarOpen(false)}
-                />
+                <div className="fixed inset-0 z-20 bg-black/60 lg:hidden" onClick={() => setSidebarOpen(false)} />
             )}
 
             {/* Sidebar */}
-            <aside
-                className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-gray-900 border-r border-gray-800 transition-transform duration-300 lg:translate-x-0 ${
-                    sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
-            >
-                {/* Logo */}
+            <aside className={`fixed inset-y-0 left-0 z-30 flex w-64 flex-col bg-gray-900 border-r border-gray-800 transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
                 <div className="flex h-16 shrink-0 items-center gap-3 px-6 border-b border-gray-800">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600">
-                        <Zap className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="text-lg font-bold text-white tracking-tight">
-                        4u<span className="text-violet-400">test</span>
-                    </span>
+                    <Link href="/" className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-600">
+                            <Zap className="h-5 w-5 text-white" />
+                        </div>
+                        <span className="text-lg font-bold text-white tracking-tight">
+                            4u<span className="text-violet-400">test</span>
+                        </span>
+                    </Link>
                 </div>
 
-                {/* Navigation */}
                 <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.routeName);
                         return (
                             <Link
-                                key={item.routeName + item.label}
+                                key={item.routeName}
                                 href={item.href}
-                                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
-                                    active
-                                        ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
-                                        : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'
-                                }`}
+                                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'}`}
                             >
                                 <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-violet-400' : ''}`} />
                                 {item.label}
@@ -96,7 +75,6 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     })}
                 </nav>
 
-                {/* User section */}
                 <div className="shrink-0 border-t border-gray-800 p-4">
                     <div className="relative">
                         <button
@@ -123,7 +101,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     onClick={() => setUserMenuOpen(false)}
                                 >
                                     <User className="h-4 w-4" />
-                                    Profile
+                                    {t('nav.profile')}
                                 </Link>
                                 <Link
                                     href="/logout"
@@ -133,7 +111,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                     onClick={() => setUserMenuOpen(false)}
                                 >
                                     <LogOut className="h-4 w-4" />
-                                    Log Out
+                                    {t('nav.logout')}
                                 </Link>
                             </div>
                         )}
@@ -143,8 +121,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
             {/* Main content */}
             <div className="lg:pl-64">
-                {/* Top bar */}
-                <div className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b border-gray-800 bg-gray-950/80 px-4 backdrop-blur-sm lg:px-6">
+                <div className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b border-gray-800 bg-gray-950/80 px-4 backdrop-blur-sm lg:px-6">
                     <button
                         onClick={() => setSidebarOpen(true)}
                         className="rounded-md p-2 text-gray-400 hover:bg-gray-800 hover:text-gray-100 lg:hidden"
@@ -152,16 +129,16 @@ export default function AppLayout({ children }: PropsWithChildren) {
                         <Menu className="h-5 w-5" />
                     </button>
                     <div className="flex-1" />
+                    <LanguageSwitcher />
                     <Link
                         href="/audits"
                         className="hidden sm:flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 transition-colors"
                     >
                         <Search className="h-4 w-4" />
-                        New Scan
+                        {t('nav.newScan')}
                     </Link>
                 </div>
 
-                {/* Page content */}
                 <main className="p-4 lg:p-6">{children}</main>
             </div>
         </div>

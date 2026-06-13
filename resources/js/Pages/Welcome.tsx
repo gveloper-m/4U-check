@@ -1,26 +1,22 @@
 import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star } from 'lucide-react';
-
-const features = [
-  { icon: Search, title: 'SEO & Schema', desc: 'Meta tags, structured data, Open Graph, canonical URLs, image alt text.', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
-  { icon: Shield, title: 'Security Audit', desc: 'SSL, HTTP security headers, mixed content, CSP, HSTS, X-Frame-Options.', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
-  { icon: BarChart3, title: 'Performance', desc: 'FCP, LCP, TTFB, compression, resource analysis, Core Web Vitals.', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
-  { icon: Link2, title: 'Broken Resources', desc: 'Find all broken links and missing images across every page.', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
-  { icon: ShoppingCart, title: 'E-commerce Catalog', desc: 'Price integrity, stock mismatches, disabled cart buttons on product pages.', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
-  { icon: Tag, title: 'Marketing Tracking', desc: 'Detect GA4, Facebook Pixel, TikTok Pixel across all site pages.', color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
-];
-
-const planFeatures = [
-  'Unlimited website scans',
-  'All 6 audit modules',
-  'Scheduled automatic scans',
-  'Full scan history & comparisons',
-  'PDF & CSV exports',
-  'Priority queue processing',
-];
+import { useTranslation } from 'react-i18next';
 
 export default function Welcome({ auth }: PageProps) {
+  const { t } = useTranslation();
+
+  const features = [
+    { icon: Search, title: t('welcome.features.seo.title'), desc: t('welcome.features.seo.desc'), color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
+    { icon: Shield, title: t('welcome.features.security.title'), desc: t('welcome.features.security.desc'), color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+    { icon: BarChart3, title: t('welcome.features.performance.title'), desc: t('welcome.features.performance.desc'), color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
+    { icon: Link2, title: t('welcome.features.broken.title'), desc: t('welcome.features.broken.desc'), color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
+    { icon: ShoppingCart, title: t('welcome.features.ecommerce.title'), desc: t('welcome.features.ecommerce.desc'), color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+    { icon: Tag, title: t('welcome.features.tracking.title'), desc: t('welcome.features.tracking.desc'), color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
+  ];
+
+  const planFeatures = t('welcome.planFeatures', { returnObjects: true }) as string[];
+
   return (
     <>
       <Head title="4utest — Website Audit Platform" />
@@ -42,7 +38,7 @@ export default function Welcome({ auth }: PageProps) {
                   href="/dashboard"
                   className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 transition-colors"
                 >
-                  Dashboard <ArrowRight className="h-4 w-4" />
+                  {t('nav.dashboard')} <ArrowRight className="h-4 w-4" />
                 </Link>
               ) : (
                 <>
@@ -50,13 +46,13 @@ export default function Welcome({ auth }: PageProps) {
                     href="/login"
                     className="rounded-lg px-4 py-2 text-sm text-gray-300 hover:text-white transition-colors"
                   >
-                    Sign in
+                    {t('welcome.signin')}
                   </Link>
                   <Link
                     href="/register"
                     className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 transition-colors"
                   >
-                    Get Started
+                    {t('welcome.getStarted')}
                   </Link>
                 </>
               )}
@@ -72,31 +68,30 @@ export default function Welcome({ auth }: PageProps) {
           <div className="mx-auto max-w-4xl text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-sm text-violet-300">
               <Star className="h-3.5 w-3.5" />
-              Complete website health analysis
+              {t('welcome.badge')}
             </div>
             <h1 className="text-5xl font-extrabold tracking-tight text-white sm:text-6xl lg:text-7xl">
-              Know exactly what&apos;s{' '}
+              {t('welcome.headline1')}{' '}
               <span className="bg-gradient-to-r from-violet-400 to-purple-400 bg-clip-text text-transparent">
-                broken
+                {t('welcome.headline2')}
               </span>{' '}
-              on your site
+              {t('welcome.headline3')}
             </h1>
             <p className="mt-6 text-xl text-gray-400 max-w-2xl mx-auto leading-relaxed">
-              4utest runs 6 deep audits in parallel — SEO, security, performance, broken links,
-              e-commerce catalog, and marketing tracking — giving you a complete health score in minutes.
+              {t('welcome.sub')}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
                 href="/register"
                 className="flex items-center gap-2 rounded-xl bg-violet-600 px-8 py-4 text-base font-semibold text-white hover:bg-violet-500 transition-all shadow-lg shadow-violet-500/25"
               >
-                Start auditing free <ArrowRight className="h-5 w-5" />
+                {t('welcome.cta')} <ArrowRight className="h-5 w-5" />
               </Link>
               <Link
                 href="/login"
                 className="rounded-xl border border-gray-700 px-8 py-4 text-base font-medium text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
               >
-                Sign in
+                {t('welcome.signin')}
               </Link>
             </div>
           </div>
@@ -107,9 +102,9 @@ export default function Welcome({ auth }: PageProps) {
           <div className="mx-auto max-w-7xl">
             <div className="mb-12 text-center">
               <h2 className="text-3xl font-bold text-white sm:text-4xl">
-                6 audit modules in every scan
+                {t('welcome.featuresTitle')}
               </h2>
-              <p className="mt-4 text-lg text-gray-400">Run concurrently. Results in minutes.</p>
+              <p className="mt-4 text-lg text-gray-400">{t('welcome.featuresSub')}</p>
             </div>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((f) => {
@@ -136,12 +131,12 @@ export default function Welcome({ auth }: PageProps) {
         {/* Pricing */}
         <section className="px-6 py-20 bg-gray-900/50">
           <div className="mx-auto max-w-lg text-center">
-            <h2 className="text-3xl font-bold text-white">Simple pricing</h2>
-            <p className="mt-4 text-gray-400">One plan. Everything included.</p>
+            <h2 className="text-3xl font-bold text-white">{t('welcome.pricingTitle')}</h2>
+            <p className="mt-4 text-gray-400">{t('welcome.pricingSub')}</p>
             <div className="mt-10 rounded-2xl border border-violet-500/30 bg-gray-900 p-8 shadow-2xl shadow-violet-500/10">
               <div className="flex items-end justify-center gap-1">
                 <span className="text-5xl font-extrabold text-white">€19.99</span>
-                <span className="mb-2 text-gray-400">/month</span>
+                <span className="mb-2 text-gray-400">{t('welcome.perMonth')}</span>
               </div>
               <ul className="mt-8 space-y-3 text-left">
                 {planFeatures.map((f) => (
@@ -155,9 +150,9 @@ export default function Welcome({ auth }: PageProps) {
                 href="/register"
                 className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-4 text-base font-semibold text-white hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/25"
               >
-                Get started <ArrowRight className="h-5 w-5" />
+                {t('welcome.getStarted')} <ArrowRight className="h-5 w-5" />
               </Link>
-              <p className="mt-3 text-xs text-gray-500">No setup fees. Cancel anytime.</p>
+              <p className="mt-3 text-xs text-gray-500">{t('welcome.nofees')}</p>
             </div>
           </div>
         </section>
@@ -168,20 +163,20 @@ export default function Welcome({ auth }: PageProps) {
             {[
               {
                 icon: Clock,
-                title: 'Automated Scans',
-                desc: 'Schedule hourly, daily, weekly, or monthly scans. Never miss a regression.',
+                title: t('welcome.extraFeatures.scheduled.title'),
+                desc: t('welcome.extraFeatures.scheduled.desc'),
                 color: 'text-emerald-400',
               },
               {
                 icon: Download,
-                title: 'Export Results',
-                desc: 'Download PDF reports for clients or CSV data for your own analysis.',
+                title: t('welcome.extraFeatures.export.title'),
+                desc: t('welcome.extraFeatures.export.desc'),
                 color: 'text-blue-400',
               },
               {
                 icon: BarChart3,
-                title: 'Track Progress',
-                desc: 'Compare any two scans side by side to see your health score improve.',
+                title: t('welcome.extraFeatures.track.title'),
+                desc: t('welcome.extraFeatures.track.desc'),
                 color: 'text-violet-400',
               },
             ].map((item) => {
@@ -202,15 +197,15 @@ export default function Welcome({ auth }: PageProps) {
         {/* CTA */}
         <section className="px-6 py-20 border-t border-gray-800">
           <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold text-white">Ready to audit your site?</h2>
+            <h2 className="text-3xl font-bold text-white">{t('welcome.ctaTitle')}</h2>
             <p className="mt-4 text-gray-400">
-              Create an account and run your first audit in under 2 minutes.
+              {t('welcome.ctaSub')}
             </p>
             <Link
               href="/register"
               className="mt-8 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-8 py-4 text-base font-semibold text-white hover:bg-violet-500 transition-colors"
             >
-              Start for free <ArrowRight className="h-5 w-5" />
+              {t('welcome.startFree')} <ArrowRight className="h-5 w-5" />
             </Link>
           </div>
         </section>

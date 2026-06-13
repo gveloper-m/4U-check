@@ -76,6 +76,9 @@ class PerformanceAuditController extends Controller
         $allDesktopMetrics = [];
         $allMobileMetrics  = [];
 
+        // Cap pages to avoid timeout on large sites
+        $pagesToTest = array_slice($pagesToTest, 0, 15);
+
         // TTFB: quick HTTP HEAD check across all pages
         foreach ($pagesToTest as $testUrl) {
             $ttfb = $this->measureTTFB($testUrl);
@@ -301,13 +304,15 @@ class PerformanceAuditController extends Controller
             return (int)($endTime - $startTime);
         } catch (\Exception $httpError) {
             // If HTTP fails, try with browser
+            $chromePath = $this->findChromePath();
+            if (! $chromePath) return null;
             try {
                 $startTime = microtime(true) * 1000;
                 Browsershot::url($url)
-                    ->setChromePath('/usr/bin/google-chrome')
+                    ->setChromePath($chromePath)
                     ->noSandbox()
                     ->disableImages()
-                    ->timeout(30000)
+                    ->timeout(30)
                     ->bodyHtml();
                 $endTime = microtime(true) * 1000;
                 return (int)($endTime - $startTime);
@@ -470,12 +475,14 @@ class PerformanceAuditController extends Controller
     private function findChromePath(): ?string
     {
         $paths = [
+            '/opt/google/chrome/chrome',
+            '/opt/google/chrome/google-chrome',
             '/var/www/html/chrome/linux-151.0.7884.0/chrome-linux64/chrome',
             '/root/.cache/puppeteer/chrome/linux-151.0.7884.0/chrome-linux64/chrome',
-            '/usr/bin/chromium-browser',
-            '/usr/bin/chromium',
             '/usr/bin/google-chrome-stable',
             '/usr/bin/google-chrome',
+            '/usr/bin/chromium',
+            '/usr/bin/chromium-browser',
         ];
 
         foreach ($paths as $path) {

@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps, FullAuditReport } from '@/types';
 import { ArrowLeft, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface CompareProps extends PageProps {
   reports: FullAuditReport[];
@@ -72,6 +73,7 @@ function CellStyle({ value, best, higherIsBetter }: { value: CellValue; best: nu
 }
 
 export default function Compare({ reports }: CompareProps) {
+  const { t } = useTranslation();
   const extractRow = (report: FullAuditReport): Record<string, CellValue> => {
     const perf = report.performance_result;
     const broken = report.broken_resources_result;
@@ -137,13 +139,13 @@ export default function Compare({ reports }: CompareProps) {
     label: string;
     higherIsBetter: boolean;
   }> = [
-    { key: 'health', label: 'Health Score', higherIsBetter: true },
-    { key: 'seo_meta_title', label: 'SEO Meta Title', higherIsBetter: true },
-    { key: 'security_ssl', label: 'SSL Status', higherIsBetter: true },
-    { key: 'avg_ttfb', label: 'Avg TTFB', higherIsBetter: false },
-    { key: 'broken_links', label: 'Broken Links', higherIsBetter: false },
-    { key: 'catalog_broken_pct', label: 'Catalog Broken %', higherIsBetter: false },
-    { key: 'tracking_detected', label: 'Tracking Pixels', higherIsBetter: true },
+    { key: 'health', label: t('compare.healthScore'), higherIsBetter: true },
+    { key: 'seo_meta_title', label: t('compare.seoStatus'), higherIsBetter: true },
+    { key: 'security_ssl', label: t('compare.securitySsl'), higherIsBetter: true },
+    { key: 'avg_ttfb', label: t('compare.ttfb'), higherIsBetter: false },
+    { key: 'broken_links', label: t('compare.brokenLinks'), higherIsBetter: false },
+    { key: 'catalog_broken_pct', label: t('compare.catalogBroken'), higherIsBetter: false },
+    { key: 'tracking_detected', label: t('compare.ga4'), higherIsBetter: true },
   ];
 
   const extracted = reports.map(extractRow);
@@ -164,13 +166,13 @@ export default function Compare({ reports }: CompareProps) {
           className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to audits
+          {t('compare.backToAudits')}
         </Link>
 
         <div>
-          <h1 className="text-2xl font-bold text-white">Compare Audits</h1>
+          <h1 className="text-2xl font-bold text-white">{t('compare.title')}</h1>
           <p className="mt-1 text-sm text-gray-400">
-            Side-by-side comparison of {reports.length} scans
+            {t('compare.sub')} — {reports.length} scans
           </p>
         </div>
 
@@ -179,7 +181,7 @@ export default function Compare({ reports }: CompareProps) {
             <thead>
               <tr className="border-b border-gray-800">
                 <th className="sticky left-0 bg-gray-900 px-5 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 w-44">
-                  Metric
+                  {t('compare.metric')}
                 </th>
                 {reports.map((report) => (
                   <th

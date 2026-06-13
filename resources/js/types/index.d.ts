@@ -4,6 +4,9 @@ export interface User {
     email: string;
     email_verified_at?: string;
     is_unlimited: boolean;
+    phone?: string | null;
+    company_name?: string | null;
+    company_site?: string | null;
     stripe_id?: string;
     pm_type?: string;
     pm_last_four?: string;
@@ -34,6 +37,7 @@ export interface ScheduledScan {
     site_url: string;
     interval: 'hourly' | 'daily' | 'weekly' | 'monthly';
     is_active: boolean;
+    notify_email: boolean;
     last_run_at?: string;
     next_run_at: string;
     last_report_id?: number;

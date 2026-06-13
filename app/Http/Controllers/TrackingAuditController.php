@@ -13,7 +13,8 @@ class TrackingAuditController extends Controller
 {
     use FetchesWebPages;
 
-    private $baseHost = '';
+    private $baseHost     = '';
+    private $collectedHtml = '';
 
     /**
      * Audit a site for marketing tracking scripts across all pages.
@@ -39,12 +40,15 @@ class TrackingAuditController extends Controller
         $this->baseHost = $parsedUrl['host'] ?? '';
 
         $allGA4 = $allFacebook = $allTikTok = [];
+        $this->collectedHtml = '';
         $visited     = [];          // url => true  (O(1) lookup)
         $inQueue     = [$pageUrl => true];
         $queue       = [$pageUrl];
         $pagesCrawled = 0;
+        $deadline     = microtime(true) + 120; // hard 2-minute budget
+        $maxPages     = 20;
 
-        while (! empty($queue)) {
+        while (! empty($queue) && $pagesCrawled < $maxPages && microtime(true) < $deadline) {
             // Pull up to 20 unvisited URLs for concurrent fetch
             $batch = [];
             while (! empty($queue) && count($batch) < 20) {
@@ -74,6 +78,7 @@ class TrackingAuditController extends Controller
 
                 $visited[$url] = true;
                 $htmlContent   = $response->body();
+                $this->collectedHtml .= $htmlContent;
 
                 $ga4      = $this->detectGA4($htmlContent);
                 $facebook = $this->detectFacebookPixel($htmlContent);
@@ -91,6 +96,30 @@ class TrackingAuditController extends Controller
                 }
                 $pagesCrawled++;
             }
+        }
+
+        $allGA4      = array_values(array_unique($allGA4));
+        $allFacebook = array_values(array_unique($allFacebook));
+        $allTikTok   = array_values(array_unique($allTikTok));
+
+        // Fetch GTM container JS files and scan them for pixel IDs inside the container.
+        $gtmIds = array_values(array_unique($this->detectGtmIds($this->collectedHtml)));
+        foreach ($gtmIds as $gtmId) {
+            try {
+                $containerUrl = "https://www.googletagmanager.com/gtm.js?id={$gtmId}";
+                $containerJs  = Http::timeout(10)->get($containerUrl);
+                if ($containerJs->successful()) {
+                    $js = $containerJs->body();
+                    $ga4  = $this->detectGA4($js);
+                    $fb   = $this->detectFacebookPixel($js);
+                    $tt   = $this->detectTikTokPixel($js);
+                    $allGA4      = array_merge($allGA4,      $ga4['ids']);
+                    $allFacebook = array_merge($allFacebook, $fb['ids']);
+                    $allTikTok   = array_merge($allTikTok,   $tt['ids']);
+                    // Also treat GTM presence as implicit GA4 detection
+                    if (empty($allGA4)) $allGA4 = ["via-{$gtmId}"];
+                }
+            } catch (\Throwable) {}
         }
 
         $allGA4      = array_values(array_unique($allGA4));
@@ -231,6 +260,20 @@ class TrackingAuditController extends Controller
      * @param string $htmlContent
      * @return array
      */
+    private function detectGtmIds(string $html): array
+    {
+        $ids = [];
+        // IIFE form: })(window,document,'script','dataLayer','GTM-XXXXX');
+        if (preg_match_all("/['\"]+(GTM-[A-Z0-9]{4,})['\"]+/", $html, $matches)) {
+            $ids = array_merge($ids, $matches[1]);
+        }
+        // Direct URL form: gtm.js?id=GTM-XXXXX
+        if (preg_match_all('/gtm\.js\?id=(GTM-[A-Z0-9]{4,})/i', $html, $matches)) {
+            $ids = array_merge($ids, $matches[1]);
+        }
+        return array_values(array_unique($ids));
+    }
+
     private function detectGA4(string $htmlContent): array
     {
         $detected = false;
@@ -242,20 +285,26 @@ class TrackingAuditController extends Controller
             $ids = array_merge($ids, array_unique($matches[1]));
         }
 
-        // Pattern 2: gtm.js with container ID
-        if (preg_match_all('/googletagmanager\.com\/gtm\.js\?id=(GTM-[A-Z0-9]+)/i', $htmlContent, $matches)) {
+        // Pattern 2: gtm.js URL form
+        if (preg_match_all('/gtm\.js\?id=(GTM-[A-Z0-9]+)/i', $htmlContent, $matches)) {
             $detected = true;
             $ids = array_merge($ids, array_unique($matches[1]));
         }
 
-        // Pattern 3: gtag config call
-        if (preg_match_all('/gtag\([\'"]config[\'"]\s*,\s*[\'"]([G|GTM]-[A-Z0-9]+)[\'"]/', $htmlContent, $matches)) {
+        // Pattern 3: gtag config call — G- or GTM- IDs
+        if (preg_match_all('/gtag\([\'"]config[\'"]\s*,\s*[\'"]([GM]-[A-Z0-9\-]+)[\'"]/', $htmlContent, $matches)) {
             $detected = true;
             $ids = array_merge($ids, array_unique($matches[1]));
         }
 
-        // Pattern 4: dataLayer push with measurement ID
-        if (preg_match_all('/[\'"](G-[A-Z0-9]+)[\'"].*?measurement_id/i', $htmlContent, $matches)) {
+        // Pattern 4: bare G- measurement ID in quotes anywhere
+        if (preg_match_all('/[\'"]+(G-[A-Z0-9]{6,})[\'\"]+/', $htmlContent, $matches)) {
+            $detected = true;
+            $ids = array_merge($ids, array_unique($matches[1]));
+        }
+
+        // Pattern 5: dataLayer push with measurement_id
+        if (preg_match_all('/[\'"]measurement_id[\'"]\s*:\s*[\'"]([G]-[A-Z0-9]+)[\'"]/', $htmlContent, $matches)) {
             $detected = true;
             $ids = array_merge($ids, array_unique($matches[1]));
         }

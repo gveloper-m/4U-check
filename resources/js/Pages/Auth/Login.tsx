@@ -2,6 +2,7 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export default function Login({
   status,
@@ -10,6 +11,7 @@ export default function Login({
   status?: string;
   canResetPassword: boolean;
 }) {
+  const { t } = useTranslation();
   const { data, setData, post, processing, errors, reset } = useForm({
     email: '',
     password: '',
@@ -25,9 +27,9 @@ export default function Login({
 
   return (
     <GuestLayout>
-      <Head title="Sign in" />
+      <Head title={t('auth.login.submit')} />
 
-      <h2 className="mb-6 text-xl font-bold text-white">Sign in to your account</h2>
+      <h2 className="mb-6 text-xl font-bold text-white">{t('auth.login.title')}</h2>
 
       {status && (
         <div className="mb-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
@@ -38,7 +40,7 @@ export default function Login({
       <form onSubmit={submit} className="space-y-4">
         <div>
           <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-300">
-            Email address
+            {t('auth.login.email')}
           </label>
           <input
             id="email"
@@ -57,14 +59,14 @@ export default function Login({
         <div>
           <div className="flex items-center justify-between mb-1.5">
             <label htmlFor="password" className="text-sm font-medium text-gray-300">
-              Password
+              {t('auth.login.password')}
             </label>
             {canResetPassword && (
               <Link
                 href={route('password.request')}
                 className="text-xs text-violet-400 hover:text-violet-300 transition-colors"
               >
-                Forgot password?
+                {t('auth.login.forgot')}
               </Link>
             )}
           </div>
@@ -91,7 +93,7 @@ export default function Login({
             className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-violet-600 focus:ring-violet-500 focus:ring-offset-gray-900"
           />
           <label htmlFor="remember" className="text-sm text-gray-400">
-            Remember me
+            {t('auth.login.remember')}
           </label>
         </div>
 
@@ -101,14 +103,14 @@ export default function Login({
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
         >
           {processing && <Loader2 className="h-4 w-4 animate-spin" />}
-          Sign in
+          {t('auth.login.submit')}
         </button>
       </form>
 
       <p className="mt-5 text-center text-sm text-gray-500">
-        Don&apos;t have an account?{' '}
+        {t('auth.login.noAccount')}{' '}
         <Link href={route('register')} className="text-violet-400 hover:text-violet-300 transition-colors">
-          Create one
+          {t('auth.login.register')}
         </Link>
       </p>
     </GuestLayout>

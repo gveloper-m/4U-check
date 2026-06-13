@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { PageProps, FullAuditReport, PaginatedData } from '@/types';
 import { FormEventHandler } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Search,
   CheckCircle2,
@@ -19,11 +20,12 @@ interface AuditsIndexProps extends PageProps {
 }
 
 function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
+  const { t } = useTranslation();
   if (status === 'completed') {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20">
         <CheckCircle2 className="h-3 w-3" />
-        Completed
+        {t('audits.completed')}
       </span>
     );
   }
@@ -31,14 +33,14 @@ function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-400 border border-violet-500/20">
         <Loader2 className="h-3 w-3 animate-spin" />
-        Running
+        {t('audits.running')}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400 border border-red-500/20">
       <XCircle className="h-3 w-3" />
-      Failed
+      {t('audits.failed')}
     </span>
   );
 }
@@ -58,6 +60,7 @@ function healthRingColor(score?: number): string {
 }
 
 export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
+  const { t } = useTranslation();
   const { data, setData, post, processing, errors, reset } = useForm({
     site_url: '',
     name: '',
@@ -71,19 +74,19 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
   };
 
   const handleDelete = (id: number) => {
-    if (!confirm('Are you sure you want to delete this scan?')) return;
+    if (!confirm(t('audits.deleteConfirm'))) return;
     router.delete(`/audits/${id}`);
   };
 
   return (
     <AppLayout>
-      <Head title="Scan History" />
+      <Head title={t('audits.title')} />
 
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">Audits</h1>
-          <p className="mt-1 text-sm text-gray-400">Run a new scan or view past results</p>
+          <h1 className="text-2xl font-bold text-white">{t('audits.title')}</h1>
+          <p className="mt-1 text-sm text-gray-400">{t('audits.sub')}</p>
         </div>
 
         {/* Flash messages */}
@@ -100,17 +103,17 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
 
         {/* New Scan Panel */}
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
-          <h2 className="mb-4 text-base font-semibold text-white">New Scan</h2>
+          <h2 className="mb-4 text-base font-semibold text-white">{t('audits.newScan')}</h2>
           <form onSubmit={submit} className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="site_url" className="mb-1.5 block text-sm font-medium text-gray-300">
-                  Website URL <span className="text-red-400">*</span>
+                  {t('audits.urlLabel')} <span className="text-red-400">*</span>
                 </label>
                 <input
                   id="site_url"
                   type="url"
-                  placeholder="https://example.com"
+                  placeholder={t('audits.urlPlaceholder')}
                   value={data.site_url}
                   onChange={(e) => setData('site_url', e.target.value)}
                   required
@@ -122,12 +125,12 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
               </div>
               <div>
                 <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-gray-300">
-                  Name <span className="text-gray-500">(optional)</span>
+                  {t('audits.nameLabel')} <span className="text-gray-500">({t('audits.nameOptional')})</span>
                 </label>
                 <input
                   id="name"
                   type="text"
-                  placeholder="e.g. Homepage audit"
+                  placeholder={t('audits.namePlaceholder')}
                   value={data.name}
                   onChange={(e) => setData('name', e.target.value)}
                   className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
@@ -148,7 +151,7 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
                 ) : (
                   <Search className="h-4 w-4" />
                 )}
-                Run Audit
+                {t('audits.runAudit')}
               </button>
             </div>
           </form>
@@ -158,7 +161,7 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
         <div className="rounded-xl border border-gray-800 bg-gray-900">
           <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
             <h2 className="text-base font-semibold text-white">
-              Scan History
+              {t('audits.history')}
               <span className="ml-2 rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400">
                 {reports.total}
               </span>
@@ -168,9 +171,9 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
           {reports.data.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Search className="mb-3 h-10 w-10 text-gray-600" />
-              <p className="text-gray-400">No scans yet</p>
+              <p className="text-gray-400">{t('audits.noScans')}</p>
               <p className="mt-1 text-sm text-gray-500">
-                Run your first audit above to get started.
+                {t('audits.noScansSub')}
               </p>
             </div>
           ) : (
@@ -180,19 +183,19 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
                   <thead>
                     <tr className="border-b border-gray-800">
                       <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        Site
+                        {t('audits.site')}
                       </th>
                       <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        Status
+                        {t('audits.status')}
                       </th>
                       <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        Health
+                        {t('audits.health')}
                       </th>
                       <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                        Date
+                        {t('audits.date')}
                       </th>
                       <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                        Actions
+                        {t('audits.actions')}
                       </th>
                     </tr>
                   </thead>
@@ -235,7 +238,7 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
                               className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
                             >
                               <ExternalLink className="h-3 w-3" />
-                              View
+                              {t('audits.view')}
                             </Link>
                             {report.status === 'completed' && (
                               <>
@@ -244,14 +247,14 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
                                   className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
                                 >
                                   <FileDown className="h-3 w-3" />
-                                  PDF
+                                  {t('show.pdf')}
                                 </a>
                                 <a
                                   href={`/audits/${report.id}/export/csv`}
                                   className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
                                 >
                                   <FileDown className="h-3 w-3" />
-                                  CSV
+                                  {t('show.csv')}
                                 </a>
                               </>
                             )}
@@ -260,7 +263,7 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
                               className="inline-flex items-center gap-1 rounded-lg border border-red-500/20 px-2.5 py-1.5 text-xs text-red-400 hover:border-red-500/40 hover:text-red-300 transition-colors"
                             >
                               <Trash2 className="h-3 w-3" />
-                              Delete
+                              {t('audits.delete')}
                             </button>
                           </div>
                         </td>
@@ -274,7 +277,7 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
               {reports.last_page > 1 && (
                 <div className="flex items-center justify-between border-t border-gray-800 px-5 py-4">
                   <p className="text-xs text-gray-500">
-                    Showing {reports.from}–{reports.to} of {reports.total}
+                    {t('audits.showing')} {reports.from}–{reports.to} {t('audits.of')} {reports.total}
                   </p>
                   <div className="flex items-center gap-1">
                     {reports.links.map((link, index) => {

@@ -1,6 +1,7 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link } from '@inertiajs/react';
 import { PageProps, FullAuditReport } from '@/types';
+import { useTranslation } from 'react-i18next';
 import {
   FileSearch,
   Clock,
@@ -35,11 +36,12 @@ function healthBg(score?: number): string {
 }
 
 function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
+  const { t } = useTranslation();
   if (status === 'completed') {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20">
         <CheckCircle2 className="h-3 w-3" />
-        Completed
+        {t('audits.completed')}
       </span>
     );
   }
@@ -47,14 +49,14 @@ function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
     return (
       <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-400 border border-violet-500/20">
         <Loader2 className="h-3 w-3 animate-spin" />
-        Running
+        {t('audits.running')}
       </span>
     );
   }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400 border border-red-500/20">
       <XCircle className="h-3 w-3" />
-      Failed
+      {t('audits.failed')}
     </span>
   );
 }
@@ -72,11 +74,12 @@ export default function Dashboard({
   scheduledScans,
   subscription,
 }: DashboardProps) {
+  const { t } = useTranslation();
   const avg = avgHealthScore(recentReports);
 
   const stats = [
     {
-      label: 'Total Scans',
+      label: t('dashboard.totalScans'),
       value: totalReports,
       icon: FileSearch,
       color: 'text-violet-400',
@@ -84,7 +87,7 @@ export default function Dashboard({
       border: 'border-violet-500/20',
     },
     {
-      label: 'Active Scheduled',
+      label: t('dashboard.activeScheduled'),
       value: scheduledScans,
       icon: Clock,
       color: 'text-blue-400',
@@ -92,16 +95,16 @@ export default function Dashboard({
       border: 'border-blue-500/20',
     },
     {
-      label: 'Subscription',
-      value: subscription === 'active' ? 'Active' : 'Inactive',
+      label: t('dashboard.subscription'),
+      value: subscription === 'active' ? t('dashboard.active') : t('dashboard.inactive'),
       icon: CreditCard,
       color: subscription === 'active' ? 'text-emerald-400' : 'text-red-400',
       bg: subscription === 'active' ? 'bg-emerald-500/10' : 'bg-red-500/10',
       border: subscription === 'active' ? 'border-emerald-500/20' : 'border-red-500/20',
     },
     {
-      label: 'Avg Health Score',
-      value: avg !== null ? `${avg}` : 'N/A',
+      label: t('dashboard.avgScore'),
+      value: avg !== null ? `${avg}` : t('dashboard.noScore'),
       icon: Activity,
       color: avg !== null ? healthColor(avg) : 'text-gray-400',
       bg: avg !== null ? healthBg(avg).split(' ')[0] : 'bg-gray-500/10',
@@ -111,20 +114,20 @@ export default function Dashboard({
 
   return (
     <AppLayout>
-      <Head title="Dashboard" />
+      <Head title={t('dashboard.title')} />
 
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Dashboard</h1>
-            <p className="mt-1 text-sm text-gray-400">Overview of your website audits</p>
+            <h1 className="text-2xl font-bold text-white">{t('dashboard.title')}</h1>
+            <p className="mt-1 text-sm text-gray-400">{t('dashboard.greeting')}</p>
           </div>
           <Link
             href="/audits"
             className="flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 transition-colors"
           >
-            Start New Scan <ArrowRight className="h-4 w-4" />
+            {t('dashboard.startNew')} <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
 
@@ -152,24 +155,24 @@ export default function Dashboard({
         {/* Recent Scans */}
         <div className="rounded-xl border border-gray-800 bg-gray-900">
           <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
-            <h2 className="text-base font-semibold text-white">Recent Scans</h2>
+            <h2 className="text-base font-semibold text-white">{t('dashboard.recentScans')}</h2>
             <Link href="/audits" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
-              View all
+              {t('dashboard.viewAll')}
             </Link>
           </div>
 
           {recentReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <FileSearch className="mb-3 h-10 w-10 text-gray-600" />
-              <p className="text-gray-400">No scans yet</p>
+              <p className="text-gray-400">{t('dashboard.noRecent')}</p>
               <p className="mt-1 text-sm text-gray-500">
-                Start your first audit to see results here.
+                {t('dashboard.noRecentSub')}
               </p>
               <Link
                 href="/audits"
                 className="mt-4 flex items-center gap-2 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 transition-colors"
               >
-                Run your first scan <ArrowRight className="h-4 w-4" />
+                {t('dashboard.startNew')} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           ) : (
@@ -178,19 +181,19 @@ export default function Dashboard({
                 <thead>
                   <tr className="border-b border-gray-800">
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Site
+                      {t('dashboard.site')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Status
+                      {t('dashboard.status')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Health
+                      {t('dashboard.health')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Date
+                      {t('dashboard.date')}
                     </th>
                     <th className="px-5 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Action
+                      {t('audits.view')}
                     </th>
                   </tr>
                 </thead>
@@ -229,7 +232,7 @@ export default function Dashboard({
                           href={`/audits/${report.id}`}
                           className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
                         >
-                          View <ExternalLink className="h-3 w-3" />
+                          {t('audits.view')} <ExternalLink className="h-3 w-3" />
                         </Link>
                       </td>
                     </tr>

@@ -2,6 +2,7 @@ import AppLayout from '@/Layouts/AppLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { FormEventHandler } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   CreditCard,
   CheckCircle2,
@@ -36,15 +37,6 @@ interface BillingProps extends PageProps {
   payment_method: PaymentMethodData | null;
 }
 
-const planFeatures = [
-  'Unlimited website scans',
-  'All 6 audit modules',
-  'Scheduled automatic scans',
-  'Full scan history & comparisons',
-  'PDF & CSV exports',
-  'Priority queue processing',
-];
-
 export default function BillingIndex({
   subscribed,
   subscription,
@@ -52,6 +44,8 @@ export default function BillingIndex({
   payment_method,
   flash,
 }: BillingProps) {
+  const { t } = useTranslation();
+  const planFeatures = t('billing.features', { returnObjects: true }) as string[];
   const subscribeForm = useForm({});
   const cancelForm = useForm({});
 
@@ -72,13 +66,13 @@ export default function BillingIndex({
 
   return (
     <AppLayout>
-      <Head title="Billing" />
+      <Head title={t('billing.title')} />
 
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">Billing</h1>
-          <p className="mt-1 text-sm text-gray-400">Manage your subscription and payment details</p>
+          <h1 className="text-2xl font-bold text-white">{t('billing.title')}</h1>
+          <p className="mt-1 text-sm text-gray-400">{t('billing.sub')}</p>
         </div>
 
         {/* Flash messages */}
@@ -96,7 +90,7 @@ export default function BillingIndex({
         <div className="grid gap-6 lg:grid-cols-2">
           {/* Subscription card */}
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
-            <h2 className="mb-4 text-base font-semibold text-white">Subscription</h2>
+            <h2 className="mb-4 text-base font-semibold text-white">{t('billing.activeTitle')}</h2>
 
             {is_unlimited ? (
               /* Unlimited account */
@@ -106,12 +100,12 @@ export default function BillingIndex({
                     <Infinity className="h-5 w-5 text-emerald-400" />
                   </div>
                   <div>
-                    <p className="font-semibold text-emerald-400">Unlimited Account</p>
-                    <p className="text-xs text-emerald-300/70">Full access — no limits applied</p>
+                    <p className="font-semibold text-emerald-400">{t('billing.unlimited')}</p>
+                    <p className="text-xs text-emerald-300/70">{t('billing.unlimitedSub')}</p>
                   </div>
                 </div>
                 <p className="mt-3 text-sm text-gray-400">
-                  Your account has unlimited access to all features. No billing required.
+                  {t('billing.unlimitedSub')}
                 </p>
               </div>
             ) : subscribed && subscription ? (
@@ -120,11 +114,11 @@ export default function BillingIndex({
                 <div className="flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4">
                   <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
                   <div>
-                    <p className="font-semibold text-emerald-400">Active Subscription</p>
+                    <p className="font-semibold text-emerald-400">{t('billing.activeTitle')}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      Status:{' '}
+                      {t('billing.activeStatus')}:{' '}
                       <span className="text-gray-300 capitalize">
-                        {subscription.stripe_status ?? 'active'}
+                        {subscription.stripe_status ?? t('billing.active')}
                       </span>
                     </p>
                     {subscription.ends_at && (
@@ -156,7 +150,7 @@ export default function BillingIndex({
                     ) : (
                       <CreditCard className="h-4 w-4" />
                     )}
-                    Manage Subscription
+                    {t('billing.manageBtn')}
                   </button>
                 </form>
               </div>
@@ -166,9 +160,9 @@ export default function BillingIndex({
                 <div className="flex items-center gap-3 rounded-xl border border-red-500/20 bg-red-500/10 p-4">
                   <XCircle className="h-5 w-5 shrink-0 text-red-400" />
                   <div>
-                    <p className="font-semibold text-red-400">No Active Subscription</p>
+                    <p className="font-semibold text-red-400">{t('billing.upgradeTitle')}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
-                      Subscribe to unlock all features
+                      {t('billing.upgradeSub')}
                     </p>
                   </div>
                 </div>
@@ -176,7 +170,7 @@ export default function BillingIndex({
                 <div>
                   <div className="flex items-end gap-1 mb-4">
                     <span className="text-3xl font-bold text-white">€19.99</span>
-                    <span className="mb-1 text-sm text-gray-400">/month</span>
+                    <span className="mb-1 text-sm text-gray-400">{t('billing.perMonth')}</span>
                   </div>
                   <ul className="mb-5 space-y-2">
                     {planFeatures.map((f) => (
@@ -197,11 +191,11 @@ export default function BillingIndex({
                       ) : (
                         <ArrowRight className="h-4 w-4" />
                       )}
-                      Subscribe — €19.99/month
+                      {t('billing.subscribeBtn')} — €19.99{t('billing.perMonth')}
                     </button>
                   </form>
                   <p className="mt-2 text-center text-xs text-gray-500">
-                    No setup fees. Cancel anytime.
+                    {t('billing.nofees')}
                   </p>
                 </div>
               </div>
@@ -210,7 +204,7 @@ export default function BillingIndex({
 
           {/* Payment method card */}
           <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
-            <h2 className="mb-4 text-base font-semibold text-white">Payment Method</h2>
+            <h2 className="mb-4 text-base font-semibold text-white">{t('billing.paymentMethod')}</h2>
 
             {card ? (
               <div className="rounded-xl border border-gray-700 bg-gray-800 p-4">

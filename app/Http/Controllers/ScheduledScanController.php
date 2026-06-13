@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ProcessScheduledScan;
 use App\Models\ScheduledScan;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -21,7 +20,7 @@ class ScheduledScanController extends Controller
             ->scheduledScans()
             ->with('lastReport')
             ->latest()
-            ->paginate(15);
+            ->get();
 
         return Inertia::render('ScheduledScans/Index', ['scans' => $scans]);
     }
@@ -32,17 +31,19 @@ class ScheduledScanController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'name'     => 'required|string|max:255',
-            'site_url' => 'required|url',
-            'interval' => 'required|in:hourly,daily,weekly,monthly',
+            'name'         => 'required|string|max:255',
+            'site_url'     => 'required|url',
+            'interval'     => 'required|in:hourly,daily,weekly,monthly',
+            'notify_email' => 'boolean',
         ]);
 
         auth()->user()->scheduledScans()->create([
-            'name'        => $validated['name'],
-            'site_url'    => $validated['site_url'],
-            'interval'    => $validated['interval'],
-            'is_active'   => true,
-            'next_run_at' => ScheduledScan::computeNextRun($validated['interval']),
+            'name'         => $validated['name'],
+            'site_url'     => $validated['site_url'],
+            'interval'     => $validated['interval'],
+            'is_active'    => true,
+            'notify_email' => $validated['notify_email'] ?? false,
+            'next_run_at'  => ScheduledScan::computeNextRun($validated['interval']),
         ]);
 
         return redirect()->route('scheduled-scans.index')
@@ -57,9 +58,10 @@ class ScheduledScanController extends Controller
         abort_unless($scheduledScan->user_id === auth()->id(), 403);
 
         $validated = $request->validate([
-            'name'     => 'sometimes|string|max:255',
-            'site_url' => 'sometimes|url',
-            'interval' => 'sometimes|in:hourly,daily,weekly,monthly',
+            'name'         => 'sometimes|string|max:255',
+            'site_url'     => 'sometimes|url',
+            'interval'     => 'sometimes|in:hourly,daily,weekly,monthly',
+            'notify_email' => 'sometimes|boolean',
         ]);
 
         if (isset($validated['interval']) && $validated['interval'] !== $scheduledScan->interval) {
@@ -88,27 +90,25 @@ class ScheduledScanController extends Controller
     /**
      * POST /scheduled-scans/{scan}/run-now
      */
-    public function runNow(ScheduledScan $scheduledScan): JsonResponse
+    public function runNow(ScheduledScan $scheduledScan): RedirectResponse
     {
         abort_unless($scheduledScan->user_id === auth()->id(), 403);
 
         ProcessScheduledScan::dispatch($scheduledScan);
 
-        return response()->json(['success' => true, 'message' => 'Scan dispatched.']);
+        return redirect()->route('scheduled-scans.index')
+            ->with('success', 'Scan dispatched.');
     }
 
     /**
      * POST /scheduled-scans/{scan}/toggle
      */
-    public function toggle(ScheduledScan $scheduledScan): JsonResponse
+    public function toggle(ScheduledScan $scheduledScan): RedirectResponse
     {
         abort_unless($scheduledScan->user_id === auth()->id(), 403);
 
         $scheduledScan->update(['is_active' => ! $scheduledScan->is_active]);
 
-        return response()->json([
-            'success'   => true,
-            'is_active' => $scheduledScan->is_active,
-        ]);
+        return redirect()->route('scheduled-scans.index');
     }
 }
