@@ -15,6 +15,7 @@ import {
     ChevronDown,
 } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import CookieBanner from '@/Components/CookieBanner';
 
 export default function AppLayout({ children }: PropsWithChildren) {
     const { auth } = usePage<PageProps>().props;
@@ -141,6 +142,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
                 <main className="p-4 lg:p-6">{children}</main>
             </div>
+            <CookieBanner />
         </div>
     );
 }

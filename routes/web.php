@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BillingController;
+use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduledScanController;
@@ -10,6 +11,8 @@ use Inertia\Inertia;
 
 // Public
 Route::get('/', fn () => Inertia::render('Welcome'))->name('home');
+Route::get('/terms', fn () => Inertia::render('Terms'))->name('terms');
+Route::post('/cookie-consent', [CookieConsentController::class, 'store'])->name('cookie-consent.store');
 
 // Auth (Breeze handles: /login, /register, /forgot-password, /reset-password)
 require __DIR__.'/auth.php';

@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
 import { Zap } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import CookieBanner from '@/Components/CookieBanner';
 
 export default function Guest({ children }: PropsWithChildren) {
     return (
@@ -30,6 +31,7 @@ export default function Guest({ children }: PropsWithChildren) {
             <p className="mt-6 text-xs text-gray-600">
                 &copy; {new Date().getFullYear()} 4utest. All rights reserved.
             </p>
+            <CookieBanner />
         </div>
     );
 }

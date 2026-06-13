@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import CookieBanner from '@/Components/CookieBanner';
 
 export default function Welcome({ auth }: PageProps) {
   const { t } = useTranslation();
@@ -218,10 +219,11 @@ export default function Welcome({ auth }: PageProps) {
               </div>
               <span className="text-sm font-semibold text-white">4utest</span>
             </div>
-            <p className="text-xs text-gray-600">&copy; 2024 4utest. All rights reserved.</p>
+            <p className="text-xs text-gray-600">&copy; {new Date().getFullYear()} 4utest. All rights reserved.</p>
           </div>
         </footer>
       </div>
+      <CookieBanner />
     </>
   );
 }
