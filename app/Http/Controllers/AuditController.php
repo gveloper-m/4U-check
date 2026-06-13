@@ -22,6 +22,7 @@ class AuditController extends Controller
         'marketing_tracking' => TrackingAuditController::class,
         'broken_resources'   => BrokenResourceController::class,
         'performance'        => PerformanceAuditController::class,
+        'accessibility'      => AccessibilityAuditController::class,
     ];
 
     /**
@@ -91,7 +92,7 @@ class AuditController extends Controller
             if ($isDone) $doneCount++;
         }
 
-        if ($doneCount === 6 && $record->status !== 'completed') {
+        if ($doneCount === 7 && $record->status !== 'completed') {
             DB::table('full_audit_reports')->where('id', $report->id)->update([
                 'status'     => 'completed',
                 'updated_at' => now(),
@@ -103,7 +104,7 @@ class AuditController extends Controller
             'status'   => $record->status,
             'progress' => [
                 'completed' => $doneCount,
-                'total'     => 6,
+                'total'     => 7,
                 'auditors'  => $progress,
             ],
         ]);

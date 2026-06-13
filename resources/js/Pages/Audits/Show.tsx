@@ -19,6 +19,7 @@ import {
   Link2,
   ShoppingCart,
   Tag,
+  Accessibility,
   ChevronDown,
   ChevronUp,
   CheckCircle2,
@@ -215,6 +216,7 @@ export default function AuditShow({ report }: ShowProps) {
   const broken = report.broken_resources_result;
   const catalog = report.catalog_result;
   const tracking = report.tracking_result;
+  const a11y = report.accessibility_result;
 
   // SEO helpers
   const seoMeta = getObj(seo, 'meta_title');
@@ -351,14 +353,15 @@ export default function AuditShow({ report }: ShowProps) {
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
-                { key: 'seo_schema', label: t('show.sections.seo') },
-                { key: 'security', label: t('show.sections.security') },
-                { key: 'performance', label: t('show.sections.performance') },
-                { key: 'broken_resources', label: t('show.sections.broken') },
-                { key: 'catalog_integrity', label: t('show.sections.catalog') },
+                { key: 'seo_schema',         label: t('show.sections.seo') },
+                { key: 'security',           label: t('show.sections.security') },
+                { key: 'performance',        label: t('show.sections.performance') },
+                { key: 'broken_resources',   label: t('show.sections.broken') },
+                { key: 'catalog_integrity',  label: t('show.sections.catalog') },
                 { key: 'marketing_tracking', label: t('show.sections.tracking') },
+                { key: 'accessibility',      label: t('show.sections.accessibility') },
               ].map(({ key, label }) => {
                 const done = progress?.auditors?.[key] === 'done';
                 return (
@@ -767,6 +770,176 @@ export default function AuditShow({ report }: ShowProps) {
                   ok={getBool(trackTt, 'detected') ?? undefined}
                 />
                 </div>
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">{t('show.noData')}</p>
+            )}
+          </Section>
+
+          {/* Accessibility */}
+          <Section
+            title={t('show.sections.accessibility')}
+            icon={Accessibility}
+            color="text-cyan-400"
+            bg="bg-cyan-500/10"
+            border="border-cyan-500/20"
+          >
+            {a11y ? (
+              <div className="space-y-4">
+                <ModuleError result={a11y} />
+                {(() => {
+                  const checks   = getObj(a11y, 'checks');
+                  const score    = getNum(a11y, 'score');
+                  const formLbl  = getObj(checks, 'form_labels');
+                  const imgAlt   = getObj(checks, 'image_alt');
+                  const ariaLbl  = getObj(checks, 'aria_labels');
+                  const headings = getObj(checks, 'heading_hierarchy');
+                  const linkTxt  = getObj(checks, 'link_text');
+                  const lmarks   = getObj(checks, 'landmarks');
+                  const contrast = getObj(checks, 'color_contrast');
+
+                  const statusOk = (s: string | null | undefined) => s === 'pass' ? true : s === 'fail' ? false : undefined;
+
+                  return (
+                    <>
+                      {score !== null && (
+                        <div className="flex items-center gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-3">
+                          <span className="text-sm font-medium text-cyan-300">{t('show.accessibility.score')}</span>
+                          <span className={`text-lg font-bold ${score >= 80 ? 'text-emerald-400' : score >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{score}/100</span>
+                        </div>
+                      )}
+
+                      <div className="divide-y divide-gray-800">
+                        {/* Form labels */}
+                        <MetaRow
+                          label={t('show.accessibility.formLabels')}
+                          value={formLbl ? `${getNum(formLbl,'pass') ?? 0} pass, ${getNum(formLbl,'fail') ?? 0} fail` : t('common.na')}
+                          ok={statusOk(getStr(formLbl, 'status'))}
+                        />
+                        {/* Image alt */}
+                        <MetaRow
+                          label={t('show.accessibility.imageAlt')}
+                          value={imgAlt ? `${getNum(imgAlt,'missing_count') ?? 0} missing of ${getNum(imgAlt,'total') ?? '?'}` : t('common.na')}
+                          ok={statusOk(getStr(imgAlt, 'status'))}
+                        />
+                        {/* ARIA */}
+                        <MetaRow
+                          label={t('show.accessibility.ariaLabels')}
+                          value={ariaLbl ? `${getNum(ariaLbl,'fail') ?? 0} violation(s)` : t('common.na')}
+                          ok={statusOk(getStr(ariaLbl, 'status'))}
+                        />
+                        {/* Heading hierarchy */}
+                        <MetaRow
+                          label={t('show.accessibility.headings')}
+                          value={headings ? `${getNum(headings,'total_headings') ?? 0} headings, ${getArr(headings,'issues').length} issue(s)` : t('common.na')}
+                          ok={statusOk(getStr(headings, 'status'))}
+                        />
+                        {/* Link text */}
+                        <MetaRow
+                          label={t('show.accessibility.linkText')}
+                          value={linkTxt ? `${getNum(linkTxt,'fail') ?? 0} vague link(s)` : t('common.na')}
+                          ok={statusOk(getStr(linkTxt, 'status'))}
+                        />
+                        {/* Landmarks */}
+                        <MetaRow
+                          label={t('show.accessibility.langAttr')}
+                          value={lmarks ? (getBool(lmarks,'has_lang') ? getStr(lmarks,'lang') : 'Missing') : t('common.na')}
+                          ok={getBool(lmarks,'has_lang') ?? undefined}
+                        />
+                        <MetaRow
+                          label={t('show.accessibility.mainLandmark')}
+                          value={lmarks ? (getBool(lmarks,'has_main') ? 'Present' : 'Missing') : t('common.na')}
+                          ok={getBool(lmarks,'has_main') ?? undefined}
+                        />
+                        <MetaRow
+                          label={t('show.accessibility.skipNav')}
+                          value={lmarks ? (getBool(lmarks,'has_skip_nav') ? 'Found' : 'Not found') : t('common.na')}
+                          ok={getBool(lmarks,'has_skip_nav') ?? undefined}
+                        />
+                        {/* Color contrast */}
+                        <MetaRow
+                          label={t('show.accessibility.colorContrast')}
+                          value={contrast ? `${getNum(contrast,'fail') ?? 0} violation(s) found` : t('common.na')}
+                          ok={statusOk(getStr(contrast, 'status'))}
+                        />
+                      </div>
+
+                      {/* Heading issues */}
+                      {getArr(headings, 'issues').length > 0 && (
+                        <div>
+                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.headingIssues')}</p>
+                          <div className="space-y-1">
+                            {getArr(headings, 'issues').map((issue, i) => (
+                              <div key={i} className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-300">
+                                <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                                {String(issue)}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Form label violations */}
+                      {getArr(formLbl, 'violations').length > 0 && (
+                        <div>
+                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.unlabeledInputs')} ({getArr(formLbl,'violations').length})</p>
+                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-800">
+                            {getArr(formLbl, 'violations').map((v, i) => {
+                              const vv = v as Record<string,unknown>;
+                              return (
+                                <div key={i} className="border-b border-gray-800 px-3 py-2 last:border-0 text-xs text-gray-400">
+                                  <span className="text-red-400 font-mono">{String(vv.element ?? '')}{vv.type ? `[type=${String(vv.type)}]` : ''}</span>
+                                  {!!vv.name && <span className="ml-2 text-gray-500">name="{String(vv.name)}"</span>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* ARIA violations */}
+                      {getArr(ariaLbl, 'violations').length > 0 && (
+                        <div>
+                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.ariaViolations')} ({getArr(ariaLbl,'violations').length})</p>
+                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-800">
+                            {getArr(ariaLbl, 'violations').map((v, i) => {
+                              const vv = v as Record<string,unknown>;
+                              return (
+                                <div key={i} className="border-b border-gray-800 px-3 py-2 last:border-0">
+                                  <p className="text-xs text-red-400">{String(vv.issue ?? '')}</p>
+                                  {!!vv.href && <p className="text-xs text-gray-500 truncate">{String(vv.href ?? '')}</p>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Color contrast violations */}
+                      {getArr(contrast, 'violations').length > 0 && (
+                        <div>
+                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.contrastViolations')} ({getArr(contrast,'violations').length})</p>
+                          {contrast && <p className="mb-2 text-xs text-gray-600">{getStr(contrast,'note')}</p>}
+                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-800">
+                            {getArr(contrast, 'violations').map((v, i) => {
+                              const vv = v as Record<string,unknown>;
+                              return (
+                                <div key={i} className="flex items-center gap-3 border-b border-gray-800 px-3 py-2 last:border-0">
+                                  <div className="flex items-center gap-1.5 shrink-0">
+                                    <span className="inline-block h-4 w-4 rounded border border-gray-700" style={{ background: String(vv.bg_color ?? '#000') }} />
+                                    <span className="inline-block h-4 w-4 rounded border border-gray-700" style={{ background: String(vv.fg_color ?? '#fff') }} />
+                                  </div>
+                                  <span className="text-xs text-gray-400 flex-1 truncate">{vv.selector ? String(vv.selector) : String(vv.element ?? '')}</span>
+                                  <span className="shrink-0 text-xs text-red-400 font-mono">{String(vv.ratio ?? '')}:1</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
             ) : (
               <p className="text-sm text-gray-500">{t('show.noData')}</p>

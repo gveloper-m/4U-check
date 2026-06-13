@@ -26,6 +26,7 @@ class RunAuditorJob implements ShouldQueue
         'marketing_tracking' => 'tracking_result',
         'broken_resources'   => 'broken_resources_result',
         'performance'        => 'performance_result',
+        'accessibility'      => 'accessibility_result',
     ];
 
     public function __construct(
@@ -53,7 +54,7 @@ class RunAuditorJob implements ShouldQueue
         $this->tryFinalize();
     }
 
-    public function failed(\Throwable $exception): void
+    public function failed(\Throwable $_exception): void
     {
         // Write a timeout/error marker so the finalization check can still count this auditor as done.
         $column = self::COLUMN_MAP[$this->auditorKey];
@@ -85,7 +86,7 @@ class RunAuditorJob implements ShouldQueue
                 }
             }
 
-            if ($doneCount < 6) {
+            if ($doneCount < 7) {
                 return;
             }
 
@@ -188,6 +189,26 @@ class RunAuditorJob implements ShouldQueue
                 elseif ($ttfb > 600)  { $score -= 5;  $deductions[] = "Performance: TTFB {$ttfb}ms (slow) (-5)"; }
             }
             if (! ($perf['compression_detected'] ?? false)) { $score -= 5; $deductions[] = 'Performance: compression not enabled (-5)'; }
+        }
+
+        // --- Accessibility ---
+        $a11y = $audits['accessibility'] ?? [];
+        if (($a11y['status'] ?? '') === 'ok') {
+            $checks    = $a11y['checks'] ?? [];
+            $formFail  = $checks['form_labels']['fail']        ?? 0;
+            $imgFail   = $checks['image_alt']['missing_count'] ?? 0;
+            $ariaFail  = $checks['aria_labels']['fail']        ?? 0;
+            $hIssues   = count($checks['heading_hierarchy']['issues'] ?? []);
+            $lmIssues  = count($checks['landmarks']['issues']  ?? []);
+            $csFail    = $checks['color_contrast']['fail']     ?? 0;
+
+            if ($formFail > 3)  { $score -= 8;  $deductions[] = "Accessibility: {$formFail} unlabeled form inputs (-8)"; }
+            if ($imgFail  > 5)  { $score -= 5;  $deductions[] = "Accessibility: {$imgFail} images missing alt text (-5)"; }
+            if ($ariaFail > 2)  { $score -= 5;  $deductions[] = "Accessibility: {$ariaFail} elements missing ARIA name (-5)"; }
+            if ($hIssues  > 0)  { $score -= 5;  $deductions[] = 'Accessibility: heading hierarchy issues (-5)'; }
+            if (! ($checks['landmarks']['has_lang']  ?? true)) { $score -= 5; $deductions[] = 'Accessibility: missing html lang attribute (-5)'; }
+            if (! ($checks['landmarks']['has_main']  ?? true)) { $score -= 3; $deductions[] = 'Accessibility: no <main> landmark (-3)'; }
+            if ($csFail   > 2)  { $score -= 5;  $deductions[] = "Accessibility: {$csFail} color contrast violations (-5)"; }
         }
 
         return ['score' => max(0, $score), 'deductions' => $deductions];

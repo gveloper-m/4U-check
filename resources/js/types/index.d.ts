@@ -27,6 +27,7 @@ export interface FullAuditReport {
     tracking_result?: Record<string, unknown>;
     broken_resources_result?: Record<string, unknown>;
     performance_result?: Record<string, unknown>;
+    accessibility_result?: Record<string, unknown>;
     created_at: string;
     updated_at: string;
 }

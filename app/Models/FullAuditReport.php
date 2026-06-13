@@ -20,6 +20,7 @@ class FullAuditReport extends Model
         'tracking_result',
         'broken_resources_result',
         'performance_result',
+        'accessibility_result',
     ];
 
     protected $casts = [
@@ -30,6 +31,7 @@ class FullAuditReport extends Model
         'tracking_result'         => 'array',
         'broken_resources_result' => 'array',
         'performance_result'      => 'array',
+        'accessibility_result'    => 'array',
     ];
 
     public function user(): BelongsTo
