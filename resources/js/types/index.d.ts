@@ -4,6 +4,7 @@ export interface User {
     email: string;
     email_verified_at?: string;
     is_unlimited: boolean;
+    is_admin: boolean;
     phone?: string | null;
     company_name?: string | null;
     company_site?: string | null;

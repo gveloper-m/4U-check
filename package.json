@@ -29,5 +29,12 @@
         "tailwindcss": "^3.4.0",
         "typescript": "^5.0.2",
         "vite": "^8.0.0"
+    },
+    "dependencies": {
+        "@tiptap/extension-image": "^3.26.1",
+        "@tiptap/extension-link": "^3.26.1",
+        "@tiptap/extension-placeholder": "^3.26.1",
+        "@tiptap/react": "^3.26.1",
+        "@tiptap/starter-kit": "^3.26.1"
     }
 }

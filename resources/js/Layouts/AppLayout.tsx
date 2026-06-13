@@ -13,6 +13,7 @@ import {
     Menu,
     Zap,
     ChevronDown,
+    FileText,
 } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import CookieBanner from '@/Components/CookieBanner';
@@ -29,6 +30,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         { label: t('nav.history'),    href: '/audits',           icon: History,         routeName: 'audits.index' },
         { label: t('nav.scheduled'),  href: '/scheduled-scans',  icon: Clock,           routeName: 'scheduled-scans.index' },
         { label: t('nav.billing'),    href: '/billing',          icon: CreditCard,      routeName: 'billing' },
+        ...(auth.user.is_admin ? [{ label: 'Blog', href: '/admin/blog', icon: FileText, routeName: 'admin.blog.index' }] : []),
     ];
 
     const currentRoute = () => {

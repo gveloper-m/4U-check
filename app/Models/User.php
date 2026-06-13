@@ -19,6 +19,7 @@ class User extends Authenticatable
         'email',
         'password',
         'is_unlimited',
+        'is_admin',
         'phone',
         'company_name',
         'company_site',
@@ -36,6 +37,7 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'trial_ends_at'     => 'datetime',
             'is_unlimited'      => 'boolean',
+            'is_admin'          => 'boolean',
         ];
     }
 

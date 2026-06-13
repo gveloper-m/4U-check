@@ -474,6 +474,10 @@ class PerformanceAuditController extends Controller
      */
     private function findChromePath(): ?string
     {
+        if ($env = env('CHROME_PATH')) {
+            return $env;
+        }
+
         $paths = [
             '/opt/google/chrome/chrome',
             '/opt/google/chrome/google-chrome',
