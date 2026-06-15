@@ -1,11 +1,25 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star } from 'lucide-react';
+import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star, XCircle, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CookieBanner from '@/Components/CookieBanner';
+import { useEffect, useState } from 'react';
 
 export default function Welcome({ auth }: PageProps) {
   const { t } = useTranslation();
+  const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  useEffect(() => {
+    if (flash?.success) setToast({ message: flash.success, type: 'success' });
+    else if (flash?.error) setToast({ message: flash.error, type: 'error' });
+  }, [flash]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const timer = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(timer);
+  }, [toast]);
 
   const features = [
     { icon: Search, title: t('welcome.features.seo.title'), desc: t('welcome.features.seo.desc'), color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20' },
@@ -224,6 +238,22 @@ export default function Welcome({ auth }: PageProps) {
         </footer>
       </div>
       <CookieBanner />
+
+      {toast && (
+        <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl text-sm font-medium ${
+          toast.type === 'success'
+            ? 'border-emerald-500/30 bg-gray-900 text-emerald-300'
+            : 'border-red-500/30 bg-gray-900 text-red-300'
+        }`}>
+          {toast.type === 'success'
+            ? <CheckCircle2 className="h-5 w-5 shrink-0" />
+            : <XCircle className="h-5 w-5 shrink-0" />}
+          <span>{toast.message}</span>
+          <button onClick={() => setToast(null)} className="ml-1 opacity-60 hover:opacity-100">
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
     </>
   );
 }

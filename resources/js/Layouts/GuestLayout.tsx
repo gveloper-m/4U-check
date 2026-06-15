@@ -1,10 +1,24 @@
-import { Link } from '@inertiajs/react';
-import { PropsWithChildren } from 'react';
-import { Zap } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { PropsWithChildren, useEffect, useState } from 'react';
+import { Zap, CheckCircle2, XCircle, X } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import CookieBanner from '@/Components/CookieBanner';
 
 export default function Guest({ children }: PropsWithChildren) {
+    const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    useEffect(() => {
+        if (flash?.success) setToast({ message: flash.success, type: 'success' });
+        else if (flash?.error) setToast({ message: flash.error, type: 'error' });
+    }, [flash]);
+
+    useEffect(() => {
+        if (!toast) return;
+        const t = setTimeout(() => setToast(null), 4000);
+        return () => clearTimeout(t);
+    }, [toast]);
+
     return (
         <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4">
             {/* Language switcher top-right */}
@@ -32,6 +46,22 @@ export default function Guest({ children }: PropsWithChildren) {
                 &copy; {new Date().getFullYear()} 4utest. All rights reserved.
             </p>
             <CookieBanner />
+
+            {toast && (
+                <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl text-sm font-medium ${
+                    toast.type === 'success'
+                        ? 'border-emerald-500/30 bg-gray-900 text-emerald-300'
+                        : 'border-red-500/30 bg-gray-900 text-red-300'
+                }`}>
+                    {toast.type === 'success'
+                        ? <CheckCircle2 className="h-5 w-5 shrink-0" />
+                        : <XCircle className="h-5 w-5 shrink-0" />}
+                    <span>{toast.message}</span>
+                    <button onClick={() => setToast(null)} className="ml-1 opacity-60 hover:opacity-100">
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
