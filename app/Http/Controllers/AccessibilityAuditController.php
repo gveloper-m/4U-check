@@ -74,7 +74,7 @@ class AccessibilityAuditController extends Controller
                 'heading_hierarchy' => $this->checkHeadingHierarchy($dom, $xpath),
                 'link_text'         => $this->checkLinkText($dom, $xpath),
                 'landmarks'         => $this->checkLandmarks($dom, $xpath),
-                'color_contrast'    => $this->checkColorContrast($html, $xpath),
+                'color_contrast'    => $this->checkColorContrast($html, $xpath, $dom),
             ];
 
             $score = $this->computeScore($checks);
@@ -134,10 +134,12 @@ class AccessibilityAuditController extends Controller
                 $pass++;
             } else {
                 $violations[] = [
-                    'element'  => $input->nodeName,
-                    'type'     => $type,
-                    'name'     => $name,
-                    'issue'    => 'No associated label',
+                    'element'      => $input->nodeName,
+                    'type'         => $type,
+                    'name'         => $name,
+                    'id'           => $id ?: null,
+                    'issue'        => 'No associated label',
+                    'html_snippet' => mb_substr(@$dom->saveHTML($input) ?: '', 0, 250),
                 ];
             }
         }
@@ -149,7 +151,7 @@ class AccessibilityAuditController extends Controller
             'pass'       => $pass,
             'fail'       => count($violations),
             'total'      => $total,
-            'violations' => array_slice($violations, 0, 20),
+            'violations' => array_slice($violations, 0, 50),
         ];
     }
 
@@ -164,7 +166,15 @@ class AccessibilityAuditController extends Controller
         foreach ($xpath->query('//img') as $img) {
             if (! $img->hasAttribute('alt')) {
                 $src        = $img->getAttribute('src') ?: '(no src)';
-                $missing[]  = ['src' => $src, 'issue' => 'Missing alt attribute'];
+                $parentTag  = ($img->parentNode instanceof \DOMElement) ? $img->parentNode->nodeName : null;
+                $parentHref = ($img->parentNode instanceof \DOMElement) ? $img->parentNode->getAttribute('href') : null;
+                $missing[]  = [
+                    'src'          => $src,
+                    'issue'        => 'Missing alt attribute',
+                    'parent_tag'   => $parentTag,
+                    'parent_href'  => $parentHref ?: null,
+                    'html_snippet' => mb_substr(@$dom->saveHTML($img) ?: '', 0, 250),
+                ];
             } elseif ($img->getAttribute('alt') === '') {
                 $decorative++; // empty alt = intentionally decorative, fine
             } else {
@@ -199,9 +209,9 @@ class AccessibilityAuditController extends Controller
 
             if (empty($text) && empty($ariaLabel) && empty($ariaLbdBy)) {
                 $violations[] = [
-                    'element' => 'button',
-                    'issue'   => 'Button has no accessible name (no text, aria-label, or aria-labelledby)',
-                    'html'    => substr($dom->saveHTML($button), 0, 120),
+                    'element'      => 'button',
+                    'issue'        => 'Button has no accessible name (no text, aria-label, or aria-labelledby)',
+                    'html_snippet' => mb_substr(@$dom->saveHTML($button) ?: '', 0, 250),
                 ];
             } else {
                 $pass++;
@@ -228,9 +238,10 @@ class AccessibilityAuditController extends Controller
             if (empty($textContent) && ! $hasImgAlt) {
                 $href = $link->getAttribute('href') ?: '(no href)';
                 $violations[] = [
-                    'element' => 'a',
-                    'href'    => $href,
-                    'issue'   => 'Link has no accessible name',
+                    'element'      => 'a',
+                    'href'         => $href,
+                    'issue'        => 'Link has no accessible name',
+                    'html_snippet' => mb_substr(@$dom->saveHTML($link) ?: '', 0, 250),
                 ];
             } else {
                 $pass++;
@@ -242,9 +253,10 @@ class AccessibilityAuditController extends Controller
             $title = $iframe->getAttribute('title');
             if (empty($title)) {
                 $violations[] = [
-                    'element' => 'iframe',
-                    'src'     => $iframe->getAttribute('src') ?: '(no src)',
-                    'issue'   => 'iframe has no title attribute',
+                    'element'      => 'iframe',
+                    'src'          => $iframe->getAttribute('src') ?: '(no src)',
+                    'issue'        => 'iframe has no title attribute',
+                    'html_snippet' => mb_substr(@$dom->saveHTML($iframe) ?: '', 0, 250),
                 ];
             } else {
                 $pass++;
@@ -256,8 +268,10 @@ class AccessibilityAuditController extends Controller
             $alt = $input->getAttribute('alt');
             if (empty($alt)) {
                 $violations[] = [
-                    'element' => 'input[type=image]',
-                    'issue'   => 'Image button missing alt text',
+                    'element'      => 'input[type=image]',
+                    'src'          => $input->getAttribute('src') ?: '(no src)',
+                    'issue'        => 'Image button missing alt text',
+                    'html_snippet' => mb_substr(@$dom->saveHTML($input) ?: '', 0, 250),
                 ];
             } else {
                 $pass++;
@@ -268,7 +282,7 @@ class AccessibilityAuditController extends Controller
             'status'     => count($violations) === 0 ? 'pass' : (count($violations) <= 2 ? 'warn' : 'fail'),
             'pass'       => $pass,
             'fail'       => count($violations),
-            'violations' => array_slice($violations, 0, 20),
+            'violations' => array_slice($violations, 0, 100),
         ];
     }
 
@@ -415,7 +429,7 @@ class AccessibilityAuditController extends Controller
 
     // ─── Check 7: Color Contrast ─────────────────────────────────────────────
 
-    private function checkColorContrast(string $html, DOMXPath $xpath): array
+    private function checkColorContrast(string $html, DOMXPath $xpath, DOMDocument $dom): array
     {
         $violations = [];
         $pass       = 0;
@@ -430,18 +444,23 @@ class AccessibilityAuditController extends Controller
                 $rgb1 = $this->parseColor($color);
                 $rgb2 = $this->parseColor($bg);
                 if ($rgb1 && $rgb2) {
-                    $ratio  = $this->contrastRatio($rgb1, $rgb2);
+                    $ratio   = $this->contrastRatio($rgb1, $rgb2);
                     $tagName = $el instanceof \DOMElement ? $el->nodeName : 'element';
                     if ($ratio >= 4.5) {
                         $pass++;
                     } else {
+                        $elClass = $el instanceof \DOMElement ? mb_substr($el->getAttribute('class'), 0, 80) : null;
+                        $elId    = $el instanceof \DOMElement ? $el->getAttribute('id') : null;
                         $violations[] = [
-                            'element'  => $tagName,
-                            'fg_color' => $color,
-                            'bg_color' => $bg,
-                            'ratio'    => round($ratio, 2),
-                            'required' => 4.5,
-                            'source'   => 'inline-style',
+                            'element'      => $tagName,
+                            'class'        => $elClass ?: null,
+                            'id'           => $elId ?: null,
+                            'fg_color'     => $color,
+                            'bg_color'     => $bg,
+                            'ratio'        => round($ratio, 2),
+                            'required'     => 4.5,
+                            'source'       => 'inline-style',
+                            'html_snippet' => mb_substr(@$dom->saveHTML($el) ?: '', 0, 200),
                         ];
                     }
                 }

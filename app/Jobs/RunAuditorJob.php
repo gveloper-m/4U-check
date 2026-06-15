@@ -183,12 +183,12 @@ class RunAuditorJob implements ShouldQueue
         // --- Performance ---
         $perf = $audits['performance'] ?? [];
         if (($perf['status'] ?? '') === 'ok') {
-            $ttfb = $perf['avg_ttfb'] ?? null;
+            $ttfb = $perf['metrics']['ttfb_ms'] ?? null;
             if ($ttfb !== null) {
                 if ($ttfb > 1500)     { $score -= 10; $deductions[] = "Performance: TTFB {$ttfb}ms (very slow) (-10)"; }
                 elseif ($ttfb > 600)  { $score -= 5;  $deductions[] = "Performance: TTFB {$ttfb}ms (slow) (-5)"; }
             }
-            if (! ($perf['compression_detected'] ?? false)) { $score -= 5; $deductions[] = 'Performance: compression not enabled (-5)'; }
+            if (! ($perf['page_analysis']['compression_enabled'] ?? false)) { $score -= 5; $deductions[] = 'Performance: compression not enabled (-5)'; }
         }
 
         // --- Accessibility ---

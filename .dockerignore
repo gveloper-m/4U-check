@@ -1,0 +1,51 @@
+# ── Git ──────────────────────────────────────────────────────────────────────
+.git
+.gitignore
+.gitattributes
+.github
+
+# ── Sensitive files ───────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Heavy directories (rebuilt inside Docker) ─────────────────────────────────
+vendor/
+node_modules/
+chrome/
+
+# ── Build artefacts ───────────────────────────────────────────────────────────
+public/hot
+public/storage
+public/fonts-manifest.dev.json
+
+# ── Writable runtime directories (replaced by named volumes) ─────────────────
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/*
+
+# ── Development tools ─────────────────────────────────────────────────────────
+.editorconfig
+.phpactor.json
+.phpunit.cache
+.phpunit.result.cache
+phpunit.xml
+tests/
+*.md
+!README.md
+
+# ── IDE ───────────────────────────────────────────────────────────────────────
+.idea/
+.vscode/
+.cursor/
+.zed/
+.nova/
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+
+# ── OS ────────────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db

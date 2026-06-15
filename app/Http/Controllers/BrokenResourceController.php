@@ -98,8 +98,26 @@ class BrokenResourceController extends Controller
             }
         }
 
-        $this->allLinks  = array_values(array_unique($this->allLinks));
-        $this->allImages = array_values(array_unique($this->allImages));
+        // Dedup by URL across all crawled pages, keeping the first found_on reference
+        $seen = [];
+        $uniqueLinks = [];
+        foreach ($this->allLinks as $item) {
+            if (!isset($seen[$item['url']])) {
+                $seen[$item['url']] = true;
+                $uniqueLinks[] = $item;
+            }
+        }
+        $this->allLinks = $uniqueLinks;
+
+        $seen = [];
+        $uniqueImages = [];
+        foreach ($this->allImages as $item) {
+            if (!isset($seen[$item['url']])) {
+                $seen[$item['url']] = true;
+                $uniqueImages[] = $item;
+            }
+        }
+        $this->allImages = $uniqueImages;
 
         $brokenLinks  = $this->checkResources($this->allLinks);
         $brokenImages = $this->checkResources($this->allImages);
@@ -173,60 +191,61 @@ class BrokenResourceController extends Controller
     {
         $crawler = new Crawler($htmlContent, $baseUrl);
         
-        $links = [];
-        $images = [];
-        $pages = [];
-        
+        $links      = [];
+        $images     = [];
+        $pages      = [];
+        $seenLinks  = [];
+        $seenImages = [];
+
         $aElements = $crawler->filter('a[href]');
-        \Log::debug("Found {$aElements->count()} <a href> elements");
-        
+
         // Extract all links (a tags with href)
-        $aElements->each(function (Crawler $node) use (&$links, &$pages, $baseUrl) {
+        $aElements->each(function (Crawler $node) use (&$links, &$pages, &$seenLinks, $baseUrl) {
             $href = $node->attr('href');
-            
+
             // Skip empty, hash-only, and javascript links
-            if (empty($href) || $href === '#' || str_starts_with($href, 'javascript:') 
+            if (empty($href) || $href === '#' || str_starts_with($href, 'javascript:')
                 || str_starts_with($href, 'mailto:') || str_starts_with($href, 'tel:')
                 || str_starts_with($href, '#')) {
                 return;
             }
-            
+
             $absoluteUrl = $this->makeAbsoluteUrl($href, $baseUrl);
-            
+
             // Check if it's an internal link on same host
             $urlHost = parse_url($absoluteUrl)['host'] ?? '';
             if ($urlHost === $this->baseHost) {
-                // It's an internal page
-                $cleanUrl = explode('#', $absoluteUrl)[0];  // Remove fragments
+                $cleanUrl = explode('#', $absoluteUrl)[0];
                 if (!in_array($cleanUrl, $pages) && !in_array($cleanUrl, $this->visitedUrls)) {
                     $pages[] = $cleanUrl;
                 }
             }
-            
-            // Add to links list
-            if (!in_array($absoluteUrl, $links)) {
-                $links[] = $absoluteUrl;
+
+            if (!isset($seenLinks[$absoluteUrl])) {
+                $seenLinks[$absoluteUrl] = true;
+                $links[] = ['url' => $absoluteUrl, 'found_on' => $baseUrl];
             }
         });
-        
+
         // Extract all images (img tags with src)
-        $crawler->filter('img[src]')->each(function (Crawler $node) use (&$images, $baseUrl) {
+        $crawler->filter('img[src]')->each(function (Crawler $node) use (&$images, &$seenImages, $baseUrl) {
             $src = $node->attr('src');
-            
+
             if (empty($src)) {
                 return;
             }
-            
+
             $absoluteUrl = $this->makeAbsoluteUrl($src, $baseUrl);
-            if (!in_array($absoluteUrl, $images)) {
-                $images[] = $absoluteUrl;
+            if (!isset($seenImages[$absoluteUrl])) {
+                $seenImages[$absoluteUrl] = true;
+                $images[] = ['url' => $absoluteUrl, 'found_on' => $baseUrl];
             }
         });
-        
+
         return [
-            'links' => array_unique($links),
-            'images' => array_unique($images),
-            'pages' => array_unique($pages),
+            'links'  => $links,
+            'images' => $images,
+            'pages'  => array_unique($pages),
         ];
     }
 
@@ -280,9 +299,10 @@ class BrokenResourceController extends Controller
      * @param array $urls
      * @return array
      */
-    private function checkResources(array $urls): array
+    // $resources is [['url' => ..., 'found_on' => ...], ...]
+    private function checkResources(array $resources): array
     {
-        if (empty($urls)) {
+        if (empty($resources)) {
             return [];
         }
 
@@ -290,7 +310,15 @@ class BrokenResourceController extends Controller
         $timeout         = 15;
         $batchSize       = 20;
 
-        foreach (array_chunk($urls, $batchSize) as $batch) {
+        // Build a url => found_on map and a flat URL list for pooling
+        $foundOnMap = [];
+        $urlList    = [];
+        foreach ($resources as $item) {
+            $foundOnMap[$item['url']] = $item['found_on'] ?? null;
+            $urlList[] = $item['url'];
+        }
+
+        foreach (array_chunk($urlList, $batchSize) as $batch) {
             $responses = Http::pool(function ($pool) use ($batch, $timeout) {
                 foreach ($batch as $url) {
                     $pool->as($url)->timeout($timeout)->withoutRedirecting()->head($url);
@@ -313,10 +341,18 @@ class BrokenResourceController extends Controller
 
                     // 403/401/429 = server is alive but blocking our checker — not broken for real users
                     if ($statusCode === 404 || $statusCode === 410 || $statusCode >= 500) {
-                        $brokenResources[] = ['url' => $url, 'status_code' => $statusCode];
+                        $brokenResources[] = [
+                            'url'         => $url,
+                            'status_code' => $statusCode,
+                            'found_on'    => $foundOnMap[$url] ?? null,
+                        ];
                     }
                 } catch (\Exception $e) {
-                    $brokenResources[] = ['url' => $url, 'error' => 'Timeout or connection error'];
+                    $brokenResources[] = [
+                        'url'      => $url,
+                        'error'    => 'Timeout or connection error',
+                        'found_on' => $foundOnMap[$url] ?? null,
+                    ];
                 }
             }
         }
