@@ -64,6 +64,7 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
   const { data, setData, post, processing, errors, reset } = useForm({
     site_url: '',
     name: '',
+    _hp: '',
   });
 
   const submit: FormEventHandler = (e) => {
@@ -105,6 +106,17 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
         <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
           <h2 className="mb-4 text-base font-semibold text-white">{t('audits.newScan')}</h2>
           <form onSubmit={submit} className="space-y-4">
+            {/* Honeypot: invisible to humans, catches automated bots */}
+            <input
+              type="text"
+              name="_hp"
+              value={data._hp}
+              onChange={(e) => setData('_hp', e.target.value)}
+              tabIndex={-1}
+              autoComplete="off"
+              aria-hidden="true"
+              style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}
+            />
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="site_url" className="mb-1.5 block text-sm font-medium text-gray-300">

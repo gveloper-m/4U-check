@@ -27,6 +27,7 @@ class ProfileUpdateRequest extends FormRequest
             'phone'        => ['nullable', 'string', 'max:30'],
             'company_name' => ['nullable', 'string', 'max:255'],
             'company_site' => ['nullable', 'url', 'max:255'],
+            'language'     => ['nullable', 'string', 'in:en,el,de,fr,es,nl,cs'],
         ];
     }
 }

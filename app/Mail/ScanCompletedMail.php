@@ -21,9 +21,11 @@ class ScanCompletedMail extends Mailable
 
     public function envelope(): Envelope
     {
-        return new Envelope(
-            subject: 'Scan complete: ' . $this->scan->name . ($this->score !== null ? ' — score ' . $this->score . '/100' : ''),
-        );
+        $subject = $this->score !== null
+            ? __('mail.scan_completed', ['name' => $this->scan->name, 'score' => $this->score])
+            : __('mail.scan_completed_no_score', ['name' => $this->scan->name]);
+
+        return new Envelope(subject: $subject);
     }
 
     public function content(): Content

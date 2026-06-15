@@ -2,6 +2,11 @@ const el = {
   lang: {
     en: 'English',
     el: 'Ελληνικά',
+    de: 'Deutsch',
+    fr: 'Français',
+    es: 'Español',
+    nl: 'Nederlands',
+    cs: 'Čeština',
   },
   nav: {
     dashboard: 'Πίνακας Ελέγχου',
@@ -329,6 +334,8 @@ const el = {
     companyName: 'Επωνυμία Εταιρείας',
     companySite: 'Ιστότοπος Εταιρείας',
     optionalLabel: 'προαιρετικό',
+    languageLabel: 'Προτιμώμενη γλώσσα',
+    languageSub: 'Η προτιμώμενη γλώσσα διεπαφής σας',
     unverified: 'Η διεύθυνση email σας δεν έχει επαληθευτεί.',
     resend: 'Κάντε κλικ εδώ για εκ νέου αποστολή email επαλήθευσης.',
     resentSent: 'Ένας νέος σύνδεσμος επαλήθευσης στάλθηκε στη διεύθυνση email σας.',

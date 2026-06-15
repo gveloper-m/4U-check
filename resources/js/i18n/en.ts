@@ -2,6 +2,11 @@ const en = {
   lang: {
     en: 'English',
     el: 'Ελληνικά',
+    de: 'Deutsch',
+    fr: 'Français',
+    es: 'Español',
+    nl: 'Nederlands',
+    cs: 'Čeština',
   },
   nav: {
     dashboard: 'Dashboard',
@@ -329,6 +334,8 @@ const en = {
     companyName: 'Company Name',
     companySite: 'Company Website',
     optionalLabel: 'optional',
+    languageLabel: 'Preferred Language',
+    languageSub: 'Your preferred interface language',
     unverified: 'Your email address is unverified.',
     resend: 'Click here to re-send the verification email.',
     resentSent: 'A new verification link has been sent to your email address.',

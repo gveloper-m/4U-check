@@ -107,8 +107,9 @@ class RunAuditorJob implements ShouldQueue
 
             if ($scan && $scan->user) {
                 $reportUrl = url('/audits/' . $this->reportId);
+                $locale    = $scan->user->language ?? 'en';
                 Mail::to($scan->user->email)
-                    ->queue(new ScanCompletedMail($scan, $score, $reportUrl));
+                    ->queue((new ScanCompletedMail($scan, $score, $reportUrl))->locale($locale));
             }
         });
     }

@@ -43,6 +43,11 @@ class AuditController extends Controller
      */
     public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
+        // Honeypot: bots fill this hidden field; legitimate users never see it
+        if ($request->filled('_hp')) {
+            return redirect()->route('audits.index');
+        }
+
         $validated = $request->validate([
             'site_url' => 'required|url',
             'name'     => 'nullable|string|max:255',
@@ -113,13 +118,13 @@ class AuditController extends Controller
     /**
      * DELETE /audits/{report}
      */
-    public function destroy(FullAuditReport $report): JsonResponse
+    public function destroy(FullAuditReport $report): \Illuminate\Http\RedirectResponse
     {
         abort_unless($report->user_id === auth()->id(), 403);
 
         $report->delete();
 
-        return response()->json(['success' => true]);
+        return back()->with('success', 'Scan deleted successfully.');
     }
 
     /**
@@ -128,6 +133,8 @@ class AuditController extends Controller
     public function exportPdf(FullAuditReport $report): Response
     {
         abort_unless($report->user_id === auth()->id(), 403);
+
+        app()->setLocale(auth()->user()->language ?? 'en');
 
         $pdf = Pdf::loadView('exports.audit-report', ['report' => $report])
             ->setPaper('a4', 'portrait')
@@ -145,6 +152,8 @@ class AuditController extends Controller
     public function exportCsv(FullAuditReport $report): StreamedResponse
     {
         abort_unless($report->user_id === auth()->id(), 403);
+
+        app()->setLocale(auth()->user()->language ?? 'en');
 
         $filename = 'audit-report-' . parse_url($report->site_url, PHP_URL_HOST)
             . '-' . $report->created_at->format('Ymd-His') . '.csv';

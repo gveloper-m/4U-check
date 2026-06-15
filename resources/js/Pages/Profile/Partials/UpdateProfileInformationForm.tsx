@@ -19,10 +19,13 @@ export default function UpdateProfileInformation({
     const { t } = useTranslation();
     const user = usePage().props.auth.user;
 
+    const ALL_LANGS = ['en', 'el', 'de', 'fr', 'es', 'nl', 'cs'] as const;
+
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm({
             name: user.name,
             email: user.email,
+            language: user.language ?? 'en',
         });
 
     const submit: FormEventHandler = (e) => {
@@ -74,6 +77,21 @@ export default function UpdateProfileInformation({
                     />
 
                     <InputError className="mt-2" message={errors.email} />
+                </div>
+
+                <div>
+                    <InputLabel htmlFor="language" value={t('profile.languageLabel')} />
+                    <select
+                        id="language"
+                        value={data.language}
+                        onChange={(e) => setData('language', e.target.value)}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                    >
+                        {ALL_LANGS.map((lang) => (
+                            <option key={lang} value={lang}>{t(`lang.${lang}`)}</option>
+                        ))}
+                    </select>
+                    <InputError className="mt-2" message={errors.language} />
                 </div>
 
                 {mustVerifyEmail && user.email_verified_at === null && (

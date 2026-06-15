@@ -1,9 +1,17 @@
 import { useTranslation } from 'react-i18next';
 import { useState, useRef, useEffect } from 'react';
+import { router } from '@inertiajs/react';
 import { Globe } from 'lucide-react';
 
-const flags: Record<string, string> = { en: '🇬🇧', el: '🇬🇷' };
-const labels: Record<string, string> = { en: 'EN', el: 'EL' };
+const ALL_LANGS = ['en', 'el', 'de', 'fr', 'es', 'nl', 'cs'] as const;
+type Lang = typeof ALL_LANGS[number];
+
+const flags: Record<Lang, string> = {
+  en: '🇬🇧', el: '🇬🇷', de: '🇩🇪', fr: '🇫🇷', es: '🇪🇸', nl: '🇳🇱', cs: '🇨🇿',
+};
+const labels: Record<Lang, string> = {
+  en: 'EN', el: 'EL', de: 'DE', fr: 'FR', es: 'ES', nl: 'NL', cs: 'CS',
+};
 
 export default function LanguageSwitcher() {
   const { i18n, t } = useTranslation();
@@ -20,11 +28,15 @@ export default function LanguageSwitcher() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const current = i18n.language.startsWith('el') ? 'el' : 'en';
-  const other = current === 'en' ? 'el' : 'en';
+  const current: Lang = (ALL_LANGS.find(l => i18n.language.startsWith(l)) ?? 'en') as Lang;
 
-  const changeLang = (lang: string) => {
+  const changeLang = (lang: Lang) => {
     i18n.changeLanguage(lang);
+    router.post('/language', { lang }, {
+      preserveState: true,
+      preserveScroll: true,
+      onError: () => {},
+    });
     setOpen(false);
   };
 
@@ -41,12 +53,12 @@ export default function LanguageSwitcher() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-50 w-36 rounded-lg border border-gray-700 bg-gray-800 shadow-xl overflow-hidden">
-          {(['en', 'el'] as const).map((lang) => (
+        <div className="absolute right-0 top-full mt-1 z-50 w-40 rounded-lg border border-gray-700 bg-gray-800 shadow-xl overflow-hidden">
+          {ALL_LANGS.map((lang) => (
             <button
               key={lang}
               onClick={() => changeLang(lang)}
-              className={`flex w-full items-center gap-2.5 px-3 py-2.5 text-sm transition-colors ${
+              className={`flex w-full items-center gap-2.5 px-3 py-2 text-sm transition-colors ${
                 current === lang
                   ? 'bg-violet-600/20 text-violet-300'
                   : 'text-gray-300 hover:bg-gray-700 hover:text-white'

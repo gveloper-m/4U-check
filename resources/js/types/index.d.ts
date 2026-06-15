@@ -11,6 +11,7 @@ export interface User {
     stripe_id?: string;
     pm_type?: string;
     pm_last_four?: string;
+    language?: string;
 }
 
 export interface FullAuditReport {

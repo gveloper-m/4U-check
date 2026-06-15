@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { PropsWithChildren, useState } from 'react';
+import { PropsWithChildren, useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PageProps } from '@/types';
 import {
@@ -14,15 +14,37 @@ import {
     Zap,
     ChevronDown,
     FileText,
+    CheckCircle2,
+    XCircle,
+    X,
 } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import CookieBanner from '@/Components/CookieBanner';
 
 export default function AppLayout({ children }: PropsWithChildren) {
-    const { auth } = usePage<PageProps>().props;
-    const { t } = useTranslation();
+    const { auth, flash } = usePage<PageProps>().props;
+    const { t, i18n } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+    useEffect(() => {
+        const lang = auth.user?.language ?? 'en';
+        if (i18n.language !== lang) {
+            i18n.changeLanguage(lang);
+        }
+    }, [auth.user?.language]);
+
+    useEffect(() => {
+        if (flash?.success) setToast({ message: flash.success, type: 'success' });
+        else if (flash?.error) setToast({ message: flash.error, type: 'error' });
+    }, [flash?.success, flash?.error]);
+
+    useEffect(() => {
+        if (!toast) return;
+        const t = setTimeout(() => setToast(null), 4000);
+        return () => clearTimeout(t);
+    }, [toast]);
 
     const navItems = [
         { label: t('nav.dashboard'),  href: '/dashboard',       icon: LayoutDashboard, routeName: 'dashboard' },
@@ -145,6 +167,22 @@ export default function AppLayout({ children }: PropsWithChildren) {
                 <main className="p-4 lg:p-6">{children}</main>
             </div>
             <CookieBanner />
+            {toast && (
+                <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl text-sm font-medium ${
+                    toast.type === 'success'
+                        ? 'border-emerald-500/30 bg-gray-900 text-emerald-300'
+                        : 'border-red-500/30 bg-gray-900 text-red-300'
+                }`}>
+                    {toast.type === 'success'
+                        ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                        : <XCircle className="h-4 w-4 shrink-0 text-red-400" />
+                    }
+                    <span>{toast.message}</span>
+                    <button onClick={() => setToast(null)} className="ml-2 text-gray-500 hover:text-gray-300 transition-colors">
+                        <X className="h-3.5 w-3.5" />
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
