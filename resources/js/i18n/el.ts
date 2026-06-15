@@ -104,6 +104,12 @@ const el = {
     completed: 'Ολοκληρώθηκε',
     running: 'Σε εξέλιξη',
     failed: 'Απέτυχε',
+    quotaTitle: 'Μηνιαίοι Έλεγχοι',
+    quotaUsed: '{{used}} / {{limit}} έλεγχοι χρησιμοποιήθηκαν αυτόν τον μήνα',
+    quotaRemaining: '{{remaining}} διαθέσιμοι',
+    quotaResets: 'Επαναφορά {{date}}',
+    quotaLimitReached: 'Εξαντλήσατε τους 120 ελέγχους για αυτόν τον μήνα. Η ποσόστωσή σας επαναφέρεται την 1η του επόμενου μήνα.',
+    quotaUnlimited: 'Απεριόριστοι έλεγχοι',
   },
   show: {
     backToAudits: 'Επιστροφή στους ελέγχους',

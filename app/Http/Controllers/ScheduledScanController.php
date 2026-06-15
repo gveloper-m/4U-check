@@ -94,6 +94,10 @@ class ScheduledScanController extends Controller
     {
         abort_unless($scheduledScan->user_id === auth()->id(), 403);
 
+        if (auth()->user()->hasReachedScanLimit()) {
+            return back()->with('error', 'Monthly scan limit reached (120/120). Your quota resets on the 1st of next month.');
+        }
+
         ProcessScheduledScan::dispatch($scheduledScan);
 
         return redirect()->route('scheduled-scans.index')

@@ -13,10 +13,15 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
+  Infinity,
+  Zap,
 } from 'lucide-react';
 
 interface AuditsIndexProps extends PageProps {
   reports: PaginatedData<FullAuditReport>;
+  scansUsed: number;
+  scanLimit: number;
+  isUnlimited: boolean;
 }
 
 function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
@@ -59,13 +64,22 @@ function healthRingColor(score?: number): string {
   return 'border-red-500';
 }
 
-export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
+export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUnlimited }: AuditsIndexProps) {
   const { t } = useTranslation();
   const { data, setData, post, processing, errors, reset } = useForm({
     site_url: '',
     name: '',
     _hp: '',
   });
+
+  const limitReached = !isUnlimited && scansUsed >= scanLimit;
+  const pct = isUnlimited ? 0 : Math.min(100, Math.round((scansUsed / scanLimit) * 100));
+  const remaining = isUnlimited ? 0 : Math.max(0, scanLimit - scansUsed);
+  const resetDate = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 1)
+    .toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+
+  const barColor = pct >= 100 ? 'bg-red-500' : pct >= 75 ? 'bg-amber-500' : 'bg-violet-500';
+  const textColor = pct >= 100 ? 'text-red-400' : pct >= 75 ? 'text-amber-400' : 'text-violet-400';
 
   const submit: FormEventHandler = (e) => {
     e.preventDefault();
@@ -99,6 +113,47 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
         {flash?.error && (
           <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {flash.error}
+          </div>
+        )}
+
+        {/* Quota bar */}
+        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <Zap className="h-4 w-4 text-violet-400" />
+              <span className="text-sm font-medium text-white">{t('audits.quotaTitle')}</span>
+            </div>
+            {isUnlimited ? (
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
+                <Infinity className="h-3.5 w-3.5" />
+                {t('audits.quotaUnlimited')}
+              </span>
+            ) : (
+              <span className={`text-sm font-semibold tabular-nums ${textColor}`}>
+                {t('audits.quotaUsed', { used: scansUsed, limit: scanLimit })}
+              </span>
+            )}
+          </div>
+          {!isUnlimited && (
+            <>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-800">
+                <div
+                  className={`h-full rounded-full transition-all duration-500 ${barColor}`}
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+                <span>{limitReached ? '' : t('audits.quotaRemaining', { remaining })}</span>
+                <span>{t('audits.quotaResets', { date: resetDate })}</span>
+              </div>
+            </>
+          )}
+        </div>
+
+        {/* Limit reached banner */}
+        {limitReached && (
+          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+            {t('audits.quotaLimitReached')}
           </div>
         )}
 
@@ -155,7 +210,7 @@ export default function AuditsIndex({ reports, flash }: AuditsIndexProps) {
             <div className="flex items-center justify-end">
               <button
                 type="submit"
-                disabled={processing}
+                disabled={processing || limitReached}
                 className="flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
               >
                 {processing ? (

@@ -9,6 +9,7 @@ use App\Http\Controllers\SecurityInfrastructureController;
 use App\Http\Controllers\SeoSchemaAuditController;
 use App\Http\Controllers\TrackingAuditController;
 use App\Models\ScheduledScan;
+use App\Models\User;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -37,6 +38,12 @@ class ProcessScheduledScan implements ShouldQueue
     public function handle(): void
     {
         $scan = $this->scan;
+
+        // Skip if user has exhausted their monthly quota
+        $user = User::find($scan->user_id);
+        if ($user && $user->hasReachedScanLimit()) {
+            return;
+        }
 
         // Create the audit report record
         $reportId = DB::table('full_audit_reports')->insertGetId([

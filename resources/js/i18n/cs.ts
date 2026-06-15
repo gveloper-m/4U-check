@@ -104,6 +104,12 @@ const cs = {
     completed: 'Dokončeno',
     running: 'Probíhá',
     failed: 'Selhalo',
+    quotaTitle: 'Měsíční skenování',
+    quotaUsed: '{{used}} / {{limit}} skenování použito tento měsíc',
+    quotaRemaining: '{{remaining}} zbývající',
+    quotaResets: 'Resetuje se {{date}}',
+    quotaLimitReached: 'Vyčerpali jste všech 120 skenování za tento měsíc. Váš limit se obnoví 1. dne příštího měsíce.',
+    quotaUnlimited: 'Neomezené skenování',
   },
   show: {
     backToAudits: 'Zpět na audity',

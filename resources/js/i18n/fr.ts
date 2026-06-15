@@ -104,6 +104,12 @@ const fr = {
     completed: 'Terminé',
     running: 'En cours',
     failed: 'Échoué',
+    quotaTitle: 'Analyses mensuelles',
+    quotaUsed: '{{used}} / {{limit}} analyses utilisées ce mois-ci',
+    quotaRemaining: '{{remaining}} restantes',
+    quotaResets: 'Réinitialisation le {{date}}',
+    quotaLimitReached: "Vous avez utilisé les 120 analyses de ce mois. Votre quota est réinitialisé le 1er du mois prochain.",
+    quotaUnlimited: 'Analyses illimitées',
   },
   show: {
     backToAudits: 'Retour aux audits',

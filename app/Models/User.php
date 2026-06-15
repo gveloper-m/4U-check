@@ -42,6 +42,32 @@ class User extends Authenticatable
         ];
     }
 
+    public const MONTHLY_SCAN_LIMIT = 120;
+
+    public function scansThisMonth(): int
+    {
+        return $this->auditReports()
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+    }
+
+    public function hasReachedScanLimit(): bool
+    {
+        if ($this->is_unlimited) {
+            return false;
+        }
+        return $this->scansThisMonth() >= self::MONTHLY_SCAN_LIMIT;
+    }
+
+    public function remainingScans(): int
+    {
+        if ($this->is_unlimited) {
+            return PHP_INT_MAX;
+        }
+        return max(0, self::MONTHLY_SCAN_LIMIT - $this->scansThisMonth());
+    }
+
     public function hasActiveSubscription(): bool
     {
         if ($this->is_unlimited) {

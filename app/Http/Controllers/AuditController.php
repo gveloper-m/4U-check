@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\RunAuditorJob;
 use App\Models\FullAuditReport;
+use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -35,7 +36,14 @@ class AuditController extends Controller
             ->latest()
             ->paginate(15);
 
-        return Inertia::render('Audits/Index', ['reports' => $reports]);
+        $user = auth()->user();
+
+        return Inertia::render('Audits/Index', [
+            'reports'     => $reports,
+            'scansUsed'   => $user->is_unlimited ? 0 : $user->scansThisMonth(),
+            'scanLimit'   => User::MONTHLY_SCAN_LIMIT,
+            'isUnlimited' => $user->is_unlimited,
+        ]);
     }
 
     /**
@@ -46,6 +54,10 @@ class AuditController extends Controller
         // Honeypot: bots fill this hidden field; legitimate users never see it
         if ($request->filled('_hp')) {
             return redirect()->route('audits.index');
+        }
+
+        if (auth()->user()->hasReachedScanLimit()) {
+            return back()->with('error', 'Monthly scan limit reached (120/120). Your quota resets on the 1st of next month.');
         }
 
         $validated = $request->validate([

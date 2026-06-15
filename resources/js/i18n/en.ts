@@ -104,6 +104,12 @@ const en = {
     completed: 'Completed',
     running: 'Running',
     failed: 'Failed',
+    quotaTitle: 'Monthly Scans',
+    quotaUsed: '{{used}} / {{limit}} scans used this month',
+    quotaRemaining: '{{remaining}} remaining',
+    quotaResets: 'Resets {{date}}',
+    quotaLimitReached: "You've used all 120 scans for this month. Your quota resets on the 1st of next month.",
+    quotaUnlimited: 'Unlimited scans',
   },
   show: {
     backToAudits: 'Back to audits',

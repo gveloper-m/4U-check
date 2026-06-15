@@ -104,6 +104,12 @@ const de = {
     completed: 'Abgeschlossen',
     running: 'Läuft',
     failed: 'Fehlgeschlagen',
+    quotaTitle: 'Monatliche Scans',
+    quotaUsed: '{{used}} / {{limit}} Scans diesen Monat verwendet',
+    quotaRemaining: '{{remaining}} verbleibend',
+    quotaResets: 'Wird zurückgesetzt am {{date}}',
+    quotaLimitReached: 'Sie haben alle 120 Scans für diesen Monat aufgebraucht. Ihr Kontingent wird am 1. des nächsten Monats zurückgesetzt.',
+    quotaUnlimited: 'Unbegrenzte Scans',
   },
   show: {
     backToAudits: 'Zurück zu Audits',

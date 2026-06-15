@@ -104,6 +104,12 @@ const es = {
     completed: 'Completado',
     running: 'En ejecución',
     failed: 'Fallido',
+    quotaTitle: 'Análisis mensuales',
+    quotaUsed: '{{used}} / {{limit}} análisis usados este mes',
+    quotaRemaining: '{{remaining}} restantes',
+    quotaResets: 'Se reinicia el {{date}}',
+    quotaLimitReached: 'Has usado los 120 análisis de este mes. Tu cuota se reinicia el 1 del próximo mes.',
+    quotaUnlimited: 'Análisis ilimitados',
   },
   show: {
     backToAudits: 'Volver a auditorías',

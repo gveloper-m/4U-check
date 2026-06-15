@@ -104,6 +104,12 @@ const nl = {
     completed: 'Voltooid',
     running: 'Wordt uitgevoerd',
     failed: 'Mislukt',
+    quotaTitle: 'Maandelijkse scans',
+    quotaUsed: '{{used}} / {{limit}} scans gebruikt deze maand',
+    quotaRemaining: '{{remaining}} resterend',
+    quotaResets: 'Wordt gereset op {{date}}',
+    quotaLimitReached: 'Je hebt alle 120 scans van deze maand gebruikt. Je quotum wordt op de 1e van volgende maand gereset.',
+    quotaUnlimited: 'Onbeperkte scans',
   },
   show: {
     backToAudits: 'Terug naar audits',
