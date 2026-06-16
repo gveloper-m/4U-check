@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ProcessScheduledScan;
 use App\Models\ScheduledScan;
+use App\Rules\PublicUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -32,7 +33,7 @@ class ScheduledScanController extends Controller
     {
         $validated = $request->validate([
             'name'         => 'required|string|max:255',
-            'site_url'     => 'required|url',
+            'site_url'     => ['required', 'url', new PublicUrl],
             'interval'     => 'required|in:hourly,daily,weekly,monthly',
             'notify_email' => 'boolean',
         ]);
@@ -59,7 +60,7 @@ class ScheduledScanController extends Controller
 
         $validated = $request->validate([
             'name'         => 'sometimes|string|max:255',
-            'site_url'     => 'sometimes|url',
+            'site_url'     => ['sometimes', 'url', new PublicUrl],
             'interval'     => 'sometimes|in:hourly,daily,weekly,monthly',
             'notify_email' => 'sometimes|boolean',
         ]);

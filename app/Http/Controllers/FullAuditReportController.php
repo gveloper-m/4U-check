@@ -63,7 +63,10 @@ class FullAuditReportController extends Controller
      */
     public function status(Request $request, int $id): JsonResponse|Response
     {
-        $record = DB::table('full_audit_reports')->find($id);
+        $record = DB::table('full_audit_reports')
+            ->where('id', $id)
+            ->where('user_id', auth()->id())
+            ->first();
 
         if (! $record) {
             return response()->json(['success' => false, 'error' => 'Report not found'], 404);
@@ -127,13 +130,17 @@ class FullAuditReportController extends Controller
     public function history(Request $request): JsonResponse
     {
         try {
-            $query = DB::table('full_audit_reports');
+            $query = DB::table('full_audit_reports')
+                ->where('user_id', auth()->id());
+
             if ($request->has('site_url')) {
                 $query->where('site_url', $request->query('site_url'));
             }
+
             return response()->json(['success' => true, 'audits' => $query->latest('executed_at')->paginate(10)]);
         } catch (\Throwable $e) {
-            return response()->json(['success' => false, 'error' => $e->getMessage()], 400);
+            \Log::error('Audit history error', ['error' => $e->getMessage()]);
+            return response()->json(['success' => false, 'error' => 'Could not retrieve history.'], 400);
         }
     }
 

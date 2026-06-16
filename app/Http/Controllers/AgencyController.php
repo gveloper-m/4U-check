@@ -15,7 +15,7 @@ class AgencyController extends Controller
             'agency_primary_color'  => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'agency_secondary_color'=> ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'agency_footer_text'    => ['nullable', 'string', 'max:255'],
-            'agency_logo'           => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif,svg,webp', 'max:2048'],
+            'agency_logo'           => ['nullable', 'image', 'mimetypes:image/jpeg,image/png,image/gif,image/webp', 'max:2048'],
             'remove_logo'           => ['boolean'],
         ]);
 

@@ -17,12 +17,15 @@ import {
     CheckCircle2,
     XCircle,
     X,
+    Ticket,
+    HelpCircle,
 } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import CookieBanner from '@/Components/CookieBanner';
 
 export default function AppLayout({ children }: PropsWithChildren) {
     const { auth, flash } = usePage<PageProps>().props;
+    const openTicketsCount = auth.openTicketsCount ?? null;
     const { t, i18n } = useTranslation();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [userMenuOpen, setUserMenuOpen] = useState(false);
@@ -52,7 +55,10 @@ export default function AppLayout({ children }: PropsWithChildren) {
         { label: t('nav.history'),    href: '/audits',           icon: History,         routeName: 'audits.index' },
         { label: t('nav.scheduled'),  href: '/scheduled-scans',  icon: Clock,           routeName: 'scheduled-scans.index' },
         { label: t('nav.billing'),    href: '/billing',          icon: CreditCard,      routeName: 'billing' },
-        ...(auth.user.is_admin ? [{ label: 'Blog', href: '/admin/blog', icon: FileText, routeName: 'admin.blog.index' }] : []),
+        ...(auth.user.is_admin ? [
+            { label: 'Blog',    href: '/admin/blog',    icon: FileText, routeName: 'admin.blog.index' },
+            { label: 'Tickets', href: '/admin/tickets', icon: Ticket,   routeName: 'admin.tickets.index' },
+        ] : []),
     ];
 
     const currentRoute = () => {
@@ -87,6 +93,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
                     {navItems.map((item) => {
                         const Icon = item.icon;
                         const active = isActive(item.routeName);
+                        const isTicketsAdmin = item.routeName === 'admin.tickets.index';
                         return (
                             <Link
                                 key={item.routeName}
@@ -94,7 +101,12 @@ export default function AppLayout({ children }: PropsWithChildren) {
                                 className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30' : 'text-gray-400 hover:bg-gray-800 hover:text-gray-100'}`}
                             >
                                 <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-violet-400' : ''}`} />
-                                {item.label}
+                                <span className="flex-1">{item.label}</span>
+                                {isTicketsAdmin && openTicketsCount != null && openTicketsCount > 0 && (
+                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-violet-500 px-1.5 text-xs font-semibold text-white">
+                                        {openTicketsCount > 99 ? '99+' : openTicketsCount}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}
@@ -165,6 +177,12 @@ export default function AppLayout({ children }: PropsWithChildren) {
                 </div>
 
                 <main className="p-4 lg:p-6">{children}</main>
+                <div className="px-4 py-2 lg:px-6 flex justify-end">
+                    <Link href="/tickets" className="flex items-center gap-1 text-xs text-gray-800 hover:text-gray-600 transition-colors">
+                        <HelpCircle className="h-3 w-3" />
+                        Need help?
+                    </Link>
+                </div>
             </div>
             <CookieBanner />
             {toast && (

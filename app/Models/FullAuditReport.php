@@ -12,6 +12,8 @@ class FullAuditReport extends Model
         'name',
         'site_url',
         'status',
+        'share_uuid',
+        'share_enabled',
         'health_score',
         'score_deductions',
         'seo_schema_result',
@@ -24,6 +26,7 @@ class FullAuditReport extends Model
     ];
 
     protected $casts = [
+        'share_enabled'           => 'boolean',
         'score_deductions'        => 'array',
         'seo_schema_result'       => 'array',
         'security_result'         => 'array',

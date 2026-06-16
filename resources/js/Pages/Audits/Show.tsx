@@ -1,5 +1,5 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { PageProps, FullAuditReport } from '@/types';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,6 +29,9 @@ import {
   FileDown,
   ArrowLeft,
   ExternalLink,
+  Share2,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 interface ShowProps extends PageProps {
@@ -266,6 +269,24 @@ export default function AuditShow({ report }: ShowProps) {
   const trackFb  = getObj(trackScripts, 'facebook_pixel');
   const trackTt  = getObj(trackScripts, 'tiktok_pixel');
 
+  const user = (usePage().props as PageProps).auth.user;
+  const isAgency = user?.is_agency === true;
+
+  const { post: toggleSharePost, processing: shareProcessing } = useForm({});
+  const [copied, setCopied] = useState(false);
+
+  const shareUrl = report.share_uuid
+    ? `${window.location.origin}/shared/${report.share_uuid}`
+    : null;
+
+  const copyShareUrl = () => {
+    if (!shareUrl) return;
+    navigator.clipboard.writeText(shareUrl).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   return (
     <AppLayout>
       <Head title={`Audit — ${report.site_url}`} />
@@ -335,6 +356,54 @@ export default function AuditShow({ report }: ShowProps) {
             </div>
           )}
         </div>
+
+        {/* Share link — agency users only */}
+        {isAgency && report.status === 'completed' && (
+          <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-5">
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <Share2 className="h-5 w-5 text-amber-400 shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-amber-300">{t('show.shareTitle')}</p>
+                  <p className="text-xs text-amber-300/60 mt-0.5">{t('show.shareSub')}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => toggleSharePost(route('audits.share.toggle', report.id))}
+                disabled={shareProcessing}
+                className={`shrink-0 inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-60 ${
+                  report.share_enabled
+                    ? 'bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30'
+                    : 'bg-amber-500 text-white hover:bg-amber-400'
+                }`}
+              >
+                <Share2 className="h-4 w-4" />
+                {report.share_enabled ? t('show.shareDisable') : t('show.shareEnable')}
+              </button>
+            </div>
+
+            {report.share_enabled && shareUrl && (
+              <div className="mt-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <input
+                    readOnly
+                    value={shareUrl}
+                    className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-300 font-mono select-all"
+                    onClick={(e) => (e.target as HTMLInputElement).select()}
+                  />
+                  <button
+                    onClick={copyShareUrl}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                  >
+                    {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                    {copied ? t('show.shareCopied') : t('show.shareCopy')}
+                  </button>
+                </div>
+                <p className="text-xs text-amber-300/50">{t('show.shareNote')}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Running state — live progress */}
         {report.status === 'running' && (

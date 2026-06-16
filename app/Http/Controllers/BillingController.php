@@ -4,10 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use Laravel\Cashier\Events\WebhookHandled;
 
 class BillingController extends Controller
 {
@@ -39,7 +37,8 @@ class BillingController extends Controller
      */
     public function subscribe(Request $request): RedirectResponse
     {
-        $priceId = env('STRIPE_PRICE_ID');
+        $priceId = config('services.stripe.price_id');
+        abort_if(empty($priceId), 500, 'Stripe price not configured.');
 
         $checkout = $request->user()
             ->newSubscription('default', $priceId)
@@ -57,22 +56,5 @@ class BillingController extends Controller
     public function portal(Request $request): RedirectResponse
     {
         return $request->user()->redirectToBillingPortal(route('billing'));
-    }
-
-    /**
-     * POST /stripe/webhook — handle Stripe webhooks
-     */
-    public function webhook(Request $request): Response
-    {
-        // Cashier's built-in webhook handler manages subscription lifecycle events.
-        // We delegate to it via the Cashier webhook route, but also handle here
-        // for any custom logic.
-        $payload = $request->all();
-        $event   = $payload['type'] ?? '';
-
-        // Cashier handles subscription.created / updated / deleted automatically
-        // via its own WebhookController. This route is kept for potential custom
-        // handling. Return 200 to acknowledge receipt.
-        return response('Webhook received.', 200);
     }
 }

@@ -25,6 +25,8 @@ export interface FullAuditReport {
     name?: string;
     site_url: string;
     status: 'running' | 'completed' | 'failed';
+    share_uuid?: string | null;
+    share_enabled?: boolean;
     health_score?: number;
     score_deductions?: string[];
     seo_schema_result?: Record<string, unknown>;
@@ -68,6 +70,39 @@ export interface PaginatedData<T> {
     from: number;
     to: number;
     links: PaginationLink[];
+    prev_page_url: string | null;
+    next_page_url: string | null;
+}
+
+export interface TicketAttachment {
+    id: number;
+    ticket_message_id: number;
+    filename: string;
+    path: string;
+    url: string;
+}
+
+export interface TicketMessage {
+    id: number;
+    ticket_id: number;
+    user_id: number;
+    body: string;
+    is_admin: boolean;
+    created_at: string;
+    updated_at: string;
+    user?: { id: number; name: string; is_admin?: boolean };
+    attachments?: TicketAttachment[];
+}
+
+export interface Ticket {
+    id: number;
+    user_id: number;
+    subject: string;
+    status: 'open' | 'in_progress' | 'resolved' | 'closed';
+    created_at: string;
+    updated_at: string;
+    user?: { id: number; name: string; email: string; company_name?: string | null };
+    messages?: TicketMessage[];
 }
 
 export type PageProps<
@@ -75,6 +110,7 @@ export type PageProps<
 > = T & {
     auth: {
         user: User;
+        openTicketsCount?: number | null;
     };
     flash?: {
         success?: string;

@@ -10,6 +10,10 @@ class CookieConsentController extends Controller
 {
     public function store(Request $request): JsonResponse
     {
+        $request->validate([
+            'version' => ['sometimes', 'string', 'max:20', 'regex:/^[\d.]+$/'],
+        ]);
+
         $version = $request->input('version', '1.0');
 
         CookieConsent::create([

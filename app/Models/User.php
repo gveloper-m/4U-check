@@ -18,8 +18,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'is_unlimited',
-        'is_admin',
         'phone',
         'company_name',
         'company_site',

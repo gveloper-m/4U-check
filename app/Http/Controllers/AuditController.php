@@ -6,10 +6,12 @@ use App\Jobs\RunAuditorJob;
 use App\Models\FullAuditReport;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Rules\PublicUrl;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -61,7 +63,7 @@ class AuditController extends Controller
         }
 
         $validated = $request->validate([
-            'site_url' => 'required|url',
+            'site_url' => ['required', 'url', new PublicUrl],
             'name'     => 'nullable|string|max:255',
         ]);
 
@@ -140,6 +142,27 @@ class AuditController extends Controller
     }
 
     /**
+     * POST /audits/{report}/share/toggle — agency users only
+     */
+    public function toggleShare(FullAuditReport $report): \Illuminate\Http\RedirectResponse
+    {
+        abort_unless($report->user_id === auth()->id(), 403);
+        abort_unless(auth()->user()->is_agency, 403);
+
+        if (! $report->share_uuid) {
+            $report->share_uuid = (string) Str::uuid();
+        }
+        $report->share_enabled = ! $report->share_enabled;
+        $report->save();
+
+        $message = $report->share_enabled
+            ? 'Share link enabled.'
+            : 'Share link disabled.';
+
+        return back()->with('success', $message);
+    }
+
+    /**
      * GET /audits/{report}/export/pdf
      */
     public function exportPdf(FullAuditReport $report): Response
@@ -172,8 +195,8 @@ class AuditController extends Controller
             ->setPaper('a4', 'portrait')
             ->setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
 
-        $filename = 'audit-report-' . parse_url($report->site_url, PHP_URL_HOST)
-            . '-' . $report->created_at->format('Ymd-His') . '.pdf';
+        $safeHost = preg_replace('/[^a-zA-Z0-9\-.]/', '', parse_url($report->site_url, PHP_URL_HOST) ?? '');
+        $filename = 'audit-report-' . $safeHost . '-' . $report->created_at->format('Ymd-His') . '.pdf';
 
         return $pdf->download($filename);
     }
@@ -187,8 +210,8 @@ class AuditController extends Controller
 
         app()->setLocale(auth()->user()->language ?? 'en');
 
-        $filename = 'audit-report-' . parse_url($report->site_url, PHP_URL_HOST)
-            . '-' . $report->created_at->format('Ymd-His') . '.csv';
+        $safeHost = preg_replace('/[^a-zA-Z0-9\-.]/', '', parse_url($report->site_url, PHP_URL_HOST) ?? '');
+        $filename = 'audit-report-' . $safeHost . '-' . $report->created_at->format('Ymd-His') . '.csv';
 
         $headers = [
             'Content-Type'        => 'text/csv',
@@ -455,7 +478,7 @@ class AuditController extends Controller
     {
         $validated = $request->validate([
             'ids'   => 'required|array|min:2|max:3',
-            'ids.*' => 'integer',
+            'ids.*' => 'integer|min:1',
         ]);
 
         $userId  = auth()->id();
