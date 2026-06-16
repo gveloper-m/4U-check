@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BlogController as AdminBlogController;
+use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\BillingController;
 use App\Http\Controllers\BlogController;
@@ -33,6 +34,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/language', [LanguageController::class, 'update'])->name('language.update');
+    Route::post('/agency', [AgencyController::class, 'update'])->name('agency.update');
 
     Route::get('/billing', [BillingController::class, 'index'])->name('billing');
     Route::post('/billing/subscribe', [BillingController::class, 'subscribe'])->name('billing.subscribe');

@@ -24,6 +24,11 @@ class User extends Authenticatable
         'company_name',
         'company_site',
         'language',
+        'is_agency',
+        'agency_logo',
+        'agency_primary_color',
+        'agency_secondary_color',
+        'agency_footer_text',
     ];
 
     protected $hidden = [
@@ -39,6 +44,7 @@ class User extends Authenticatable
             'trial_ends_at'     => 'datetime',
             'is_unlimited'      => 'boolean',
             'is_admin'          => 'boolean',
+            'is_agency'         => 'boolean',
         ];
     }
 

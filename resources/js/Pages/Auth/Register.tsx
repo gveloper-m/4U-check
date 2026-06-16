@@ -1,7 +1,7 @@
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Building2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Register() {
@@ -14,6 +14,9 @@ export default function Register() {
     company_site: '',
     password: '',
     password_confirmation: '',
+    is_agency: false,
+    agency_primary_color: '#1a1a2e',
+    agency_secondary_color: '#2d3748',
   });
 
   const submit: FormEventHandler = (e) => {
@@ -158,6 +161,62 @@ export default function Register() {
           />
           {errors.password_confirmation && (
             <p className="mt-1 text-xs text-red-400">{errors.password_confirmation}</p>
+          )}
+        </div>
+
+        {/* Agency toggle */}
+        <div className="rounded-xl border border-gray-700 bg-gray-800/50 p-4">
+          <label className="flex cursor-pointer items-center gap-3">
+            <div className="relative flex-shrink-0">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={data.is_agency}
+                onChange={(e) => setData('is_agency', e.target.checked)}
+              />
+              <div className={`h-6 w-11 rounded-full transition-colors ${data.is_agency ? 'bg-violet-600' : 'bg-gray-600'}`} />
+              <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${data.is_agency ? 'translate-x-5' : 'translate-x-0'}`} />
+            </div>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-4 w-4 text-amber-400" />
+              <span className="text-sm font-medium text-gray-200">{t('profile.agencyToggle')}</span>
+            </div>
+          </label>
+
+          {data.is_agency && (
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-400">
+                    {t('profile.agencyPrimaryColor')}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={data.agency_primary_color}
+                      onChange={(e) => setData('agency_primary_color', e.target.value)}
+                      className="h-9 w-10 cursor-pointer rounded border border-gray-600 bg-gray-800 p-0.5" />
+                    <input type="text" value={data.agency_primary_color}
+                      onChange={(e) => setData('agency_primary_color', e.target.value)}
+                      className={inputCls} placeholder="#1a1a2e" maxLength={7} />
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">{t('profile.agencyPrimaryColorHint')}</p>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-gray-400">
+                    {t('profile.agencySecondaryColor')}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input type="color" value={data.agency_secondary_color}
+                      onChange={(e) => setData('agency_secondary_color', e.target.value)}
+                      className="h-9 w-10 cursor-pointer rounded border border-gray-600 bg-gray-800 p-0.5" />
+                    <input type="text" value={data.agency_secondary_color}
+                      onChange={(e) => setData('agency_secondary_color', e.target.value)}
+                      className={inputCls} placeholder="#2d3748" maxLength={7} />
+                  </div>
+                  <p className="mt-0.5 text-xs text-gray-500">{t('profile.agencySecondaryColorHint')}</p>
+                </div>
+              </div>
+              <p className="text-xs text-gray-500">You can upload your logo and set a report footer after signing in.</p>
+            </div>
           )}
         </div>
 

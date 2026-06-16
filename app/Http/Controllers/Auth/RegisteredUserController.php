@@ -27,21 +27,27 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name'         => 'required|string|max:255',
-            'email'        => 'required|string|lowercase|email|max:255|unique:'.User::class,
-            'password'     => ['required', 'confirmed', Rules\Password::defaults()],
-            'phone'        => 'nullable|string|max:30',
-            'company_name' => 'nullable|string|max:255',
-            'company_site' => 'nullable|url|max:255',
+            'name'                  => 'required|string|max:255',
+            'email'                 => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'password'              => ['required', 'confirmed', Rules\Password::defaults()],
+            'phone'                 => 'nullable|string|max:30',
+            'company_name'          => 'nullable|string|max:255',
+            'company_site'          => 'nullable|url|max:255',
+            'is_agency'             => 'boolean',
+            'agency_primary_color'  => ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'agency_secondary_color'=> ['nullable', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
         ]);
 
         $user = User::create([
-            'name'         => $request->name,
-            'email'        => $request->email,
-            'password'     => Hash::make($request->password),
-            'phone'        => $request->phone,
-            'company_name' => $request->company_name,
-            'company_site' => $request->company_site,
+            'name'                  => $request->name,
+            'email'                 => $request->email,
+            'password'              => Hash::make($request->password),
+            'phone'                 => $request->phone,
+            'company_name'          => $request->company_name,
+            'company_site'          => $request->company_site,
+            'is_agency'             => $request->boolean('is_agency'),
+            'agency_primary_color'  => $request->input('agency_primary_color'),
+            'agency_secondary_color'=> $request->input('agency_secondary_color'),
         ]);
 
         event(new Registered($user));

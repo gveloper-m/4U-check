@@ -12,6 +12,11 @@ export interface User {
     pm_type?: string;
     pm_last_four?: string;
     language?: string;
+    is_agency?: boolean;
+    agency_logo?: string | null;
+    agency_primary_color?: string | null;
+    agency_secondary_color?: string | null;
+    agency_footer_text?: string | null;
 }
 
 export interface FullAuditReport {
