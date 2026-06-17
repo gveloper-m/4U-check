@@ -21,7 +21,7 @@ class UserController extends Controller
         $users = DB::table('users')
             ->leftJoin('full_audit_reports as far', 'far.user_id', '=', 'users.id')
             ->leftJoin('subscriptions as sub', function ($j) {
-                $j->on('sub.user_id', '=', 'users.id')->where('sub.name', 'default');
+                $j->on('sub.user_id', '=', 'users.id')->whereRaw("sub.type = 'default'");
             })
             ->select([
                 'users.id', 'users.name', 'users.email', 'users.created_at',
@@ -50,7 +50,7 @@ class UserController extends Controller
             'total_users'    => User::count(),
             'subscribed'     => DB::table('subscriptions')
                 ->whereIn('stripe_status', ['active', 'trialing'])
-                ->where('name', 'default')
+                ->where('type', 'default')
                 ->distinct('user_id')->count('user_id'),
             'unlimited'      => User::where('is_unlimited', true)->count(),
             'month_crawls'   => FullAuditReport::whereYear('created_at', now()->year)
