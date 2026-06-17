@@ -707,16 +707,23 @@ export default function AuditShow({ report }: ShowProps) {
                     <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('show.broken.topBroken')} ({brokenLinks.length})
                     </p>
-                    <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-800">
+                    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-800 divide-y divide-gray-800">
                       {brokenLinks.map((link, i) => {
                         const l = link as Record<string, unknown>;
                         return (
-                          <div key={i} className="flex items-center justify-between gap-3 border-b border-gray-800 px-3 py-2 last:border-0">
-                            <span className="truncate text-xs text-gray-400">{String(l.url ?? link)}</span>
-                            {l.status_code != null && (
-                              <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs text-red-400">
-                                {String(l.status_code)}
-                              </span>
+                          <div key={i} className="px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="break-all text-xs text-gray-300">{String(l.url ?? link)}</span>
+                              {l.status_code != null && (
+                                <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">
+                                  {String(l.status_code)}
+                                </span>
+                              )}
+                            </div>
+                            {l.found_on != null && (
+                              <p className="mt-1 text-xs text-gray-600 break-all">
+                                Found on: <span className="text-gray-500">{String(l.found_on)}</span>
+                              </p>
                             )}
                           </div>
                         );
@@ -730,16 +737,23 @@ export default function AuditShow({ report }: ShowProps) {
                     <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('show.broken.brokenImages')} ({brokenImages.length})
                     </p>
-                    <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-800">
+                    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-800 divide-y divide-gray-800">
                       {brokenImages.map((img, i) => {
                         const im = img as Record<string, unknown>;
                         return (
-                          <div key={i} className="flex items-center justify-between gap-3 border-b border-gray-800 px-3 py-2 last:border-0">
-                            <span className="truncate text-xs text-gray-400">{String(im.url ?? img)}</span>
-                            {im.status_code != null && (
-                              <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs text-red-400">
-                                {String(im.status_code)}
-                              </span>
+                          <div key={i} className="px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="break-all text-xs text-gray-300">{String(im.url ?? img)}</span>
+                              {im.status_code != null && (
+                                <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">
+                                  {String(im.status_code)}
+                                </span>
+                              )}
+                            </div>
+                            {im.found_on != null && (
+                              <p className="mt-1 text-xs text-gray-600 break-all">
+                                Found on: <span className="text-gray-500">{String(im.found_on)}</span>
+                              </p>
                             )}
                           </div>
                         );

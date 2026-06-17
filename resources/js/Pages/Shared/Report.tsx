@@ -359,13 +359,20 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                   {brokenLinks.length > 0 && (
                     <div>
                       <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Top Broken Links ({brokenLinks.length})</p>
-                      <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-200">
+                      <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
                         {brokenLinks.map((link, i) => {
                           const l = link as Record<string, unknown>;
                           return (
-                            <div key={i} className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 last:border-0">
-                              <span className="truncate text-xs text-gray-500">{String(l.url ?? link)}</span>
-                              {l.status_code != null && <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600">{String(l.status_code)}</span>}
+                            <div key={i} className="px-3 py-2.5">
+                              <div className="flex items-start justify-between gap-3">
+                                <span className="break-all text-xs text-gray-700">{String(l.url ?? link)}</span>
+                                {l.status_code != null && <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">{String(l.status_code)}</span>}
+                              </div>
+                              {l.found_on != null && (
+                                <p className="mt-1 text-xs text-gray-400 break-all">
+                                  Found on: <span className="text-gray-500">{String(l.found_on)}</span>
+                                </p>
+                              )}
                             </div>
                           );
                         })}
@@ -375,13 +382,20 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                   {brokenImages.length > 0 && (
                     <div>
                       <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Broken Images ({brokenImages.length})</p>
-                      <div className="max-h-64 overflow-y-auto rounded-lg border border-gray-200">
+                      <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
                         {brokenImages.map((img, i) => {
                           const im = img as Record<string, unknown>;
                           return (
-                            <div key={i} className="flex items-center justify-between gap-3 border-b border-gray-100 px-3 py-2 last:border-0">
-                              <span className="truncate text-xs text-gray-500">{String(im.url ?? img)}</span>
-                              {im.status_code != null && <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs text-red-600">{String(im.status_code)}</span>}
+                            <div key={i} className="px-3 py-2.5">
+                              <div className="flex items-start justify-between gap-3">
+                                <span className="break-all text-xs text-gray-700">{String(im.url ?? img)}</span>
+                                {im.status_code != null && <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">{String(im.status_code)}</span>}
+                              </div>
+                              {im.found_on != null && (
+                                <p className="mt-1 text-xs text-gray-400 break-all">
+                                  Found on: <span className="text-gray-500">{String(im.found_on)}</span>
+                                </p>
+                              )}
                             </div>
                           );
                         })}
