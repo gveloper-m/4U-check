@@ -1,6 +1,23 @@
-# 4utest — Website Audit Platform
+# 4uTest — Website Audit Platform
 
-A full-stack SaaS web audit tool that runs 7 deep analysis modules in parallel on any website and returns a scored health report out of 100.
+A full-stack SaaS web audit tool that runs 7 deep analysis modules in parallel on any website and returns a scored health report out of 100. Built for agencies and businesses that need recurring, structured website monitoring.
+
+---
+
+## Table of Contents
+
+1. [Tech Stack](#tech-stack)
+2. [Features at a Glance](#features-at-a-glance)
+3. [Audit Modules](#audit-modules)
+4. [Local Development](#local-development)
+5. [Environment Variables Reference](#environment-variables-reference)
+6. [Production Deployment](#production-deployment)
+7. [Stripe Setup](#stripe-setup)
+8. [Email Setup](#email-setup)
+9. [Admin Panel](#admin-panel)
+10. [Health Score](#health-score)
+11. [Project Structure](#project-structure)
+12. [Security Hardening](#security-hardening)
 
 ---
 
@@ -8,112 +25,462 @@ A full-stack SaaS web audit tool that runs 7 deep analysis modules in parallel o
 
 | Layer | Technology |
 |---|---|
-| Backend | Laravel 13.8 · PHP 8.4 |
+| Backend | Laravel 13 · PHP 8.4+ |
 | Frontend | React 18 · TypeScript · Inertia.js v2 |
 | Styling | Tailwind CSS v4 (dark theme) |
-| Queue | Laravel Queues (Redis) |
-| Database | MySQL 8 |
-| Payments | Stripe (Laravel Cashier) |
-| i18n | i18next — English, Greek, German, French, Spanish, Dutch, Czech |
-| Containerisation | Docker (Laravel Sail for dev · custom stack for production) |
+| Queue | Laravel Queues + Redis |
+| Database | MySQL 8.4 |
+| Payments | Stripe + Laravel Cashier |
+| i18n | i18next — EN / EL / DE / FR / ES / NL / CS |
+| Dev environment | Docker (Laravel Sail) |
+| Production | Docker Compose — Nginx + PHP-FPM + Horizon + Certbot |
 
 ---
 
-## Local Development URLs
+## Features at a Glance
+
+| Feature | Detail |
+|---|---|
+| **7 audit modules** | SEO, Security, Performance, Broken Resources, E-commerce, Marketing, Accessibility |
+| **Health score** | 0–100, colour-coded, deduction-breakdown per module |
+| **Scan history** | Full audit history with status, score, date |
+| **Compare** | Side-by-side view of 2–3 scans |
+| **Scheduled scans** | Hourly / daily / weekly / monthly — email notification on completion |
+| **Quota system** | 120 scans/month per user; unlimited accounts bypass |
+| **PDF & CSV exports** | Formatted for client delivery, translated, branded with agency logo |
+| **White-label share links** | Public UUID-based links — no login required, zero 4utest branding |
+| **Agency mode** | Custom logo, primary/secondary colours, footer text |
+| **Support tickets** | Threaded tickets with photo attachments, email notifications |
+| **Blog** | Admin-managed blog with public listing |
+| **Billing** | Two plans: €22/mo or €220/yr (both excl. VAT), Stripe Checkout with VAT collection |
+| **Admin panel** | User management, monitoring dashboard, ticket panel, blog CMS |
+| **Error pages** | Branded 401/403/404/419/429/500/503 pages |
+| **Monitoring** | Live server metrics (RAM, CPU, Disk, Uptime), app health, log viewer |
+| **7 languages** | Full UI + PDF + email translation |
+
+---
+
+## Audit Modules
+
+### 1 — SEO & Schema
+Meta title/description (presence + length), H1 tags, canonical URL, Open Graph, JSON-LD structured data, image alt text, `robots.txt`, `sitemap.xml`.
+
+### 2 — Security
+SSL validity, expiry, issuer, HTTPS redirect, mixed content detection. Six HTTP security headers: HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy. DNS: SPF, DMARC, DKIM records.
+
+### 3 — Performance
+TTFB, FCP, LCP, CLS (desktop + mobile). Gzip/Brotli compression, render-blocking scripts/stylesheets, HTML page size.
+
+### 4 — Broken Resources
+Full internal crawl — every link and image tested for HTTP 4xx/5xx. Reports total counts, percentages, and the full list of broken URLs **with the source page each was found on**.
+
+### 5 — E-commerce Catalog
+Detects product pages and audits for: missing/malformed prices, stock mismatches between schema.org and visible UI, disabled add-to-cart buttons.
+
+### 6 — Marketing Tracking
+Detects Google Analytics 4, Facebook Pixel, TikTok Pixel across crawled pages. Reports pixel IDs found per page.
+
+### 7 — Accessibility (WCAG)
+Form labels, image alt text, ARIA attributes, heading hierarchy (H1→H2→H3), landmark elements (`<main>`, skip nav), colour contrast ratios.
+
+---
+
+## Local Development
+
+### Prerequisites
+
+- Docker + Docker Compose v2
+- Node.js 18+
+- Composer (optional — `vendor/` is committed)
+
+### Start the stack
+
+```bash
+# Clone and enter the repo
+git clone git@github.com:gveloper-m/4U-check.git 4utest && cd 4utest
+
+# Copy and edit env
+cp .env.example .env          # fill in APP_KEY, Stripe keys, mail settings
+
+# Generate app key if starting fresh
+docker run --rm -v "$PWD":/app -w /app php:8.4-cli php artisan key:generate
+
+# Start all containers (app + mysql + redis + queue worker)
+./vendor/bin/sail up -d
+
+# Run migrations
+docker exec 4utest-laravel.test-1 php artisan migrate
+
+# Install JS dependencies and build
+npm install && npm run build
+
+# OR run with hot reload
+npm run dev
+```
+
+> **Port conflicts?** If MySQL 3306 or Redis 6379 are already in use, add to `.env`:
+> ```
+> FORWARD_DB_PORT=3307
+> FORWARD_REDIS_PORT=6380
+> ```
+> Then restart: `./vendor/bin/sail up -d`
+
+### Local URLs
 
 | Service | URL |
 |---|---|
-| App (web) | http://localhost |
+| App | http://localhost |
 | Vite dev server | http://localhost:5173 |
-| MySQL | localhost:3307 |
-| Redis | localhost:6380 |
+| MySQL (host) | localhost:3307 |
+| Redis (host) | localhost:6380 |
 
-> The dev environment runs HTTP only. Use `http://localhost` — not `https://`.
-
----
-
-## Default Admin Account
+### Default admin account
 
 ```
 Email:    admin@4utest.gr
 Password: admin4utest2024
 ```
 
-> The admin account has `is_unlimited = true`, bypassing all subscription and quota checks.
+The admin account has `is_admin = true` and `is_unlimited = true`.
 
----
+### Queue worker
 
-## Getting Started
-
-### Prerequisites
-
-- Docker + Docker Compose
-- Node.js 18+
-
-### Start the dev stack
+The queue worker runs as a separate `queue` container automatically when you `sail up`. To check its logs:
 
 ```bash
-# Start all containers (app, mysql, redis)
-./vendor/bin/sail up -d
-
-# Run database migrations (must run inside the container — DB_HOST=mysql resolves only there)
-docker exec 4utest-laravel.test-1 php artisan migrate
-
-# Install JS dependencies and build assets
-npm install
-npm run build
-
-# Or run the dev server with hot reload
-npm run dev
+docker logs 4utest-queue-1 -f
 ```
 
-### Run the queue worker
+To restart it:
 
 ```bash
-docker exec 4utest-laravel.test-1 php artisan queue:work --timeout=600
+./vendor/bin/sail restart queue
+```
+
+### Run the scheduler locally
+
+```bash
+docker exec 4utest-laravel.test-1 php artisan schedule:work
+```
+
+### Clear caches after code changes
+
+```bash
+docker exec 4utest-laravel.test-1 php artisan route:clear
+docker exec 4utest-laravel.test-1 php artisan config:clear
+docker exec 4utest-laravel.test-1 php artisan view:clear
+```
+
+### Useful admin commands
+
+```bash
+# View failed queue jobs
+docker exec 4utest-laravel.test-1 php artisan queue:failed
+
+# Retry all failed jobs
+docker exec 4utest-laravel.test-1 php artisan queue:retry all
+
+# Flush failed jobs table
+docker exec 4utest-laravel.test-1 php artisan queue:flush
+
+# Seed the database (if a seeder exists)
+docker exec 4utest-laravel.test-1 php artisan db:seed
 ```
 
 ---
 
-## Running a Scan
+## Environment Variables Reference
 
-1. Log in at http://localhost
-2. Go to **Audits** in the sidebar
-3. Enter a website URL (e.g. `https://example.com`) and an optional name
-4. Click **Run Audit** — 7 modules start in parallel as queued jobs
-5. The page auto-refreshes every 3 seconds until all modules complete
-6. View the health score, per-module results, and score deductions
+All variables below must be set in `.env` (development) or `deploy/.env` (production).
+
+### Application
+
+```env
+APP_NAME=4uTest
+APP_ENV=production           # local | production
+APP_KEY=base64:...           # php artisan key:generate --show
+APP_DEBUG=false              # NEVER true in production
+APP_URL=https://yourdomain.com
+APP_LOCALE=en
+```
+
+### Database
+
+```env
+DB_CONNECTION=mysql
+DB_HOST=mysql                # container name inside Docker network
+DB_PORT=3306
+DB_DATABASE=4utest_prod
+DB_USERNAME=4utest_user
+DB_PASSWORD=strong-password
+```
+
+### Cache & Queue
+
+```env
+CACHE_STORE=redis
+QUEUE_CONNECTION=redis
+REDIS_HOST=redis             # container name inside Docker network
+REDIS_PORT=6379
+REDIS_PASSWORD=null          # set if Redis auth is enabled
+```
+
+### Session
+
+```env
+SESSION_DRIVER=database
+SESSION_LIFETIME=120
+SESSION_SECURE_COOKIE=true   # REQUIRED in production (HTTPS only)
+```
+
+### Mail
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.resend.com    # or smtp.mailgun.org, smtp.sendgrid.net, etc.
+MAIL_PORT=587
+MAIL_USERNAME=resend
+MAIL_PASSWORD=re_...
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+MAIL_FROM_NAME="4uTest"
+
+# Admin receives emails for new support tickets (defaults to MAIL_FROM_ADDRESS)
+ADMIN_SUPPORT_EMAIL=support@yourdomain.com
+```
+
+### Stripe (Payments)
+
+```env
+STRIPE_KEY=pk_live_...            # Publishable key
+STRIPE_SECRET=sk_live_...         # Secret key
+STRIPE_WEBHOOK_SECRET=whsec_...   # From Stripe dashboard → Webhooks
+
+# Two billing plans — create in Stripe dashboard as tax-exclusive prices
+STRIPE_MONTHLY_PRICE_ID=price_...  # €22/month excl. VAT
+STRIPE_YEARLY_PRICE_ID=price_...   # €220/year excl. VAT
+
+# Automatic VAT calculation via Stripe Tax (see Stripe Setup section)
+STRIPE_TAX_ENABLED=false           # Set true after enabling Stripe Tax
+
+CASHIER_CURRENCY=eur
+CASHIER_CURRENCY_LOCALE=el_GR      # locale used for currency formatting
+```
+
+### Chromium (for audits)
+
+```env
+CHROME_PATH=/usr/bin/chromium
+PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+```
+
+### Trusted Proxies (production — behind Nginx)
+
+```env
+TRUSTED_PROXIES=*
+TRUSTED_HOSTS=yourdomain.com
+```
 
 ---
 
-## Audit Modules (7 total)
+## Production Deployment
 
-### 1. SEO & Schema
-Checks meta title/description length and status, H1 tags, canonical URL, Open Graph tags, JSON-LD structured data, image alt text, `robots.txt`, and `sitemap.xml`.
+A complete Docker Compose production stack lives in `deploy/`. It includes:
+- **Nginx** — reverse proxy + automatic HTTPS via Let's Encrypt
+- **PHP-FPM** — Laravel app with Chromium for audits
+- **Queue worker** — dedicated container for audit jobs
+- **Scheduler** — runs `artisan schedule:run` every minute
+- **MySQL 8.4** — persistent data volume
+- **Redis 7** — cache + queue backend
+- **Certbot** — automatic SSL certificate renewal
 
-### 2. Security
-Validates SSL certificate (validity, issuer, days remaining), HTTPS redirect enforcement, mixed content detection, 6 HTTP security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy), and DNS records: SPF, DMARC, DKIM.
+### Step-by-step first deploy
 
-### 3. Performance
-Measures TTFB, FCP, LCP, and CLS on desktop and mobile. Detects gzip/brotli compression, render-blocking scripts and stylesheets, and HTML page size.
+```bash
+# 1. Point your domain's A record to the server IP — do this first.
+#    Let's Encrypt requires DNS to propagate before certificate issuance.
 
-### 4. Broken Resources
-Crawls all internal pages and checks every link and image for HTTP 4xx/5xx errors. Reports total broken counts, percentages, and the full list of broken URLs with the page each was found on.
+# 2. SSH into the server and clone the repo
+git clone git@github.com:gveloper-m/4U-check.git /var/www/4utest
+cd /var/www/4utest/deploy
 
-### 5. E-commerce Catalog
-Finds product pages and audits each for: missing or malformed prices, stock availability mismatches between schema.org data and visible UI, and disabled add-to-cart buttons.
+# 3. Create and fill the production .env
+cp .env.example .env
+nano .env    # fill in all REPLACE_ME values
 
-### 6. Marketing Tracking
-Detects Google Analytics 4, Facebook Pixel, and TikTok Pixel across crawled pages. Reports pixel IDs found.
+# 4. Obtain the first SSL certificate (run only once)
+chmod +x scripts/init-letsencrypt.sh
+./scripts/init-letsencrypt.sh
 
-### 7. Accessibility (WCAG)
-Checks form labels, image alt text, ARIA attributes, heading hierarchy (H1→H2→H3 order), landmark elements (`<main>`, skip navigation), and color contrast ratios.
+# 5. Build images and start all services
+docker compose up -d --build
+
+# 6. Run migrations
+docker compose exec php-fpm php artisan migrate --force
+
+# 7. Seed the admin user (if seeder exists)
+docker compose exec php-fpm php artisan db:seed --class=AdminSeeder
+
+# 8. Set correct storage permissions
+docker compose exec php-fpm php artisan storage:link
+```
+
+### Subsequent deploys
+
+```bash
+cd /var/www/4utest
+git pull origin master
+cd deploy
+./scripts/deploy.sh
+```
+
+The deploy script: pulls the latest image, runs migrations, clears caches, and restarts containers with zero downtime.
+
+### Cron (scheduler)
+
+The scheduler container runs inside Docker. No host cron entry is needed — it's managed by the `scheduler` service in `deploy/docker-compose.yml`.
+
+### SSL renewal
+
+Certbot renews certificates automatically. The Nginx container reloads after renewal via a cron inside the `certbot` container.
+
+### Backups
+
+Recommended: daily MySQL dump to an S3-compatible bucket.
+
+```bash
+# Example manual backup
+docker compose exec mysql mysqldump -u4utest_user -pPASSWORD 4utest_prod | gzip > backup-$(date +%Y%m%d).sql.gz
+```
+
+---
+
+## Stripe Setup
+
+### 1. Create two products and prices
+
+In the [Stripe dashboard](https://dashboard.stripe.com) → Products → Add product:
+
+| Product | Price | Billing | Tax behaviour |
+|---|---|---|---|
+| 4uTest Pro — Monthly | €22.00 | Monthly recurring | **Exclusive of tax** |
+| 4uTest Pro — Yearly | €220.00 | Yearly recurring | **Exclusive of tax** |
+
+> **Important:** Set the tax behaviour to **"Exclusive of tax"** on both prices. This is what makes €22 + VAT work correctly.
+
+Copy each `price_...` ID into `.env`:
+```env
+STRIPE_MONTHLY_PRICE_ID=price_...
+STRIPE_YEARLY_PRICE_ID=price_...
+```
+
+### 2. Configure the webhook
+
+Stripe dashboard → Developers → Webhooks → Add endpoint:
+
+- **URL:** `https://yourdomain.com/stripe/webhook`
+- **Events to listen to:** `customer.subscription.*`, `invoice.*`
+
+Copy the signing secret → `.env`:
+```env
+STRIPE_WEBHOOK_SECRET=whsec_...
+```
+
+### 3. Enable VAT collection (recommended)
+
+The checkout already collects billing addresses and VAT numbers from customers. To also **calculate and charge VAT automatically**:
+
+1. Stripe dashboard → **Tax** → Enable Stripe Tax
+2. Add your tax registrations per country:
+
+| Country | VAT label | Rate |
+|---|---|---|
+| Greece (GR) | ΦΠΑ | 24% |
+| Germany (DE) | MwSt | 19% |
+| France (FR) | TVA | 20% |
+| Spain (ES) | IVA | 21% |
+| Netherlands (NL) | BTW | 21% |
+| Czech Republic (CZ) | DPH | 21% |
+| United Kingdom (GB) | VAT | 20% |
+
+3. Set in `.env`:
+```env
+STRIPE_TAX_ENABLED=true
+```
+
+When enabled, Stripe automatically:
+- Calculates VAT based on the customer's billing country
+- Applies **reverse charge (0% VAT)** for EU businesses with a valid VAT number
+- Includes VAT on Stripe-generated invoices
+
+### 4. Customer billing portal
+
+The **Manage Subscription** button redirects customers to Stripe's hosted billing portal (cancel, update card, download invoices). Enable it in Stripe dashboard → Settings → Billing → Customer portal.
+
+---
+
+## Email Setup
+
+The app sends emails for:
+- Audit completion (if email notification is enabled on a scheduled scan)
+- New support ticket (to admin)
+- Admin reply on a ticket (to user)
+
+Recommended providers: **Resend**, Mailgun, SendGrid, AWS SES.
+
+### Resend (recommended)
+
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.resend.com
+MAIL_PORT=587
+MAIL_USERNAME=resend
+MAIL_PASSWORD=re_your_api_key
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=noreply@yourdomain.com
+```
+
+You must verify your domain in Resend and add the required DNS records.
+
+---
+
+## Admin Panel
+
+The admin panel is available at `/admin/*` and is only accessible to users with `is_admin = true`.
+
+### Grant admin access
+
+```bash
+docker compose exec php-fpm php artisan tinker
+# Inside tinker:
+\App\Models\User::where('email', 'user@example.com')->update(['is_admin' => true]);
+```
+
+### Admin sections
+
+| URL | Description |
+|---|---|
+| `/admin/users` | All users — crawl stats, plan, last activity |
+| `/admin/users/{id}` | User detail — 6-month chart, top sites, Stripe subscription data, toggle admin/unlimited |
+| `/admin/tickets` | Support tickets — filter by status, full thread view, reply, status management |
+| `/admin/monitoring` | Server health — RAM, CPU, Disk, Uptime, DB/Redis ping, queue status, log viewer |
+| `/admin/blog` | Blog CMS — create, edit, delete posts |
+
+### Monitoring dashboard
+
+`/admin/monitoring` auto-refreshes every 30 seconds. Shows:
+
+- **Status row:** Database (with ping time), Redis, Queue (pending/failed jobs), Debug mode warning
+- **System metrics:** RAM used/total with bar, CPU load (1/5/15 min), Disk used/total, server uptime
+- **App info:** Laravel version, PHP version, environment, timezone, log file size
+- **Log viewer:** Last 100 entries from `storage/logs/laravel.log`, filterable by level (ERROR / WARNING / NOTICE / INFO etc.) and full-text searchable
 
 ---
 
 ## Health Score
 
-Every completed scan scores 0–100. Key deductions:
+Every completed scan returns a score 0–100. Modules with missing data score 0 for those checks.
 
 | Issue | Penalty |
 |---|---|
@@ -121,7 +488,7 @@ Every completed scan scores 0–100. Key deductions:
 | SSL expiring within 30 days | −10 |
 | Mixed content detected | −10 |
 | Most security headers missing | −10 |
-| Slow TTFB (> 1500 ms) | −10 |
+| Slow TTFB (> 1 500 ms) | −10 |
 | More than 10 broken links | −10 |
 | No SPF record | −5 |
 | No DMARC record | −5 |
@@ -130,117 +497,7 @@ Every completed scan scores 0–100. Key deductions:
 | No structured data | −5 |
 | Broken images | −5 |
 | Compression not enabled | −5 |
-| … and more | … |
-
----
-
-## Monthly Scan Quota
-
-Each user is limited to **120 scans per calendar month**. Usage can be spread freely — 4/day, 8 every two days, burst all at once, etc. The quota resets on the 1st of each month.
-
-- Enforced at all three entry points: manual scans, manual run-now of scheduled scans, and cron-triggered scheduled scans
-- The Audits page shows a live progress bar (violet → amber → red) with remaining count and reset date
-- Unlimited accounts (`is_unlimited = true`) bypass the quota entirely
-
----
-
-## Scheduled Scans
-
-Set up automatic scans to run **hourly / daily / weekly / monthly**. Toggle on/off from the Scheduled Scans page. Enable **Email notification** to receive an email in your preferred language when each scan completes.
-
-The scheduler runs via `php artisan schedule:run` (or the `scans:run` command) every minute — wire this up to cron in production:
-
-```cron
-* * * * * cd /var/www/html && php artisan schedule:run >> /dev/null 2>&1
-```
-
----
-
-## Exports
-
-From any completed audit report:
-- **PDF** — formatted summary ready for client delivery
-- **CSV** — full raw data for further analysis in Excel or other tools
-
-Both exports are generated in the user's preferred language.
-
----
-
-## Compare
-
-From Scan History, select 2–3 completed scans and click **Compare** for a side-by-side view of all key metrics.
-
----
-
-## White-Label Share Links (Agency)
-
-Agency accounts can generate a public share link for any completed report:
-
-1. Open a completed report → toggle **Enable Public Share Link**
-2. Copy the URL: `https://yourdomain.com/shared/{uuid}`
-3. Share it with the end client — **no login required**
-
-The shared page has **zero 4utest branding**: only the agency's logo, primary/secondary colors, and footer text. A branded **Download PDF** button is included at `/shared/{uuid}/pdf`.
-
-- Refreshing the shared link 500× costs nothing — quota is charged only when **Run Audit** is clicked
-- Rate-limited: 60 req/min per IP for the page, 10 req/min for the PDF
-- UUID-constrained routes; user data is never exposed in the public page HTML
-
----
-
-## Support Ticket System
-
-All authenticated users can submit support tickets at `/tickets`:
-
-- **Open tickets** with a subject, message body, and up to 3 photo attachments (JPEG/PNG/GIF/WebP, max 5 MB each)
-- **Threaded replies** — users and admins exchange messages in a chat-style view
-- **Status tracking** — open → in_progress → resolved → closed
-- **Email notifications** — admin receives an email for each new ticket; user receives an email for each admin reply
-- A subtle **Need help?** link appears in the footer of every authenticated page
-
-### Admin ticket panel
-
-Accessible at `/admin/tickets` (sidebar entry with a live badge showing open + in-progress count):
-
-- Filter tickets by status with counts per category
-- Full thread view per ticket
-- Reply form with image attachments
-- One-click status change sidebar
-
----
-
-## Languages
-
-The entire platform is translated into 7 languages. The language preference is saved per user account and applied to the UI, PDF/CSV exports, and notification emails.
-
-| Code | Language |
-|---|---|
-| `en` | English |
-| `el` | Greek |
-| `de` | German |
-| `fr` | French |
-| `es` | Spanish |
-| `nl` | Dutch |
-| `cs` | Czech |
-
----
-
-## Security
-
-Key hardening measures in place:
-
-| Area | Protection |
-|---|---|
-| SSRF | `PublicUrl` validation rule — blocks private/reserved IPs, validates DNS resolves to public IP |
-| Mass assignment | `is_admin` / `is_unlimited` removed from `$fillable` on User model |
-| API auth | All `/api/audit/*` routes require `auth:sanctum` |
-| Stripe webhooks | Routed to Cashier's `WebhookController` with automatic signature verification; CSRF-exempt via `preventRequestForgery(except: ['stripe/webhook'])` |
-| File uploads | SVG blocked; binary `mimetypes:` check instead of extension-based `mimes:` |
-| Rate limiting | Named limiters on shared reports, PDF, audit creation, registration, and password reset |
-| Inertia props | Explicit allowlist — Stripe fields, session tokens never sent to the frontend |
-| Shared pages | `unsetRelation('user')` before Inertia render; no user PII in public HTML |
-| Session cookies | `SESSION_SECURE_COOKIE=true` enforced in production |
-| Input validation | UUID route regex, `min:1` on IDs, sanitized Content-Disposition filenames, cookie version regex |
+| … and more module-specific checks | varies |
 
 ---
 
@@ -248,138 +505,152 @@ Key hardening measures in place:
 
 ```
 app/
-  Http/Controllers/
-    AuditController.php                   # Orchestrates all 7 modules, enforces quota, share toggle
-    SharedReportController.php            # Public white-label share page + PDF
-    TicketController.php                  # User-facing support tickets
-    Admin/
+  Http/
+    Controllers/
+      AuditController.php                    # Audit orchestration, quota, share toggle
+      SharedReportController.php             # Public white-label page + PDF
+      BillingController.php                  # Stripe Checkout, portal, VAT
+      TicketController.php                   # User support tickets
+      DashboardController.php
+      ProfileController.php
+      AgencyController.php                   # Agency logo + branding
       BlogController.php
-      TicketController.php                # Admin ticket management
-    SeoSchemaAuditController.php
-    SecurityInfrastructureController.php
-    PerformanceAuditController.php
-    BrokenResourceController.php
-    EcommerceCatalogAuditController.php
-    TrackingAuditController.php
-    AccessibilityAuditController.php
-    ScheduledScanController.php
-    LanguageController.php
-    BillingController.php
-    DashboardController.php
-    ProfileController.php
-    BlogController.php
-  Rules/
-    PublicUrl.php                         # SSRF protection validation rule
+      ScheduledScanController.php
+      LanguageController.php
+      Admin/
+        UserController.php                   # Admin user management
+        TicketController.php                 # Admin ticket management
+        MonitoringController.php             # Server + app health
+        BlogController.php
+      # Audit modules (one controller each):
+      SeoSchemaAuditController.php
+      SecurityInfrastructureController.php
+      PerformanceAuditController.php
+      BrokenResourceController.php
+      EcommerceCatalogAuditController.php
+      TrackingAuditController.php
+      AccessibilityAuditController.php
+    Middleware/
+      HandleInertiaRequests.php              # Shared Inertia props (auth, flash, locale)
+      EnsureUserIsAdmin.php
+      RequireActiveSubscription.php
+    Rules/
+      PublicUrl.php                          # SSRF protection
   Jobs/
-    RunAuditorJob.php
+    RunAuditorJob.php                        # Dispatches all 7 audit modules
     ProcessScheduledScan.php
   Models/
-    User.php
-    FullAuditReport.php                   # share_uuid, share_enabled
+    User.php                                 # Cashier trait, is_admin, is_unlimited, vat_number
+    FullAuditReport.php                      # share_uuid, share_enabled
     ScheduledScan.php
-    Ticket.php
-    TicketMessage.php
-    TicketAttachment.php
+    Ticket.php / TicketMessage.php / TicketAttachment.php
   Mail/
     ScanCompletedMail.php
-    TicketReplyMail.php                   # Admin reply → user email
-    TicketNewMail.php                     # New ticket → admin email
+    TicketNewMail.php                        # New ticket → admin
+    TicketReplyMail.php                      # Admin reply → user
+
+bootstrap/
+  app.php                                    # Exception handler — branded error pages for Inertia
+
+config/
+  services.php                               # stripe.monthly_price_id, yearly_price_id, tax_enabled
+
+database/migrations/
+  ...standard Laravel migrations...
+  *_create_full_audit_reports_table.php
+  *_add_share_fields_to_full_audit_reports.php
+  *_create_tickets_tables.php
+  *_add_vat_number_to_users_table.php
 
 resources/
   js/
     Pages/
       Dashboard.tsx
-      Audits/Index.tsx
-      Audits/Show.tsx                     # Share link toggle panel
+      Audits/Index.tsx                       # Quota progress bar
+      Audits/Show.tsx                        # Module tabs, share toggle, found_on display
       Audits/Compare.tsx
-      Shared/Report.tsx                   # Public white-label report (no AppLayout)
-      Tickets/Index.tsx                   # User ticket list + new ticket form
-      Tickets/Show.tsx                    # User ticket thread + reply
-      Admin/Tickets/Index.tsx             # Admin tickets table with filter tabs
-      Admin/Tickets/Show.tsx              # Admin ticket thread + reply + status
+      Shared/Report.tsx                      # Public white-label (no AppLayout)
+      Billing/Index.tsx                      # Plan selector (€22/€220 + VAT), company/VAT fields
+      Tickets/Index.tsx                      # User ticket list + new ticket form
+      Tickets/Show.tsx                       # User ticket thread
       ScheduledScans/Index.tsx
       Profile/Edit.tsx
-      Billing/Index.tsx
-      Blog/
-      Admin/Blog/
+      Blog/ Admin/Blog/
+      Admin/
+        Users/Index.tsx                      # 6 stat cards + user table
+        Users/Show.tsx                       # User detail: chart, top sites, Stripe card
+        Tickets/Index.tsx                    # Admin tickets table
+        Tickets/Show.tsx                     # Admin ticket thread + status
+        Monitoring.tsx                       # Server metrics + log viewer
+    Layouts/
+      AppLayout.tsx                          # Dark sidebar, admin badge, help footer
     i18n/
       en.ts  el.ts  de.ts  fr.ts  es.ts  nl.ts  cs.ts
-    Layouts/
-      AppLayout.tsx                       # Sidebar with admin ticket badge + footer help link
-      GuestLayout.tsx
-    Components/
-      LanguageSwitcher.tsx
-      CookieBanner.tsx
-
   views/
+    errors/
+      _layout.blade.php                      # Shared branded error layout
+      401.blade.php  403.blade.php  404.blade.php
+      419.blade.php  429.blade.php  500.blade.php  503.blade.php
+    exports/
+      audit-report.blade.php                 # DomPDF template
     mail/
       scan-completed.blade.php
-      ticket-reply.blade.php
       ticket-new.blade.php
+      ticket-reply.blade.php
 
-database/migrations/
-  ...
-  2026_06_16_160000_add_share_fields_to_full_audit_reports.php
-  2026_06_16_200000_create_tickets_tables.php
+routes/
+  web.php                                    # All web routes
+  api.php                                    # Sanctum-protected audit status endpoint
+  console.php                                # Scheduled scan command
 
-deploy/                                   # Production Docker stack
+deploy/                                      # Production Docker stack
   docker-compose.yml
-  nginx/
-  certbot/
   .env.example
+  backend/Dockerfile
+  frontend/Dockerfile                        # Nginx + SSL
+  scripts/
+    init-letsencrypt.sh                      # First-time SSL certificate setup
+    deploy.sh                                # Pull → build → migrate → restart
 ```
 
 ---
 
-## Environment Variables
+## Security Hardening
 
-```env
-APP_URL=https://yourdomain.com
-APP_KEY=base64:...
-
-DB_HOST=mysql
-DB_DATABASE=4utest
-DB_USERNAME=sail
-DB_PASSWORD=password
-
-REDIS_HOST=redis
-
-STRIPE_KEY=pk_...
-STRIPE_SECRET=sk_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-STRIPE_PRICE_ID=price_...
-
-MAIL_MAILER=smtp
-MAIL_HOST=smtp.resend.com
-MAIL_PORT=587
-MAIL_USERNAME=resend
-MAIL_PASSWORD=re_...
-MAIL_FROM_ADDRESS=noreply@yourdomain.com
-MAIL_FROM_NAME="4utest"
-
-# Support ticket notifications — defaults to MAIL_FROM_ADDRESS if not set
-ADMIN_SUPPORT_EMAIL=support@yourdomain.com
-
-# Must be true in production (HTTPS-only session cookies)
-SESSION_SECURE_COOKIE=true
-```
+| Area | Measure |
+|---|---|
+| **SSRF protection** | `PublicUrl` validation rule — blocks private/loopback/reserved IPs, verifies DNS resolves to public IP |
+| **Mass assignment** | `is_admin` / `is_unlimited` removed from `User::$fillable`; set only via `forceFill()` in admin controllers |
+| **API authentication** | All `/api/*` routes require `auth:sanctum` |
+| **Stripe webhooks** | Routed to Cashier's `WebhookController`; signature verified automatically; CSRF-exempt via `preventRequestForgery(except:)` |
+| **File uploads** | SVG blocked; `mimetypes:` binary check (not extension-based `mimes:`) to prevent MIME confusion |
+| **Rate limiting** | Named rate limiters on: shared report pages (60/min), PDF downloads (10/min), audit creation, new ticket (10/hr), ticket reply (20/min), registration, password reset |
+| **Inertia props** | Strict allowlist — Stripe keys, session tokens, raw exception data never sent to the frontend |
+| **Shared pages** | `$report->unsetRelation('user')` before render — no user PII in public page HTML |
+| **Session cookies** | `SESSION_SECURE_COOKIE=true` in production (HTTPS-only) |
+| **Admin routes** | Protected by `admin` middleware (`EnsureUserIsAdmin`) — 403 for non-admins |
+| **Input validation** | UUID route regex, `min:1` on IDs, sanitized Content-Disposition filenames |
+| **Error pages** | `APP_DEBUG=false` in production — branded error pages replace stack traces; Inertia XHR errors also get branded pages |
+| **Subscription gate** | `RequireActiveSubscription` middleware on all audit routes — admins and unlimited accounts bypass |
 
 ---
 
-## Production Deployment
+## Languages
 
-A full production Docker stack lives in the `deploy/` folder:
+All 7 languages cover the full UI, PDF/CSV exports, and email notifications. The selected language is saved per user account.
 
-```bash
-cd deploy
-cp .env.example .env   # fill in your values
-docker compose up -d
-```
-
-The stack includes Nginx with automatic Let's Encrypt SSL, MySQL, Redis, a PHP-FPM app container, and a queue worker. Point your domain's DNS A record to the server IP before running — Certbot handles certificate issuance automatically.
+| Code | Language | Target countries |
+|---|---|---|
+| `en` | English | Global / UK / US |
+| `el` | Greek | Greece (GR — 24% VAT) |
+| `de` | German | Germany (DE — 19% VAT) |
+| `fr` | French | France (FR — 20% VAT) |
+| `es` | Spanish | Spain (ES — 21% VAT) |
+| `nl` | Dutch | Netherlands (NL — 21% VAT) |
+| `cs` | Czech | Czech Republic (CZ — 21% VAT) |
 
 ---
 
 ## License
 
-Private / proprietary.
+Private / proprietary. All rights reserved.
