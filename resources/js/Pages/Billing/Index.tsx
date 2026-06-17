@@ -143,7 +143,7 @@ export default function BillingIndex({
                 </div>
 
                 <div className="flex items-end gap-1 flex-wrap">
-                  <span className="text-3xl font-bold text-white">€22</span>
+                  <span className="text-3xl font-bold text-white">€19.99</span>
                   <span className="mb-1 text-sm text-gray-400">/{t('billing.perMonth')} + {t('billing.exclVat')}</span>
                 </div>
 
@@ -179,8 +179,8 @@ export default function BillingIndex({
                   {/* Plan selector */}
                   <div className="mb-5 grid grid-cols-2 gap-3">
                     {([
-                      { key: 'monthly', price: '€22', period: '/mo', note: `+ ${t('billing.exclVat')} · billed monthly` },
-                      { key: 'yearly',  price: '€220', period: '/yr', note: `+ ${t('billing.exclVat')} · save 2 months` },
+                      { key: 'monthly', price: '€19.99', period: '/mo', note: `+ ${t('billing.exclVat')} · billed monthly` },
+                      { key: 'yearly',  price: '€199.99', period: '/yr', note: `+ ${t('billing.exclVat')} · 2 months free` },
                     ] as const).map(p => (
                       <button
                         key={p.key}
@@ -195,7 +195,7 @@ export default function BillingIndex({
                         <div className="text-xl font-bold text-white">{p.price}<span className="text-sm font-normal text-gray-400">{p.period}</span></div>
                         <div className="mt-1 text-xs text-gray-500">{p.note}</div>
                         {p.key === 'yearly' && (
-                          <div className="mt-1.5 inline-block rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">Best value — €18.3/mo</div>
+                          <div className="mt-1.5 inline-block rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">Best value — 10 months price</div>
                         )}
                       </button>
                     ))}
@@ -248,7 +248,7 @@ export default function BillingIndex({
                         <ArrowRight className="h-4 w-4" />
                       )}
                       {t('billing.subscribeBtn')} —{' '}
-                      {subscribeForm.data.plan === 'yearly' ? '€220' : '€22'} + {t('billing.exclVat')}
+                      {subscribeForm.data.plan === 'yearly' ? '€199.99' : '€19.99'} + {t('billing.exclVat')}
                     </button>
                     <p className="text-center text-xs text-gray-600">{t('billing.vatNote')}</p>
                     <p className="text-center text-xs text-gray-500">{t('billing.nofees')}</p>

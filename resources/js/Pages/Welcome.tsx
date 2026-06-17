@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star, XCircle, X } from 'lucide-react';
+import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star, XCircle, X, Accessibility } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CookieBanner from '@/Components/CookieBanner';
 import { useEffect, useState } from 'react';
@@ -28,6 +28,7 @@ export default function Welcome({ auth }: PageProps) {
     { icon: Link2, title: t('welcome.features.broken.title'), desc: t('welcome.features.broken.desc'), color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/20' },
     { icon: ShoppingCart, title: t('welcome.features.ecommerce.title'), desc: t('welcome.features.ecommerce.desc'), color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
     { icon: Tag, title: t('welcome.features.tracking.title'), desc: t('welcome.features.tracking.desc'), color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
+    { icon: Accessibility, title: t('welcome.features.accessibility.title'), desc: t('welcome.features.accessibility.desc'), color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/20' },
   ];
 
   const planFeatures = t('welcome.planFeatures', { returnObjects: true }) as string[];
@@ -145,30 +146,66 @@ export default function Welcome({ auth }: PageProps) {
 
         {/* Pricing */}
         <section className="px-6 py-20 bg-gray-900/50">
-          <div className="mx-auto max-w-lg text-center">
+          <div className="mx-auto max-w-3xl text-center">
             <h2 className="text-3xl font-bold text-white">{t('welcome.pricingTitle')}</h2>
             <p className="mt-4 text-gray-400">{t('welcome.pricingSub')}</p>
-            <div className="mt-10 rounded-2xl border border-violet-500/30 bg-gray-900 p-8 shadow-2xl shadow-violet-500/10">
-              <div className="flex items-end justify-center gap-1">
-                <span className="text-5xl font-extrabold text-white">€19.99</span>
-                <span className="mb-2 text-gray-400">{t('welcome.perMonth')}</span>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-2">
+              {/* Monthly */}
+              <div className="rounded-2xl border border-gray-700 bg-gray-900 p-8 text-left shadow-xl">
+                <p className="text-sm font-medium text-gray-400 mb-4">Monthly</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-extrabold text-white">€19.99</span>
+                  <span className="mb-1 text-gray-400">{t('welcome.perMonth')}</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">+ excl. VAT</p>
+                <ul className="mt-6 space-y-3">
+                  {planFeatures.map((f) => (
+                    <li key={f} className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/register"
+                  className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-gray-700 py-3 text-sm font-semibold text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                >
+                  {t('welcome.getStarted')} <ArrowRight className="h-4 w-4" />
+                </Link>
               </div>
-              <ul className="mt-8 space-y-3 text-left">
-                {planFeatures.map((f) => (
-                  <li key={f} className="flex items-center gap-3 text-gray-300">
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-violet-400" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              <Link
-                href="/register"
-                className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-4 text-base font-semibold text-white hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/25"
-              >
-                {t('welcome.getStarted')} <ArrowRight className="h-5 w-5" />
-              </Link>
-              <p className="mt-3 text-xs text-gray-500">{t('welcome.nofees')}</p>
+
+              {/* Yearly */}
+              <div className="rounded-2xl border border-violet-500/40 bg-gray-900 p-8 text-left shadow-2xl shadow-violet-500/10 relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white">
+                    2 months free
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-violet-400 mb-4">Yearly</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-extrabold text-white">€199.99</span>
+                  <span className="mb-1 text-gray-400">/year</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">+ excl. VAT · 10 months price for 12</p>
+                <ul className="mt-6 space-y-3">
+                  {planFeatures.map((f) => (
+                    <li key={f} className="flex items-center gap-3 text-sm text-gray-300">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/register"
+                  className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/25"
+                >
+                  {t('welcome.getStarted')} <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
             </div>
+
+            <p className="mt-6 text-xs text-gray-600">{t('welcome.nofees')} All prices excl. VAT.</p>
           </div>
         </section>
 

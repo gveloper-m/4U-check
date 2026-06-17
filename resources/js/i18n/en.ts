@@ -22,11 +22,11 @@ const en = {
     headline1: "Know exactly what's",
     headline2: 'broken',
     headline3: 'on your site',
-    sub: '4utest runs 6 deep audits in parallel — SEO, security, performance, broken links, e-commerce catalog, and marketing tracking — giving you a complete health score in minutes.',
+    sub: '4utest runs 7 deep audits in parallel — SEO, security, performance, broken links, e-commerce catalog, marketing tracking, and accessibility — giving you a complete health score in minutes.',
     cta: 'Start auditing free',
     signin: 'Sign in',
     getStarted: 'Get Started',
-    featuresTitle: '6 audit modules in every scan',
+    featuresTitle: '7 audit modules in every scan',
     featuresSub: 'Run concurrently. Results in minutes.',
     pricingTitle: 'Simple pricing',
     pricingSub: 'One plan. Everything included.',
@@ -42,10 +42,11 @@ const en = {
       broken: { title: 'Broken Resources', desc: 'Find all broken links and missing images across every page.' },
       ecommerce: { title: 'E-commerce Catalog', desc: 'Price integrity, stock mismatches, disabled cart buttons on product pages.' },
       tracking: { title: 'Marketing Tracking', desc: 'Detect GA4, Facebook Pixel, TikTok Pixel across all site pages.' },
+      accessibility: { title: 'Accessibility', desc: 'WCAG checks, form labels, ARIA attributes, heading hierarchy, image alt text.' },
     },
     planFeatures: [
       'Unlimited website scans',
-      'All 6 audit modules',
+      'All 7 audit modules',
       'Scheduled automatic scans',
       'Full scan history & comparisons',
       'PDF & CSV exports',
@@ -240,7 +241,7 @@ const en = {
     nofees: 'No setup fees. Cancel anytime.',
     features: [
       'Unlimited website scans',
-      'All 6 audit modules',
+      'All 7 audit modules',
       'Scheduled automatic scans',
       'PDF & CSV exports',
       'Full scan history & comparisons',
@@ -392,7 +393,7 @@ const en = {
     instructions: [
       {
         title: 'Running a Scan',
-        body: 'Go to "New Scan", enter your website URL, and optionally give it a name. Click "Run Audit". Six modules run in parallel — SEO, Security, Performance, Broken Resources, E-commerce Catalog, and Marketing Tracking. Most scans complete in 3–10 minutes.',
+        body: 'Go to "New Scan", enter your website URL, and optionally give it a name. Click "Run Audit". Seven modules run in parallel — SEO, Security, Performance, Broken Resources, E-commerce Catalog, Marketing Tracking, and Accessibility. Most scans complete in 3–10 minutes.',
       },
       {
         title: 'SEO & Schema',
