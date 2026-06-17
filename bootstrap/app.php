@@ -32,4 +32,17 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request) => $request->is('api/*'),
         );
+
+        // Render branded error pages for Inertia XHR requests
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response, \Throwable $e, Request $request) {
+            $status = $response->getStatusCode();
+            if (
+                $request->header('X-Inertia') &&
+                in_array($status, [401, 403, 404, 419, 429, 500, 503]) &&
+                view()->exists("errors.{$status}")
+            ) {
+                return response()->view("errors.{$status}", [], $status);
+            }
+            return $response;
+        });
     })->create();
