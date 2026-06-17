@@ -14,11 +14,21 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
+interface Quota {
+  used: number;
+  limit: number;
+  bonus: number;
+  remaining: number;
+  resets_at: string;
+  percent: number;
+}
+
 interface DashboardProps extends PageProps {
   recentReports: FullAuditReport[];
   totalReports: number;
   scheduledScans: number;
   subscription: 'active' | 'inactive';
+  quota: Quota | null;
 }
 
 function healthColor(score?: number): string {
@@ -73,6 +83,7 @@ export default function Dashboard({
   totalReports,
   scheduledScans,
   subscription,
+  quota,
 }: DashboardProps) {
   const { t } = useTranslation();
   const avg = avgHealthScore(recentReports);
@@ -151,6 +162,37 @@ export default function Dashboard({
             );
           })}
         </div>
+
+        {/* Crawl quota */}
+        {quota && (
+          <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+            <div className="flex items-center justify-between mb-3">
+              <div>
+                <h2 className="text-sm font-semibold text-white">Monthly crawl quota</h2>
+                <p className="mt-0.5 text-xs text-gray-500">Resets {quota.resets_at}</p>
+              </div>
+              <div className="text-right">
+                <span className={`text-2xl font-bold ${quota.remaining === 0 ? 'text-rose-400' : quota.percent >= 80 ? 'text-amber-400' : 'text-white'}`}>
+                  {quota.remaining}
+                </span>
+                <span className="text-sm text-gray-500"> remaining</span>
+              </div>
+            </div>
+            <div className="h-2 w-full rounded-full bg-gray-800">
+              <div
+                className={`h-2 rounded-full transition-all ${quota.percent >= 95 ? 'bg-rose-500' : quota.percent >= 80 ? 'bg-amber-500' : 'bg-violet-500'}`}
+                style={{ width: `${quota.percent}%` }}
+              />
+            </div>
+            <div className="mt-2 flex items-center justify-between text-xs text-gray-500">
+              <span>{quota.used} used</span>
+              <span>
+                {quota.limit} total
+                {quota.bonus > 0 && <span className="ml-1 text-violet-400">(+{quota.bonus} bonus)</span>}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Recent Scans */}
         <div className="rounded-xl border border-gray-800 bg-gray-900">

@@ -1,11 +1,12 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { useState } from 'react';
 import {
     ArrowLeft, ShieldCheck, Infinity, Star, Globe, ScanLine, BarChart2,
     TrendingUp, Ticket, CreditCard, Calendar, Clock, CheckCircle2,
     XCircle, AlertTriangle, ChevronRight, Loader2, ExternalLink,
+    Gift, Mail,
 } from 'lucide-react';
 
 interface AdminUser {
@@ -130,6 +131,9 @@ function BarChart({ data }: { data: MonthlyCrawl[] }) {
 export default function AdminUsersShow({ adminUser: u, subscription, stripeData, monthlyCrawls, topSites, recentReports }: Props) {
     const [togglingAdmin, setTogglingAdmin] = useState(false);
     const [togglingUnlimited, setTogglingUnlimited] = useState(false);
+
+    const crawlForm = useForm({ amount: '' });
+    const emailForm = useForm({ subject: '', body: '' });
 
     const toggleAdmin = () => {
         setTogglingAdmin(true);
@@ -404,6 +408,90 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                     View tickets <ChevronRight className="h-4 w-4" />
                                 </Link>
                             </div>
+                        </div>
+
+                        {/* Grant extra crawls */}
+                        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                            <div className="mb-4 flex items-center gap-2">
+                                <Gift className="h-4 w-4 text-violet-400" />
+                                <h2 className="text-sm font-semibold text-white">Grant extra crawls</h2>
+                            </div>
+                            <form
+                                onSubmit={e => {
+                                    e.preventDefault();
+                                    crawlForm.post(`/admin/users/${u.id}/grant-crawls`, {
+                                        preserveScroll: true,
+                                        onSuccess: () => crawlForm.reset(),
+                                    });
+                                }}
+                                className="space-y-3"
+                            >
+                                <input
+                                    type="number"
+                                    min={1}
+                                    max={9999}
+                                    placeholder="Number of crawls…"
+                                    value={crawlForm.data.amount}
+                                    onChange={e => crawlForm.setData('amount', e.target.value)}
+                                    className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none"
+                                />
+                                {crawlForm.errors.amount && (
+                                    <p className="text-xs text-rose-400">{crawlForm.errors.amount}</p>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={crawlForm.processing || !crawlForm.data.amount}
+                                    className="w-full rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50 transition-colors"
+                                >
+                                    {crawlForm.processing ? 'Granting…' : 'Grant crawls'}
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Send email */}
+                        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                            <div className="mb-4 flex items-center gap-2">
+                                <Mail className="h-4 w-4 text-sky-400" />
+                                <h2 className="text-sm font-semibold text-white">Send email</h2>
+                            </div>
+                            <form
+                                onSubmit={e => {
+                                    e.preventDefault();
+                                    emailForm.post(`/admin/users/${u.id}/send-email`, {
+                                        preserveScroll: true,
+                                        onSuccess: () => emailForm.reset(),
+                                    });
+                                }}
+                                className="space-y-3"
+                            >
+                                <input
+                                    type="text"
+                                    placeholder="Subject…"
+                                    value={emailForm.data.subject}
+                                    onChange={e => emailForm.setData('subject', e.target.value)}
+                                    className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none"
+                                />
+                                {emailForm.errors.subject && (
+                                    <p className="text-xs text-rose-400">{emailForm.errors.subject}</p>
+                                )}
+                                <textarea
+                                    rows={5}
+                                    placeholder="Message…"
+                                    value={emailForm.data.body}
+                                    onChange={e => emailForm.setData('body', e.target.value)}
+                                    className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none resize-none"
+                                />
+                                {emailForm.errors.body && (
+                                    <p className="text-xs text-rose-400">{emailForm.errors.body}</p>
+                                )}
+                                <button
+                                    type="submit"
+                                    disabled={emailForm.processing || !emailForm.data.subject || !emailForm.data.body}
+                                    className="w-full rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-50 transition-colors"
+                                >
+                                    {emailForm.processing ? 'Sending…' : 'Send email'}
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

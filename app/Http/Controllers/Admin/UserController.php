@@ -3,12 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Mail\AdminUserMail;
 use App\Models\FullAuditReport;
 use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -177,5 +180,109 @@ class UserController extends Controller
     {
         $user->forceFill(['is_unlimited' => ! $user->is_unlimited])->save();
         return back()->with('success', 'Unlimited status updated.');
+    }
+
+    public function grantCrawls(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'amount' => 'required|integer|min:1|max:9999',
+        ]);
+
+        $user->increment('crawl_quota_bonus', $validated['amount']);
+
+        return back()->with('success', "Granted {$validated['amount']} extra crawls to {$user->name}. New total bonus: {$user->fresh()->crawl_quota_bonus}.");
+    }
+
+    public function sendEmail(Request $request, User $user): RedirectResponse
+    {
+        $validated = $request->validate([
+            'subject' => 'required|string|max:255',
+            'body'    => 'required|string|max:5000',
+        ]);
+
+        Mail::to($user->email, $user->name)
+            ->send(new AdminUserMail($user, $validated['subject'], $validated['body']));
+
+        return back()->with('success', "Email sent to {$user->email}.");
+    }
+
+    public function export(): HttpResponse
+    {
+        $users = DB::table('users')
+            ->leftJoin('full_audit_reports as far', 'far.user_id', '=', 'users.id')
+            ->leftJoin('subscriptions as sub', function ($j) {
+                $j->on('sub.user_id', '=', 'users.id')->whereRaw("sub.type = 'default'");
+            })
+            ->select([
+                'users.id',
+                'users.name',
+                'users.email',
+                'users.phone',
+                'users.company_name',
+                'users.company_site',
+                'users.vat_number',
+                'users.is_agency',
+                'users.is_admin',
+                'users.is_unlimited',
+                'users.crawl_quota_bonus',
+                'users.created_at',
+                'sub.stripe_status',
+                DB::raw('COUNT(far.id) as total_crawls'),
+                DB::raw('SUM(CASE WHEN YEAR(far.created_at) = YEAR(NOW()) AND MONTH(far.created_at) = MONTH(NOW()) THEN 1 ELSE 0 END) as month_crawls'),
+                DB::raw('COUNT(DISTINCT far.site_url) as distinct_sites'),
+                DB::raw('ROUND(AVG(far.health_score), 1) as avg_score'),
+                DB::raw('MAX(far.created_at) as last_crawl_at'),
+            ])
+            ->groupBy(
+                'users.id', 'users.name', 'users.email', 'users.phone',
+                'users.company_name', 'users.company_site', 'users.vat_number',
+                'users.is_agency', 'users.is_admin', 'users.is_unlimited',
+                'users.crawl_quota_bonus', 'users.created_at', 'sub.stripe_status'
+            )
+            ->orderByDesc('users.created_at')
+            ->get();
+
+        $headers = [
+            'Content-Type'        => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="users-export-' . now()->format('Y-m-d') . '.csv"',
+        ];
+
+        $columns = [
+            'ID', 'Name', 'Email', 'Phone', 'Company Name', 'Company Site',
+            'VAT Number', 'Is Agency', 'Is Admin', 'Is Unlimited',
+            'Quota Bonus', 'Plan', 'Total Crawls', 'Month Crawls',
+            'Distinct Sites', 'Avg Score', 'Last Crawl', 'Joined',
+        ];
+
+        $callback = function () use ($users, $columns) {
+            $fh = fopen('php://output', 'w');
+            fprintf($fh, chr(0xEF) . chr(0xBB) . chr(0xBF)); // UTF-8 BOM for Excel
+            fputcsv($fh, $columns);
+            foreach ($users as $u) {
+                fputcsv($fh, [
+                    $u->id,
+                    $u->name,
+                    $u->email,
+                    $u->phone ?? '',
+                    $u->company_name ?? '',
+                    $u->company_site ?? '',
+                    $u->vat_number ?? '',
+                    $u->is_agency ? 'Yes' : 'No',
+                    $u->is_admin ? 'Yes' : 'No',
+                    $u->is_unlimited ? 'Yes' : 'No',
+                    $u->crawl_quota_bonus ?? 0,
+                    $u->stripe_status ?? 'free',
+                    $u->total_crawls ?? 0,
+                    $u->month_crawls ?? 0,
+                    $u->distinct_sites ?? 0,
+                    $u->avg_score ?? '',
+                    $u->last_crawl_at ?? '',
+                    $u->created_at,
+                ]);
+            }
+            fclose($fh);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 }

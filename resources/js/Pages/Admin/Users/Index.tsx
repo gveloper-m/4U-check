@@ -5,7 +5,7 @@ import { useState } from 'react';
 import {
     Users, Globe, BarChart2, Search, ChevronRight,
     CheckCircle2, XCircle, ShieldCheck, Infinity,
-    TrendingUp, Ticket, ScanLine, Star,
+    TrendingUp, Ticket, ScanLine, Star, Download,
 } from 'lucide-react';
 
 interface UserRow {
@@ -113,15 +113,23 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
                 <div className="rounded-xl border border-gray-800 bg-gray-900">
                     <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
                         <h2 className="text-sm font-semibold text-white">All Users</h2>
-                        <form onSubmit={handleSearch} className="relative">
-                            <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
-                            <input
-                                value={search}
-                                onChange={e => setSearch(e.target.value)}
-                                placeholder="Search users…"
-                                className="rounded-lg border border-gray-700 bg-gray-800 pl-8 pr-3 py-1.5 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none w-56"
-                            />
-                        </form>
+                        <div className="flex items-center gap-3">
+                            <form onSubmit={handleSearch} className="relative">
+                                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
+                                <input
+                                    value={search}
+                                    onChange={e => setSearch(e.target.value)}
+                                    placeholder="Search users…"
+                                    className="rounded-lg border border-gray-700 bg-gray-800 pl-8 pr-3 py-1.5 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none w-56"
+                                />
+                            </form>
+                            <a
+                                href="/admin/users/export"
+                                className="flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:border-gray-600 hover:text-white transition-colors"
+                            >
+                                <Download className="h-3.5 w-3.5" /> Export CSV
+                            </a>
+                        </div>
                     </div>
 
                     <div className="overflow-x-auto">

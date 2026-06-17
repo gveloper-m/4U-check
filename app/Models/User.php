@@ -48,6 +48,11 @@ class User extends Authenticatable
 
     public const MONTHLY_SCAN_LIMIT = 120;
 
+    public function monthlyLimit(): int
+    {
+        return self::MONTHLY_SCAN_LIMIT + (int) ($this->crawl_quota_bonus ?? 0);
+    }
+
     public function scansThisMonth(): int
     {
         return $this->auditReports()
@@ -61,7 +66,7 @@ class User extends Authenticatable
         if ($this->is_unlimited) {
             return false;
         }
-        return $this->scansThisMonth() >= self::MONTHLY_SCAN_LIMIT;
+        return $this->scansThisMonth() >= $this->monthlyLimit();
     }
 
     public function remainingScans(): int
@@ -69,7 +74,7 @@ class User extends Authenticatable
         if ($this->is_unlimited) {
             return PHP_INT_MAX;
         }
-        return max(0, self::MONTHLY_SCAN_LIMIT - $this->scansThisMonth());
+        return max(0, $this->monthlyLimit() - $this->scansThisMonth());
     }
 
     public function hasActiveSubscription(): bool

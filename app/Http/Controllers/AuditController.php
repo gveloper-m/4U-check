@@ -43,7 +43,7 @@ class AuditController extends Controller
         return Inertia::render('Audits/Index', [
             'reports'     => $reports,
             'scansUsed'   => $user->is_unlimited ? 0 : $user->scansThisMonth(),
-            'scanLimit'   => User::MONTHLY_SCAN_LIMIT,
+            'scanLimit'   => $user->is_unlimited ? null : $user->monthlyLimit(),
             'isUnlimited' => $user->is_unlimited,
         ]);
     }
@@ -59,7 +59,9 @@ class AuditController extends Controller
         }
 
         if (auth()->user()->hasReachedScanLimit()) {
-            return back()->with('error', 'Monthly scan limit reached (120/120). Your quota resets on the 1st of next month.');
+            $used  = $user->scansThisMonth();
+            $limit = $user->monthlyLimit();
+            return back()->with('error', "Monthly scan limit reached ({$used}/{$limit}). Your quota resets on the 1st of next month.");
         }
 
         $validated = $request->validate([
