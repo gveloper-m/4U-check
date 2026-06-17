@@ -46,7 +46,7 @@ export default function BillingIndex({
 }: BillingProps) {
   const { t } = useTranslation();
   const planFeatures = t('billing.features', { returnObjects: true }) as string[];
-  const subscribeForm = useForm({});
+  const subscribeForm = useForm<{ plan: 'monthly' | 'yearly' }>({ plan: 'monthly' });
   const cancelForm = useForm({});
 
   const handleSubscribe: FormEventHandler = (e) => {
@@ -168,10 +168,31 @@ export default function BillingIndex({
                 </div>
 
                 <div>
-                  <div className="flex items-end gap-1 mb-4">
-                    <span className="text-3xl font-bold text-white">€19.99</span>
-                    <span className="mb-1 text-sm text-gray-400">{t('billing.perMonth')}</span>
+                  {/* Plan selector */}
+                  <div className="mb-5 grid grid-cols-2 gap-3">
+                    {([
+                      { key: 'monthly', price: '€22', period: '/month', note: 'Billed monthly' },
+                      { key: 'yearly',  price: '€220', period: '/year', note: 'Save 2 months — €18.3/mo' },
+                    ] as const).map(p => (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => subscribeForm.setData('plan', p.key)}
+                        className={`rounded-xl border p-4 text-left transition-colors ${
+                          subscribeForm.data.plan === p.key
+                            ? 'border-violet-500/60 bg-violet-600/15'
+                            : 'border-gray-700 hover:border-gray-600'
+                        }`}
+                      >
+                        <div className="text-xl font-bold text-white">{p.price}<span className="text-sm font-normal text-gray-400">{p.period}</span></div>
+                        <div className="mt-1 text-xs text-gray-500">{p.note}</div>
+                        {p.key === 'yearly' && (
+                          <div className="mt-1.5 inline-block rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">Best value</div>
+                        )}
+                      </button>
+                    ))}
                   </div>
+
                   <ul className="mb-5 space-y-2">
                     {planFeatures.map((f) => (
                       <li key={f} className="flex items-center gap-2 text-sm text-gray-300">
@@ -191,7 +212,8 @@ export default function BillingIndex({
                       ) : (
                         <ArrowRight className="h-4 w-4" />
                       )}
-                      {t('billing.subscribeBtn')} — €19.99{t('billing.perMonth')}
+                      {t('billing.subscribeBtn')} —{' '}
+                      {subscribeForm.data.plan === 'yearly' ? '€220/year' : '€22/month'}
                     </button>
                   </form>
                   <p className="mt-2 text-center text-xs text-gray-500">

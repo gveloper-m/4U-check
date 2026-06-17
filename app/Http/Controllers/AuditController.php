@@ -89,7 +89,10 @@ class AuditController extends Controller
      */
     public function show(FullAuditReport $report): InertiaResponse
     {
-        abort_unless($report->user_id === auth()->id(), 403);
+        $user = auth()->user();
+        if (! $user->is_admin) {
+            abort_unless($report->user_id === $user->id, 403);
+        }
 
         return Inertia::render('Audits/Show', ['report' => $report]);
     }

@@ -9,6 +9,7 @@ import {
     Clock,
     CreditCard,
     User,
+    Users,
     LogOut,
     Menu,
     Zap,
@@ -58,6 +59,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         ...(auth.user.is_admin ? [
             { label: 'Blog',    href: '/admin/blog',    icon: FileText, routeName: 'admin.blog.index' },
             { label: 'Tickets', href: '/admin/tickets', icon: Ticket,   routeName: 'admin.tickets.index' },
+            { label: 'Users',   href: '/admin/users',   icon: Users,    routeName: 'admin.users.index' },
         ] : []),
     ];
 

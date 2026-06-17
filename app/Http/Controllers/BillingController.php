@@ -37,8 +37,15 @@ class BillingController extends Controller
      */
     public function subscribe(Request $request): RedirectResponse
     {
-        $priceId = config('services.stripe.price_id');
-        abort_if(empty($priceId), 500, 'Stripe price not configured.');
+        $validated = $request->validate([
+            'plan' => 'required|in:monthly,yearly',
+        ]);
+
+        $priceId = $validated['plan'] === 'yearly'
+            ? config('services.stripe.yearly_price_id')
+            : config('services.stripe.monthly_price_id');
+
+        abort_if(empty($priceId), 500, 'Stripe price not configured for this plan.');
 
         $checkout = $request->user()
             ->newSubscription('default', $priceId)
