@@ -70,18 +70,17 @@ class SharedReportController extends Controller
             return null;
         }
 
-        $logoBase64 = null;
+        $logoPath = null;
         if ($user->agency_logo) {
             $path = storage_path('app/public/' . $user->agency_logo);
             if (file_exists($path)) {
-                $mime       = mime_content_type($path);
-                $logoBase64 = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+                $logoPath = $path;
             }
         }
 
         return [
             'name'            => $user->company_name,
-            'logo_base64'     => $logoBase64,
+            'logo_path'       => $logoPath,
             'primary_color'   => $user->agency_primary_color   ?? '#7c3aed',
             'secondary_color' => $user->agency_secondary_color ?? '#1e1b4b',
             'footer_text'     => $user->agency_footer_text,

@@ -174,17 +174,16 @@ class AuditController extends Controller
 
         $agency = null;
         if ($user->is_agency) {
-            $logoBase64 = null;
+            $logoPath = null;
             if ($user->agency_logo) {
                 $path = storage_path('app/public/' . $user->agency_logo);
                 if (file_exists($path)) {
-                    $mime        = mime_content_type($path);
-                    $logoBase64  = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($path));
+                    $logoPath = $path;
                 }
             }
             $agency = [
                 'name'            => $user->company_name,
-                'logo_base64'     => $logoBase64,
+                'logo_path'       => $logoPath,
                 'primary_color'   => $user->agency_primary_color   ?? '#1a1a2e',
                 'secondary_color' => $user->agency_secondary_color  ?? '#2d3748',
                 'footer_text'     => $user->agency_footer_text,

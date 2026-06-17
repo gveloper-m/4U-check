@@ -3,29 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <title>Full Audit Report &mdash; {{ $report->site_url }}</title>
+@php
+  $coverBg   = $agency ? ($agency['primary_color']   ?? '#1a1a2e') : '#1a1a2e';
+  $sectionBg = $agency ? ($agency['secondary_color'] ?? '#2d3748') : '#2d3748';
+@endphp
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: DejaVu Sans, Arial, sans-serif; font-size: 11px; color: #1a1a2e; background: #fff; }
 
-@php
-  $coverBg     = $agency ? $agency['primary_color']   : '#1a1a2e';
-  $sectionBg   = $agency ? $agency['secondary_color'] : '#2d3748';
-@endphp
-  .cover { padding: 60px 50px; background: {{ $coverBg }}; color: #fff; min-height: 200px; }
-  .cover h1 { font-size: 26px; font-weight: 700; letter-spacing: 1px; margin-bottom: 8px; }
-  .cover .url { font-size: 13px; color: #a0aec0; word-break: break-all; margin-bottom: 20px; }
-  .cover .meta { font-size: 10px; color: #718096; }
-  .cover .agency-logo { max-height: 50px; max-width: 180px; margin-bottom: 16px; }
+  .cover { padding: 50px 50px 40px; background: {{ $coverBg }}; color: #fff; }
+  .cover-label { font-size: 11px; color: #cbd5e0; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+  .cover-title { font-size: 22px; font-weight: 700; color: #fff; margin-bottom: 4px; word-break: break-all; }
+  .cover-url   { font-size: 13px; color: #e2e8f0; margin-bottom: 16px; word-break: break-all; }
+  .cover-meta  { font-size: 10px; color: #a0aec0; margin-top: 4px; }
+  .agency-logo { max-height: 56px; max-width: 200px; margin-bottom: 18px; display: block; }
 
-  .score-badge { display: inline-block; padding: 6px 18px; border-radius: 30px; font-size: 20px;
+  .score-badge { display: inline-block; padding: 6px 20px; border-radius: 30px; font-size: 20px;
                  font-weight: 700; color: #fff; margin-top: 14px; }
   .score-green  { background: #38a169; }
   .score-yellow { background: #d69e2e; }
   .score-red    { background: #e53e3e; }
 
-  .section { margin: 24px 30px; page-break-inside: avoid; }
-  .section-header { background: {{ $sectionBg }}; color: #fff; padding: 8px 14px; border-radius: 6px 6px 0 0;
-                    font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+  .section { margin: 20px 30px; page-break-inside: avoid; }
+  .section-header { background: {{ $sectionBg }}; color: #fff; padding: 8px 14px;
+                    border-radius: 6px 6px 0 0; font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
   .section-body { border: 1px solid #e2e8f0; border-top: none; border-radius: 0 0 6px 6px; padding: 14px; }
 
   .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 9px; font-weight: 700; }
@@ -35,35 +36,39 @@
   .pill-gray   { background: #e2e8f0; color: #4a5568; }
 
   table { width: 100%; border-collapse: collapse; margin-top: 8px; }
-  th, td { padding: 5px 8px; border: 1px solid #e2e8f0; font-size: 10px; text-align: left; }
+  th, td { padding: 5px 8px; border: 1px solid #e2e8f0; font-size: 10px; text-align: left; vertical-align: top; }
   th { background: #f7fafc; font-weight: 700; }
   tr:nth-child(even) { background: #f7fafc; }
 
-  .deductions { margin-top: 6px; }
+  .url-cell { word-break: break-all; font-size: 9px; color: #4a5568; }
+  .found-on  { font-size: 9px; color: #718096; word-break: break-all; }
+
   .deduction-item { padding: 3px 0; border-bottom: 1px dashed #e2e8f0; font-size: 10px; color: #e53e3e; }
 
-  .footer { margin: 30px; font-size: 9px; color: #a0aec0; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 10px; }
+  .footer { margin: 30px; font-size: 9px; color: #a0aec0; text-align: center;
+             border-top: 1px solid #e2e8f0; padding-top: 10px; }
 </style>
 </head>
 <body>
 
 <!-- Cover -->
 <div class="cover">
-  @if($agency)
-    @if($agency['logo_base64'])
-      <div><img src="{{ $agency['logo_base64'] }}" class="agency-logo" alt="Agency logo" /></div>
-    @elseif($agency['name'])
-      <div style="font-size:18px; font-weight:700; margin-bottom:16px;">{{ $agency['name'] }}</div>
-    @endif
+  @if($agency && $agency['logo_path'])
+    <img src="{{ $agency['logo_path'] }}" class="agency-logo" alt="Logo" />
+  @elseif($agency && $agency['name'])
+    <div style="font-size:20px; font-weight:700; color:#fff; margin-bottom:18px;">{{ $agency['name'] }}</div>
   @else
-    <h1>4utest</h1>
+    <div style="font-size:20px; font-weight:700; color:#fff; margin-bottom:18px;">4utest</div>
   @endif
-  <div style="font-size:13px; color:#a0aec0; margin-bottom:4px;">Full Audit Report</div>
+
+  <div class="cover-label">Full Audit Report</div>
+
   @if($report->name)
-    <div class="url" style="color:#fff; font-size:15px;">{{ $report->name }}</div>
+    <div class="cover-title">{{ $report->name }}</div>
   @endif
-  <div class="url">{{ $report->site_url }}</div>
-  <div class="meta">Generated: {{ $report->created_at?->format('d M Y H:i') }}</div>
+  <div class="cover-url">{{ $report->site_url }}</div>
+  <div class="cover-meta">Generated: {{ $report->created_at?->format('d M Y H:i') }}</div>
+
   @if($report->health_score !== null)
     @php
       $score = $report->health_score;
@@ -78,32 +83,30 @@
 <div class="section">
   <div class="section-header">Score Deductions</div>
   <div class="section-body">
-    <div class="deductions">
-      @foreach($report->score_deductions as $ded)
-        <div class="deduction-item">&#8722; {{ $ded }}</div>
-      @endforeach
-    </div>
+    @foreach($report->score_deductions as $ded)
+      <div class="deduction-item">&#8722; {{ $ded }}</div>
+    @endforeach
   </div>
 </div>
 @endif
 
 <!-- SEO & Schema -->
 @if($report->seo_schema_result)
+@php $seo = $report->seo_schema_result; @endphp
 <div class="section">
   <div class="section-header">SEO &amp; Schema</div>
   <div class="section-body">
     <table>
       <tr><th>Check</th><th>Status</th><th>Details</th></tr>
-      @php $seo = $report->seo_schema_result; @endphp
       <tr>
         <td>Meta Title</td>
         <td><span class="pill {{ ($seo['meta_title']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-red' }}">{{ $seo['meta_title']['status'] ?? '-' }}</span></td>
-        <td>{{ $seo['meta_title']['value'] ?? '' }}</td>
+        <td class="url-cell">{{ $seo['meta_title']['value'] ?? '' }}</td>
       </tr>
       <tr>
         <td>Meta Description</td>
         <td><span class="pill {{ ($seo['meta_description']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-red' }}">{{ $seo['meta_description']['status'] ?? '-' }}</span></td>
-        <td>Length: {{ $seo['meta_description']['length'] ?? '-' }}</td>
+        <td>Length: {{ $seo['meta_description']['length'] ?? '-' }} chars</td>
       </tr>
       <tr>
         <td>H1 Tags</td>
@@ -111,9 +114,9 @@
         <td>Count: {{ $seo['h1_tags']['count'] ?? '-' }}</td>
       </tr>
       <tr>
-        <td>Canonical</td>
+        <td>Canonical URL</td>
         <td><span class="pill {{ ($seo['canonical']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-yellow' }}">{{ $seo['canonical']['status'] ?? '-' }}</span></td>
-        <td>{{ $seo['canonical']['url'] ?? 'Not set' }}</td>
+        <td class="url-cell">{{ $seo['canonical']['url'] ?? 'Not set' }}</td>
       </tr>
       <tr>
         <td>Structured Data</td>
@@ -125,6 +128,21 @@
         <td><span class="pill {{ ($seo['open_graph']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-yellow' }}">{{ $seo['open_graph']['status'] ?? '-' }}</span></td>
         <td></td>
       </tr>
+      <tr>
+        <td>Image Alt Text</td>
+        <td><span class="pill {{ ($seo['image_alt_text']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-yellow' }}">{{ $seo['image_alt_text']['status'] ?? '-' }}</span></td>
+        <td>Missing: {{ $seo['image_alt_text']['missing_count'] ?? '-' }}</td>
+      </tr>
+      <tr>
+        <td>robots.txt</td>
+        <td><span class="pill {{ ($seo['technical_seo']['robots_txt']['exists'] ?? false) ? 'pill-green' : 'pill-red' }}">{{ ($seo['technical_seo']['robots_txt']['exists'] ?? false) ? 'Present' : 'Missing' }}</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>sitemap.xml</td>
+        <td><span class="pill {{ ($seo['technical_seo']['sitemap_xml']['exists'] ?? false) ? 'pill-green' : 'pill-red' }}">{{ ($seo['technical_seo']['sitemap_xml']['exists'] ?? false) ? 'Present' : 'Missing' }}</span></td>
+        <td></td>
+      </tr>
     </table>
   </div>
 </div>
@@ -132,16 +150,16 @@
 
 <!-- Security -->
 @if($report->security_result)
+@php $sec = $report->security_result; @endphp
 <div class="section">
   <div class="section-header">Security &amp; Infrastructure</div>
   <div class="section-body">
-    @php $sec = $report->security_result; @endphp
     <table>
       <tr><th>Check</th><th>Status</th><th>Details</th></tr>
       <tr>
         <td>SSL Certificate</td>
         <td><span class="pill {{ ($sec['ssl']['ssl_valid'] ?? false) ? 'pill-green' : 'pill-red' }}">{{ ($sec['ssl']['ssl_valid'] ?? false) ? 'Valid' : 'Invalid' }}</span></td>
-        <td>Expires in: {{ $sec['ssl']['ssl_days_left'] ?? '-' }} days</td>
+        <td>Expires in: {{ $sec['ssl']['ssl_days_left'] ?? '-' }} days &mdash; Issuer: {{ $sec['ssl']['ssl_issuer'] ?? '-' }}</td>
       </tr>
       <tr>
         <td>HTTPS Redirect</td>
@@ -155,8 +173,12 @@
       </tr>
       <tr>
         <td>Security Headers</td>
-        <td><span class="pill pill-gray">Score: {{ $sec['security_headers']['score'] ?? '-' }}/6</span></td>
-        <td></td>
+        <td><span class="pill pill-gray">{{ $sec['security_headers']['score'] ?? '-' }}/6</span></td>
+        <td>
+          @foreach($sec['security_headers']['headers'] ?? [] as $hdr => $present)
+            <span class="pill {{ $present ? 'pill-green' : 'pill-red' }}">{{ $hdr }}</span>&nbsp;
+          @endforeach
+        </td>
       </tr>
       <tr>
         <td>SPF Record</td>
@@ -175,43 +197,40 @@
 
 <!-- Performance -->
 @if($report->performance_result)
+@php $perf = $report->performance_result; @endphp
 <div class="section">
   <div class="section-header">Performance</div>
   <div class="section-body">
-    @php $perf = $report->performance_result; @endphp
     <table>
-      <tr><th>Metric</th><th>Value</th><th>Status</th></tr>
+      <tr><th>Metric</th><th>Value</th><th>Rating</th></tr>
       <tr>
         <td>TTFB</td>
         <td>{{ $perf['metrics']['ttfb_ms'] ?? '-' }} ms</td>
-        <td>
-          @php $ttfb = $perf['metrics']['ttfb_ms'] ?? null; @endphp
-          @if($ttfb !== null)
-            <span class="pill {{ $ttfb <= 400 ? 'pill-green' : ($ttfb <= 800 ? 'pill-yellow' : 'pill-red') }}">
-              {{ $ttfb <= 400 ? 'Good' : ($ttfb <= 800 ? 'Needs Improvement' : 'Poor') }}
-            </span>
-          @endif
+        <td>@php $ttfb = $perf['metrics']['ttfb_ms'] ?? null; @endphp
+          @if($ttfb !== null)<span class="pill {{ $ttfb <= 400 ? 'pill-green' : ($ttfb <= 800 ? 'pill-yellow' : 'pill-red') }}">{{ $ttfb <= 400 ? 'Good' : ($ttfb <= 800 ? 'Needs Improvement' : 'Poor') }}</span>@endif
         </td>
       </tr>
       <tr>
         <td>LCP (Desktop)</td>
         <td>{{ $perf['metrics']['desktop']['lcp_ms'] ?? '-' }} ms</td>
-        <td>
-          @php $lcp = $perf['metrics']['desktop']['lcp_ms'] ?? null; @endphp
-          @if($lcp !== null)
-            <span class="pill {{ $lcp <= 2500 ? 'pill-green' : ($lcp <= 4000 ? 'pill-yellow' : 'pill-red') }}">
-              {{ $lcp <= 2500 ? 'Good' : ($lcp <= 4000 ? 'Needs Improvement' : 'Poor') }}
-            </span>
-          @endif
+        <td>@php $lcp = $perf['metrics']['desktop']['lcp_ms'] ?? null; @endphp
+          @if($lcp !== null)<span class="pill {{ $lcp <= 2500 ? 'pill-green' : ($lcp <= 4000 ? 'pill-yellow' : 'pill-red') }}">{{ $lcp <= 2500 ? 'Good' : ($lcp <= 4000 ? 'Needs Improvement' : 'Poor') }}</span>@endif
+        </td>
+      </tr>
+      <tr>
+        <td>LCP (Mobile)</td>
+        <td>{{ $perf['metrics']['mobile']['lcp_ms'] ?? '-' }} ms</td>
+        <td>@php $lcpM = $perf['metrics']['mobile']['lcp_ms'] ?? null; @endphp
+          @if($lcpM !== null)<span class="pill {{ $lcpM <= 2500 ? 'pill-green' : ($lcpM <= 4000 ? 'pill-yellow' : 'pill-red') }}">{{ $lcpM <= 2500 ? 'Good' : ($lcpM <= 4000 ? 'Needs Improvement' : 'Poor') }}</span>@endif
         </td>
       </tr>
       <tr>
         <td>Compression</td>
-        <td colspan="2">
-          <span class="pill {{ ($perf['page_analysis']['compression_enabled'] ?? false) ? 'pill-green' : 'pill-red' }}">
-            {{ ($perf['page_analysis']['compression_enabled'] ?? false) ? 'Enabled' : 'Disabled' }}
-          </span>
-        </td>
+        <td colspan="2"><span class="pill {{ ($perf['page_analysis']['compression_enabled'] ?? false) ? 'pill-green' : 'pill-red' }}">{{ ($perf['page_analysis']['compression_enabled'] ?? false) ? 'Enabled' : 'Disabled' }}</span></td>
+      </tr>
+      <tr>
+        <td>Render-blocking resources</td>
+        <td colspan="2">{{ $perf['page_analysis']['total_render_blocking'] ?? 0 }}</td>
       </tr>
     </table>
   </div>
@@ -220,12 +239,12 @@
 
 <!-- Broken Resources -->
 @if($report->broken_resources_result)
+@php $br = $report->broken_resources_result; @endphp
 <div class="section">
-  <div class="section-header">Broken Resources</div>
+  <div class="section-header">Broken Resources &mdash; Summary</div>
   <div class="section-body">
-    @php $br = $report->broken_resources_result; @endphp
     <table>
-      <tr><th>Resource Type</th><th>Total Checked</th><th>Broken</th><th>Percentage</th></tr>
+      <tr><th>Type</th><th>Checked</th><th>Broken</th><th>%</th></tr>
       <tr>
         <td>Links</td>
         <td>{{ $br['summary']['total_links_checked'] ?? 0 }}</td>
@@ -241,14 +260,50 @@
     </table>
   </div>
 </div>
+
+@if(!empty($br['broken_links']))
+<div class="section">
+  <div class="section-header">Broken Links (up to 20)</div>
+  <div class="section-body">
+    <table>
+      <tr><th style="width:40%">Broken URL</th><th style="width:8%">Code</th><th style="width:52%">Found on page</th></tr>
+      @foreach($br['broken_links'] as $link)
+      <tr>
+        <td class="url-cell">{{ $link['url'] ?? '-' }}</td>
+        <td><span class="pill pill-red">{{ $link['status_code'] ?? '-' }}</span></td>
+        <td class="found-on">{{ $link['found_on'] ?? '-' }}</td>
+      </tr>
+      @endforeach
+    </table>
+  </div>
+</div>
 @endif
 
-<!-- Tracking -->
+@if(!empty($br['broken_images']))
+<div class="section">
+  <div class="section-header">Broken Images (up to 20)</div>
+  <div class="section-body">
+    <table>
+      <tr><th style="width:40%">Broken Image URL</th><th style="width:8%">Code</th><th style="width:52%">Found on page</th></tr>
+      @foreach($br['broken_images'] as $img)
+      <tr>
+        <td class="url-cell">{{ $img['url'] ?? '-' }}</td>
+        <td><span class="pill pill-red">{{ $img['status_code'] ?? '-' }}</span></td>
+        <td class="found-on">{{ $img['found_on'] ?? '-' }}</td>
+      </tr>
+      @endforeach
+    </table>
+  </div>
+</div>
+@endif
+@endif
+
+<!-- Marketing & Tracking -->
 @if($report->tracking_result)
+@php $trk = $report->tracking_result; @endphp
 <div class="section">
   <div class="section-header">Marketing &amp; Tracking</div>
   <div class="section-body">
-    @php $trk = $report->tracking_result; @endphp
     <table>
       <tr><th>Script</th><th>Detected</th><th>IDs Found</th></tr>
       <tr>
@@ -271,30 +326,74 @@
 </div>
 @endif
 
-<!-- Catalog -->
+<!-- E-Commerce Catalog -->
 @if($report->catalog_result)
+@php $cat = $report->catalog_result; @endphp
 <div class="section">
   <div class="section-header">E-Commerce Catalog Integrity</div>
   <div class="section-body">
-    @php $cat = $report->catalog_result; @endphp
     <table>
       <tr><th>Metric</th><th>Value</th></tr>
       <tr><td>Products Audited</td><td>{{ $cat['products_audited'] ?? 0 }}</td></tr>
       <tr><td>Broken Products</td><td>{{ $cat['broken_products_count'] ?? 0 }}</td></tr>
       <tr><td>Broken Percentage</td><td>{{ $cat['broken_percentage'] ?? 0 }}%</td></tr>
     </table>
+    @if(!empty($cat['broken_products']))
+    <table style="margin-top:10px;">
+      <tr><th style="width:55%">Product URL</th><th>Issue</th></tr>
+      @foreach(array_slice($cat['broken_products'] ?? [], 0, 15) as $prod)
+      <tr>
+        <td class="url-cell">{{ $prod['url'] ?? '-' }}</td>
+        <td style="font-size:9px;">{{ $prod['issue'] ?? $prod['reason'] ?? '-' }}</td>
+      </tr>
+      @endforeach
+    </table>
+    @endif
+  </div>
+</div>
+@endif
+
+<!-- Accessibility -->
+@if($report->accessibility_result)
+@php $acc = $report->accessibility_result; @endphp
+<div class="section">
+  <div class="section-header">Accessibility (WCAG)</div>
+  <div class="section-body">
+    <table>
+      <tr><th>Check</th><th>Status</th><th>Details</th></tr>
+      <tr>
+        <td>Form Labels</td>
+        <td><span class="pill {{ ($acc['form_labels']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-red' }}">{{ $acc['form_labels']['status'] ?? '-' }}</span></td>
+        <td>Missing: {{ $acc['form_labels']['missing_count'] ?? 0 }}</td>
+      </tr>
+      <tr>
+        <td>Image Alt Text</td>
+        <td><span class="pill {{ ($acc['image_alts']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-yellow' }}">{{ $acc['image_alts']['status'] ?? '-' }}</span></td>
+        <td>Missing: {{ $acc['image_alts']['missing_count'] ?? 0 }}</td>
+      </tr>
+      <tr>
+        <td>Heading Hierarchy</td>
+        <td><span class="pill {{ ($acc['heading_hierarchy']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-yellow' }}">{{ $acc['heading_hierarchy']['status'] ?? '-' }}</span></td>
+        <td></td>
+      </tr>
+      <tr>
+        <td>Landmark Elements</td>
+        <td><span class="pill {{ ($acc['landmarks']['has_main'] ?? false) ? 'pill-green' : 'pill-yellow' }}">{{ ($acc['landmarks']['has_main'] ?? false) ? 'Present' : 'Missing' }}</span></td>
+        <td>Skip nav: {{ ($acc['landmarks']['has_skip_nav'] ?? false) ? 'Yes' : 'No' }}</td>
+      </tr>
+    </table>
   </div>
 </div>
 @endif
 
 <div class="footer">
-  @if($agency && $agency['footer_text'])
+  @if($agency && ($agency['footer_text'] ?? null))
     {{ $agency['footer_text'] }} &mdash;
-  @endif
-  @if(!$agency)
+  @elseif(!$agency)
     Generated by 4utest &mdash;
   @endif
-  {{ now()->format('d M Y H:i') }}
+  Audit of {{ $report->site_url }} &mdash; {{ now()->format('d M Y H:i') }}
 </div>
+
 </body>
 </html>
