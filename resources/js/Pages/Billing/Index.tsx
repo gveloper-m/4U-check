@@ -35,6 +35,8 @@ interface BillingProps extends PageProps {
   subscription: SubscriptionData | null;
   is_unlimited: boolean;
   payment_method: PaymentMethodData | null;
+  company_name: string | null;
+  vat_number: string | null;
 }
 
 export default function BillingIndex({
@@ -42,11 +44,17 @@ export default function BillingIndex({
   subscription,
   is_unlimited,
   payment_method,
+  company_name,
+  vat_number,
   flash,
 }: BillingProps) {
   const { t } = useTranslation();
   const planFeatures = t('billing.features', { returnObjects: true }) as string[];
-  const subscribeForm = useForm<{ plan: 'monthly' | 'yearly' }>({ plan: 'monthly' });
+  const subscribeForm = useForm<{ plan: 'monthly' | 'yearly'; company_name: string; vat_number: string }>({
+    plan: 'monthly',
+    company_name: company_name ?? '',
+    vat_number: vat_number ?? '',
+  });
   const cancelForm = useForm({});
 
   const handleSubscribe: FormEventHandler = (e) => {
@@ -134,9 +142,9 @@ export default function BillingIndex({
                   </div>
                 </div>
 
-                <div className="flex items-end gap-1">
-                  <span className="text-3xl font-bold text-white">€19.99</span>
-                  <span className="mb-1 text-sm text-gray-400">/month</span>
+                <div className="flex items-end gap-1 flex-wrap">
+                  <span className="text-3xl font-bold text-white">€22</span>
+                  <span className="mb-1 text-sm text-gray-400">/{t('billing.perMonth')} + {t('billing.exclVat')}</span>
                 </div>
 
                 <form onSubmit={handlePortal}>
@@ -171,8 +179,8 @@ export default function BillingIndex({
                   {/* Plan selector */}
                   <div className="mb-5 grid grid-cols-2 gap-3">
                     {([
-                      { key: 'monthly', price: '€22', period: '/month', note: 'Billed monthly' },
-                      { key: 'yearly',  price: '€220', period: '/year', note: 'Save 2 months — €18.3/mo' },
+                      { key: 'monthly', price: '€22', period: '/mo', note: `+ ${t('billing.exclVat')} · billed monthly` },
+                      { key: 'yearly',  price: '€220', period: '/yr', note: `+ ${t('billing.exclVat')} · save 2 months` },
                     ] as const).map(p => (
                       <button
                         key={p.key}
@@ -187,7 +195,7 @@ export default function BillingIndex({
                         <div className="text-xl font-bold text-white">{p.price}<span className="text-sm font-normal text-gray-400">{p.period}</span></div>
                         <div className="mt-1 text-xs text-gray-500">{p.note}</div>
                         {p.key === 'yearly' && (
-                          <div className="mt-1.5 inline-block rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">Best value</div>
+                          <div className="mt-1.5 inline-block rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">Best value — €18.3/mo</div>
                         )}
                       </button>
                     ))}
@@ -201,7 +209,34 @@ export default function BillingIndex({
                       </li>
                     ))}
                   </ul>
-                  <form onSubmit={handleSubscribe}>
+
+                  {/* Billing details */}
+                  <form onSubmit={handleSubscribe} className="space-y-4">
+                    <div className="rounded-xl border border-gray-700/60 bg-gray-800/40 p-4 space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">{t('billing.billingDetails')}</p>
+                      <div>
+                        <label className="mb-1 block text-xs text-gray-400">{t('billing.companyName')}</label>
+                        <input
+                          type="text"
+                          value={subscribeForm.data.company_name}
+                          onChange={e => subscribeForm.setData('company_name', e.target.value)}
+                          placeholder="Acme Ltd."
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-violet-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-gray-400">{t('billing.vatNumber')}</label>
+                        <input
+                          type="text"
+                          value={subscribeForm.data.vat_number}
+                          onChange={e => subscribeForm.setData('vat_number', e.target.value.toUpperCase())}
+                          placeholder={t('billing.vatNumberPlaceholder')}
+                          className="w-full rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-white placeholder-gray-600 focus:border-violet-500 focus:outline-none font-mono"
+                        />
+                        <p className="mt-1 text-xs text-gray-600">{t('billing.vatHint')}</p>
+                      </div>
+                    </div>
+
                     <button
                       type="submit"
                       disabled={subscribeForm.processing}
@@ -213,12 +248,11 @@ export default function BillingIndex({
                         <ArrowRight className="h-4 w-4" />
                       )}
                       {t('billing.subscribeBtn')} —{' '}
-                      {subscribeForm.data.plan === 'yearly' ? '€220/year' : '€22/month'}
+                      {subscribeForm.data.plan === 'yearly' ? '€220' : '€22'} + {t('billing.exclVat')}
                     </button>
+                    <p className="text-center text-xs text-gray-600">{t('billing.vatNote')}</p>
+                    <p className="text-center text-xs text-gray-500">{t('billing.nofees')}</p>
                   </form>
-                  <p className="mt-2 text-center text-xs text-gray-500">
-                    {t('billing.nofees')}
-                  </p>
                 </div>
               </div>
             )}

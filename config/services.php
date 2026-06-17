@@ -38,6 +38,7 @@ return [
     'stripe' => [
         'monthly_price_id' => env('STRIPE_MONTHLY_PRICE_ID', env('STRIPE_PRICE_ID')),
         'yearly_price_id'  => env('STRIPE_YEARLY_PRICE_ID'),
+        'tax_enabled'      => env('STRIPE_TAX_ENABLED', false),
     ],
 
 ];
