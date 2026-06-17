@@ -91,7 +91,7 @@ class MonitoringController extends Controller
         $redisOk = false;
         try {
             Cache::store('redis')->put('__healthcheck__', 1, 5);
-            $redisOk = Cache::store('redis')->get('__healthcheck__') === 1;
+            $redisOk = Cache::store('redis')->get('__healthcheck__') !== null;
         } catch (\Throwable) {}
 
         $pendingJobs = 0;
