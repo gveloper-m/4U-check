@@ -29,7 +29,7 @@ export default function Login({
     <GuestLayout>
       <Head title={t('auth.login.submit')} />
 
-      <h2 className="mb-6 text-xl font-bold text-white">{t('auth.login.title')}</h2>
+      <h2 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">{t('auth.login.title')}</h2>
 
       {status && (
         <div className="mb-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
@@ -39,7 +39,7 @@ export default function Login({
 
       <form onSubmit={submit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-300">
+          <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
             {t('auth.login.email')}
           </label>
           <input
@@ -50,7 +50,7 @@ export default function Login({
             autoComplete="username"
             autoFocus
             onChange={(e) => setData('email', e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             placeholder="you@example.com"
           />
           {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
@@ -58,7 +58,7 @@ export default function Login({
 
         <div>
           <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="password" className="text-sm font-medium text-gray-300">
+            <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
               {t('auth.login.password')}
             </label>
             {canResetPassword && (
@@ -77,7 +77,7 @@ export default function Login({
             value={data.password}
             autoComplete="current-password"
             onChange={(e) => setData('password', e.target.value)}
-            className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+            className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
             placeholder="••••••••"
           />
           {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password}</p>}
@@ -90,9 +90,9 @@ export default function Login({
             name="remember"
             checked={data.remember}
             onChange={(e) => setData('remember', (e.target.checked || false) as false)}
-            className="h-4 w-4 rounded border-gray-600 bg-gray-800 text-violet-600 focus:ring-violet-500 focus:ring-offset-gray-900"
+            className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 text-violet-600 focus:ring-violet-500 focus:ring-offset-gray-900"
           />
-          <label htmlFor="remember" className="text-sm text-gray-400">
+          <label htmlFor="remember" className="text-sm text-gray-600 dark:text-gray-400">
             {t('auth.login.remember')}
           </label>
         </div>

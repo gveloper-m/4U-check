@@ -124,7 +124,7 @@ export default function AgencySettingsForm({ className = '' }: { className?: str
                                         maxLength={7}
                                     />
                                 </div>
-                                <p className="mt-1 text-xs text-gray-400">{t('profile.agencyPrimaryColorHint')}</p>
+                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{t('profile.agencyPrimaryColorHint')}</p>
                                 <InputError className="mt-1" message={errors.agency_primary_color} />
                             </div>
                             <div>
@@ -147,7 +147,7 @@ export default function AgencySettingsForm({ className = '' }: { className?: str
                                         maxLength={7}
                                     />
                                 </div>
-                                <p className="mt-1 text-xs text-gray-400">{t('profile.agencySecondaryColorHint')}</p>
+                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{t('profile.agencySecondaryColorHint')}</p>
                                 <InputError className="mt-1" message={errors.agency_secondary_color} />
                             </div>
                         </div>
@@ -165,7 +165,7 @@ export default function AgencySettingsForm({ className = '' }: { className?: str
                                 placeholder={t('profile.agencyFooterTextPlaceholder')}
                                 maxLength={255}
                             />
-                            <p className="mt-1 text-xs text-gray-400">{t('profile.agencyFooterTextHint')}</p>
+                            <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{t('profile.agencyFooterTextHint')}</p>
                             <InputError className="mt-1" message={errors.agency_footer_text} />
                         </div>
                     </div>

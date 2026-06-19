@@ -3,6 +3,9 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
+        <script>
+            (function(){var t=localStorage.getItem('4utest_theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');})();
+        </script>
 
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 

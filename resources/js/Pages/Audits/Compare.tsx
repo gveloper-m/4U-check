@@ -9,7 +9,7 @@ interface CompareProps extends PageProps {
 }
 
 function healthColor(score?: number): string {
-  if (score === undefined || score === null) return 'text-gray-400';
+  if (score === undefined || score === null) return 'text-gray-600 dark:text-gray-400';
   if (score >= 80) return 'text-emerald-400';
   if (score >= 50) return 'text-amber-400';
   return 'text-red-400';
@@ -58,7 +58,7 @@ function DeltaIcon({ best, current, higherIsBetter }: { best: number; current: n
 
 function CellStyle({ value, best, higherIsBetter }: { value: CellValue; best: number | null; higherIsBetter: boolean }) {
   if (value.numeric === null || best === null) {
-    return <span className="text-gray-300">{value.display}</span>;
+    return <span className="text-gray-700 dark:text-gray-300">{value.display}</span>;
   }
   const isBest = value.numeric === best;
   const isGood = higherIsBetter ? value.numeric >= best : value.numeric <= best;
@@ -163,30 +163,30 @@ export default function Compare({ reports }: CompareProps) {
       <div className="space-y-6">
         <Link
           href="/audits"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           {t('compare.backToAudits')}
         </Link>
 
         <div>
-          <h1 className="text-2xl font-bold text-white">{t('compare.title')}</h1>
-          <p className="mt-1 text-sm text-gray-400">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('compare.title')}</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
             {t('compare.sub')} — {reports.length} scans
           </p>
         </div>
 
-        <div className="overflow-x-auto rounded-xl border border-gray-800 bg-gray-900">
+        <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-800">
-                <th className="sticky left-0 bg-gray-900 px-5 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 w-44">
+              <tr className="border-b border-gray-200 dark:border-gray-800">
+                <th className="sticky left-0 bg-white dark:bg-gray-900 px-5 py-4 text-left text-xs font-medium uppercase tracking-wider text-gray-500 w-44">
                   {t('compare.metric')}
                 </th>
                 {reports.map((report) => (
                   <th
                     key={report.id}
-                    className="px-5 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-300 min-w-[180px]"
+                    className="px-5 py-4 text-center text-xs font-medium uppercase tracking-wider text-gray-700 dark:text-gray-300 min-w-[180px]"
                   >
                     <div>
                       <Link
@@ -207,8 +207,8 @@ export default function Compare({ reports }: CompareProps) {
               {rows.map((row) => {
                 const best = getBestForRow(row.key, row.higherIsBetter);
                 return (
-                  <tr key={row.key} className="hover:bg-gray-800/40 transition-colors">
-                    <td className="sticky left-0 bg-gray-900 px-5 py-3.5 text-sm text-gray-400">
+                  <tr key={row.key} className="hover:bg-gray-100/40 dark:hover:bg-gray-100/40 dark:bg-gray-800/40 transition-colors">
+                    <td className="sticky left-0 bg-white dark:bg-gray-900 px-5 py-3.5 text-sm text-gray-600 dark:text-gray-400">
                       {row.label}
                     </td>
                     {extracted.map((data, i) => {
@@ -238,10 +238,10 @@ export default function Compare({ reports }: CompareProps) {
             <Link
               key={report.id}
               href={`/audits/${report.id}`}
-              className="flex items-center justify-between rounded-xl border border-gray-800 bg-gray-900 px-4 py-3 hover:border-gray-700 transition-colors"
+              className="flex items-center justify-between rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3 hover:border-gray-700 transition-colors"
             >
               <div className="min-w-0">
-                <p className="truncate text-sm font-medium text-white">{report.name ?? report.site_url}</p>
+                <p className="truncate text-sm font-medium text-gray-900 dark:text-white">{report.name ?? report.site_url}</p>
                 <p className="text-xs text-gray-500">{new Date(report.created_at).toLocaleString()}</p>
               </div>
               <div

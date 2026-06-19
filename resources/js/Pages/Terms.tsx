@@ -6,8 +6,8 @@ import { ShieldCheck } from 'lucide-react';
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
     return (
         <section className="mb-8">
-            <h2 className="mb-3 text-base font-semibold text-white">{title}</h2>
-            <div className="space-y-2 text-sm leading-relaxed text-gray-400">{children}</div>
+            <h2 className="mb-3 text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+            <div className="space-y-2 text-sm leading-relaxed text-gray-600 dark:text-gray-400">{children}</div>
         </section>
     );
 }
@@ -25,7 +25,7 @@ export default function Terms() {
                     <ShieldCheck className="h-4 w-4 text-violet-400" />
                 </div>
                 <div>
-                    <h1 className="text-lg font-bold text-white">{t('terms.title')}</h1>
+                    <h1 className="text-lg font-bold text-gray-900 dark:text-white">{t('terms.title')}</h1>
                     <p className="text-xs text-gray-500">{t('terms.lastUpdated', { year })}</p>
                 </div>
             </div>

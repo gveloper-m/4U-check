@@ -55,12 +55,12 @@ function StatCard({ icon: Icon, label, value, sub, color = 'violet' }: {
         sky:     'bg-sky-500/10    border-sky-500/20    text-sky-400',
     };
     return (
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
             <div className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg border ${colors[color]}`}>
                 <Icon className="h-5 w-5" />
             </div>
-            <div className="text-2xl font-bold text-white">{value}</div>
-            <div className="mt-0.5 text-sm text-gray-400">{label}</div>
+            <div className="text-2xl font-bold text-gray-900 dark:text-white">{value}</div>
+            <div className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{label}</div>
             {sub && <div className="mt-1 text-xs text-gray-600">{sub}</div>}
         </div>
     );
@@ -71,7 +71,7 @@ function statusBadge(stripe_status: string | null, is_unlimited: boolean) {
     if (stripe_status === 'active')   return <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">Active</span>;
     if (stripe_status === 'trialing') return <span className="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-400">Trial</span>;
     if (stripe_status === 'past_due') return <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-400">Past due</span>;
-    return <span className="rounded-full bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-400">Free</span>;
+    return <span className="rounded-full bg-gray-200 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">Free</span>;
 }
 
 function scoreColor(score: number | null) {
@@ -95,8 +95,8 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
 
             <div className="space-y-6">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">User Management</h1>
-                    <p className="mt-1 text-sm text-gray-400">Platform-wide overview of all users and their activity</p>
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">User Management</h1>
+                    <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">Platform-wide overview of all users and their activity</p>
                 </div>
 
                 {/* Stat cards */}
@@ -110,9 +110,9 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
                 </div>
 
                 {/* Table */}
-                <div className="rounded-xl border border-gray-800 bg-gray-900">
-                    <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
-                        <h2 className="text-sm font-semibold text-white">All Users</h2>
+                <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                    <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-5 py-4">
+                        <h2 className="text-sm font-semibold text-gray-900 dark:text-white">All Users</h2>
                         <div className="flex items-center gap-3">
                             <form onSubmit={handleSearch} className="relative">
                                 <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-500" />
@@ -120,12 +120,12 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
                                     value={search}
                                     onChange={e => setSearch(e.target.value)}
                                     placeholder="Search users…"
-                                    className="rounded-lg border border-gray-700 bg-gray-800 pl-8 pr-3 py-1.5 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none w-56"
+                                    className="rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 pl-8 pr-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none w-56"
                                 />
                             </form>
                             <a
                                 href="/admin/users/export"
-                                className="flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:border-gray-600 hover:text-white transition-colors"
+                                className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
                             >
                                 <Download className="h-3.5 w-3.5" /> Export CSV
                             </a>
@@ -135,7 +135,7 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead>
-                                <tr className="border-b border-gray-800 text-xs text-gray-500">
+                                <tr className="border-b border-gray-200 dark:border-gray-800 text-xs text-gray-500">
                                     <th className="px-5 py-3 text-left font-medium">User</th>
                                     <th className="px-4 py-3 text-left font-medium">Plan</th>
                                     <th className="px-4 py-3 text-right font-medium">Sites</th>
@@ -149,18 +149,18 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
                             </thead>
                             <tbody className="divide-y divide-gray-800/60">
                                 {users.data.map(u => (
-                                    <tr key={u.id} className="hover:bg-gray-800/40 transition-colors">
+                                    <tr key={u.id} className="hover:bg-gray-100/40 dark:hover:bg-gray-100/40 dark:bg-gray-800/40 transition-colors">
                                         <td className="px-5 py-3.5">
-                                            <div className="font-medium text-white">{u.name}</div>
+                                            <div className="font-medium text-gray-900 dark:text-white">{u.name}</div>
                                             <div className="text-xs text-gray-500">{u.email}</div>
                                             <div className="text-xs text-gray-600 mt-0.5">
                                                 Joined {new Date(u.created_at).toLocaleDateString()}
                                             </div>
                                         </td>
                                         <td className="px-4 py-3.5">{statusBadge(u.stripe_status, u.is_unlimited)}</td>
-                                        <td className="px-4 py-3.5 text-right text-gray-300">{u.distinct_sites ?? 0}</td>
-                                        <td className="px-4 py-3.5 text-right text-gray-300">{u.total_crawls ?? 0}</td>
-                                        <td className="px-4 py-3.5 text-right text-gray-300">{u.month_crawls ?? 0}</td>
+                                        <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">{u.distinct_sites ?? 0}</td>
+                                        <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">{u.total_crawls ?? 0}</td>
+                                        <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">{u.month_crawls ?? 0}</td>
                                         <td className={`px-4 py-3.5 text-right font-semibold ${scoreColor(u.avg_score)}`}>
                                             {u.avg_score !== null ? `${u.avg_score}` : '—'}
                                         </td>
@@ -180,7 +180,7 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
                                         <td className="px-4 py-3.5">
                                             <Link
                                                 href={`/admin/users/${u.id}`}
-                                                className="flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors"
+                                                className="flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
                                             >
                                                 View <ChevronRight className="h-3.5 w-3.5" />
                                             </Link>
@@ -200,18 +200,18 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
 
                     {/* Pagination */}
                     {(users.prev_page_url || users.next_page_url) && (
-                        <div className="flex items-center justify-between border-t border-gray-800 px-5 py-3">
+                        <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-5 py-3">
                             <span className="text-xs text-gray-500">
                                 {users.from}–{users.to} of {users.total} users
                             </span>
                             <div className="flex gap-2">
                                 {users.prev_page_url && (
-                                    <Link href={users.prev_page_url} className="rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:border-gray-600 hover:text-white transition-colors">
+                                    <Link href={users.prev_page_url} className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors">
                                         Previous
                                     </Link>
                                 )}
                                 {users.next_page_url && (
-                                    <Link href={users.next_page_url} className="rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-400 hover:border-gray-600 hover:text-white transition-colors">
+                                    <Link href={users.next_page_url} className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-xs text-gray-600 dark:text-gray-400 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors">
                                         Next
                                     </Link>
                                 )}

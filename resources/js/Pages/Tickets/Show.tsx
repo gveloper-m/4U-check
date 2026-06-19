@@ -9,7 +9,7 @@ function StatusBadge({ status }: { status: Ticket['status'] }) {
         open:        { label: 'Open',        cls: 'bg-blue-500/10 text-blue-400 border-blue-500/20' },
         in_progress: { label: 'In Progress',  cls: 'bg-amber-500/10 text-amber-400 border-amber-500/20' },
         resolved:    { label: 'Resolved',     cls: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' },
-        closed:      { label: 'Closed',       cls: 'bg-gray-700/50 text-gray-400 border-gray-700' },
+        closed:      { label: 'Closed',       cls: 'bg-gray-200/50 dark:bg-gray-700/50 text-gray-600 dark:text-gray-400 border-gray-300 dark:border-gray-700' },
     };
     const { label, cls } = map[status] ?? map.closed;
     return (
@@ -31,19 +31,19 @@ function MessageBubble({ msg }: { msg: TicketMessage }) {
     return (
         <div className={`flex gap-3 ${isAdmin ? 'flex-row-reverse' : ''}`}>
             <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                isAdmin ? 'bg-violet-600/20 border border-violet-500/30 text-violet-300' : 'bg-gray-700 text-gray-300'
+                isAdmin ? 'bg-violet-600/20 border border-violet-500/30 text-violet-300' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
             }`}>
                 {isAdmin ? 'S' : (msg.user?.name?.charAt(0).toUpperCase() ?? '?')}
             </div>
             <div className={`max-w-[75%] ${isAdmin ? 'items-end' : 'items-start'} flex flex-col gap-1`}>
                 <div className={`flex items-center gap-2 text-xs text-gray-500 ${isAdmin ? 'flex-row-reverse' : ''}`}>
-                    <span className="font-medium text-gray-400">{isAdmin ? 'Support Team' : (msg.user?.name ?? 'You')}</span>
+                    <span className="font-medium text-gray-600 dark:text-gray-400">{isAdmin ? 'Support Team' : (msg.user?.name ?? 'You')}</span>
                     <span>{formatDateTime(msg.created_at)}</span>
                 </div>
                 <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                     isAdmin
-                        ? 'bg-violet-600/15 border border-violet-500/20 text-gray-200 rounded-tr-sm'
-                        : 'bg-gray-800 border border-gray-700 text-gray-200 rounded-tl-sm'
+                        ? 'bg-violet-600/15 border border-violet-500/20 text-gray-800 dark:text-gray-200 rounded-tr-sm'
+                        : 'bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-sm'
                 }`}>
                     {msg.body}
                 </div>
@@ -51,7 +51,7 @@ function MessageBubble({ msg }: { msg: TicketMessage }) {
                     <div className="flex flex-wrap gap-2">
                         {msg.attachments.map(att => (
                             <a key={att.id} href={att.url} target="_blank" rel="noreferrer">
-                                <img src={att.url} alt={att.filename} className="h-20 w-20 rounded-lg object-cover border border-gray-700 hover:border-gray-500 transition-colors" />
+                                <img src={att.url} alt={att.filename} className="h-20 w-20 rounded-lg object-cover border border-gray-300 dark:border-gray-700 hover:border-gray-500 transition-colors" />
                             </a>
                         ))}
                     </div>
@@ -96,7 +96,7 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
             <Head title={`Ticket #${ticket.id}`} />
 
             <div className="mb-6 flex items-center gap-4">
-                <Link href={route('tickets.index')} className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-200 transition-colors">
+                <Link href={route('tickets.index')} className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
                     <ArrowLeft className="h-4 w-4" />
                     Back
                 </Link>
@@ -107,7 +107,7 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
             </div>
 
             <div className="mb-6">
-                <h1 className="text-xl font-bold text-white">{ticket.subject}</h1>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-white">{ticket.subject}</h1>
             </div>
 
             {/* Thread */}
@@ -119,19 +119,19 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
 
             {/* Reply form */}
             {isClosed ? (
-                <div className="rounded-xl border border-gray-800 bg-gray-900/50 px-5 py-4 text-center">
+                <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 px-5 py-4 text-center">
                     <p className="text-sm text-gray-500">This ticket is {ticket.status}. <Link href={route('tickets.index')} className="text-violet-400 hover:text-violet-300">Open a new ticket</Link> if you need further help.</p>
                 </div>
             ) : (
-                <form onSubmit={submit} className="rounded-xl border border-gray-800 bg-gray-900 p-5 space-y-4">
-                    <h3 className="text-sm font-medium text-gray-300">Add a reply</h3>
+                <form onSubmit={submit} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5 space-y-4">
+                    <h3 className="text-sm font-medium text-gray-700 dark:text-gray-300">Add a reply</h3>
                     <textarea
                         value={data.body}
                         onChange={e => setData('body', e.target.value)}
                         rows={4}
                         maxLength={5000}
                         placeholder="Write your reply…"
-                        className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
+                        className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-600 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 resize-none"
                     />
                     {errors.body && <p className="text-xs text-red-400">{errors.body}</p>}
 
@@ -140,7 +140,7 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
                         <div className="flex gap-2 flex-wrap">
                             {previews.map((src, i) => (
                                 <div key={i} className="relative">
-                                    <img src={src} className="h-16 w-16 rounded-lg object-cover border border-gray-700" />
+                                    <img src={src} className="h-16 w-16 rounded-lg object-cover border border-gray-300 dark:border-gray-700" />
                                     <button type="button" onClick={() => removeImage(i)} className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-white">
                                         <X className="h-2.5 w-2.5" />
                                     </button>
@@ -151,7 +151,7 @@ export default function TicketShow({ ticket }: { ticket: Ticket }) {
 
                     <div className="flex items-center justify-between">
                         {previews.length < 3 && (
-                            <button type="button" onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                            <button type="button" onClick={() => fileRef.current?.click()} className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                                 <Paperclip className="h-3.5 w-3.5" />
                                 Attach images ({previews.length}/3)
                             </button>

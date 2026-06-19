@@ -124,8 +124,8 @@ function Section({ title, icon: Icon, color, bg, border, defaultOpen = false, ch
           <span className="font-semibold text-gray-900">{title}</span>
         </div>
         {open
-          ? <ChevronUp className="h-4 w-4 text-gray-400" />
-          : <ChevronDown className="h-4 w-4 text-gray-400" />}
+          ? <ChevronUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
+          : <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />}
       </button>
       {open && <div className="border-t border-gray-100">{children}</div>}
     </div>
@@ -134,7 +134,7 @@ function Section({ title, icon: Icon, color, bg, border, defaultOpen = false, ch
 
 // ── score helpers ──────────────────────────────────────────────────────────
 function healthColor(score?: number, primary?: string): string {
-  if (score === undefined || score === null) return 'text-gray-400';
+  if (score === undefined || score === null) return 'text-gray-600 dark:text-gray-400';
   if (score >= 80) return 'text-emerald-600';
   if (score >= 50) return 'text-amber-500';
   return 'text-red-500';
@@ -218,7 +218,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
             {agency?.logo_url ? (
               <img src={agency.logo_url} alt={agency.name ?? ''} className="h-8 max-w-[140px] object-contain" />
             ) : (
-              <span className="text-lg font-bold text-white">{agency?.name ?? 'Website Audit'}</span>
+              <span className="text-lg font-bold text-gray-900 dark:text-white">{agency?.name ?? 'Website Audit'}</span>
             )}
           </div>
           <a
@@ -245,7 +245,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                 <span className={`text-lg font-extrabold leading-none ${healthColor(report.health_score)}`}>
                   {report.health_score ?? '?'}
                 </span>
-                <span className="text-[10px] text-gray-400">score</span>
+                <span className="text-[10px] text-gray-600 dark:text-gray-400">score</span>
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900 break-all">
@@ -256,12 +256,12 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     href={report.site_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="mt-0.5 flex items-center gap-1 text-sm text-gray-400 hover:text-violet-600 transition-colors"
+                    className="mt-0.5 flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-violet-600 transition-colors"
                   >
                     {report.site_url} <ExternalLink className="h-3 w-3" />
                   </a>
                 )}
-                <p className="mt-1 text-xs text-gray-400">
+                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">
                   {new Date(report.created_at).toLocaleString()}
                 </p>
               </div>
@@ -300,7 +300,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                   <MetaRow label="robots.txt" value={getBool(seoRobots, 'exists') === true ? 'Found' : getBool(seoRobots, 'exists') === false ? 'Missing' : 'N/A'} ok={getBool(seoRobots, 'exists') ?? undefined} />
                   <MetaRow label="sitemap.xml" value={getBool(seoSitemap, 'exists') === true ? 'Found' : getBool(seoSitemap, 'exists') === false ? 'Missing' : 'N/A'} ok={getBool(seoSitemap, 'exists') ?? undefined} />
                 </div>
-              ) : <p className="px-4 py-3 text-sm text-gray-400">No data available.</p>}
+              ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">No data available.</p>}
             </Section>
 
             {/* Security */}
@@ -317,7 +317,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                   <MetaRow label="DMARC" value={getBool(secDns, 'dmarc_record_exists') ? 'Present' : 'Missing'} ok={getBool(secDns, 'dmarc_record_exists') ?? undefined} />
                   <MetaRow label="DKIM" value={getBool(secDns, 'dkim_found') ? `Found (selector: ${getStr(secDns, 'dkim_selector')})` : 'Not found'} ok={getBool(secDns, 'dkim_found') ?? undefined} />
                 </div>
-              ) : <p className="px-4 py-3 text-sm text-gray-400">No data available.</p>}
+              ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">No data available.</p>}
             </Section>
 
             {/* Performance */}
@@ -342,7 +342,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     )}
                   </div>
                 </div>
-              ) : <p className="px-4 py-3 text-sm text-gray-400">No data available.</p>}
+              ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">No data available.</p>}
             </Section>
 
             {/* Broken Resources */}
@@ -358,7 +358,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                   </div>
                   {brokenLinks.length > 0 && (
                     <div>
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Top Broken Links ({brokenLinks.length})</p>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">Top Broken Links ({brokenLinks.length})</p>
                       <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
                         {brokenLinks.map((link, i) => {
                           const l = link as Record<string, unknown>;
@@ -369,7 +369,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                                 {l.status_code != null && <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">{String(l.status_code)}</span>}
                               </div>
                               {l.found_on != null && (
-                                <p className="mt-1 text-xs text-gray-400 break-all">
+                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 break-all">
                                   Found on: <span className="text-gray-500">{String(l.found_on)}</span>
                                 </p>
                               )}
@@ -381,7 +381,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                   )}
                   {brokenImages.length > 0 && (
                     <div>
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Broken Images ({brokenImages.length})</p>
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">Broken Images ({brokenImages.length})</p>
                       <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
                         {brokenImages.map((img, i) => {
                           const im = img as Record<string, unknown>;
@@ -392,7 +392,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                                 {im.status_code != null && <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">{String(im.status_code)}</span>}
                               </div>
                               {im.found_on != null && (
-                                <p className="mt-1 text-xs text-gray-400 break-all">
+                                <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 break-all">
                                   Found on: <span className="text-gray-500">{String(im.found_on)}</span>
                                 </p>
                               )}
@@ -403,7 +403,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     </div>
                   )}
                 </div>
-              ) : <p className="px-4 py-3 text-sm text-gray-400">No data available.</p>}
+              ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">No data available.</p>}
             </Section>
 
             {/* Catalog */}
@@ -425,7 +425,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     )}
                   </div>
                 </div>
-              ) : <p className="px-4 py-3 text-sm text-gray-400">No data available.</p>}
+              ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">No data available.</p>}
             </Section>
 
             {/* Tracking */}
@@ -439,7 +439,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     <MetaRow label="TikTok Pixel" value={(() => { if (!trackTt) return 'N/A'; const ids = getArr(trackTt, 'ids'); return getBool(trackTt, 'detected') ? `Yes${ids.length ? ` (${ids.join(', ')})` : ''}` : 'Not detected'; })()} ok={getBool(trackTt, 'detected') ?? undefined} />
                   </div>
                 </div>
-              ) : <p className="px-4 py-3 text-sm text-gray-400">No data available.</p>}
+              ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">No data available.</p>}
             </Section>
 
             {/* Accessibility */}
@@ -481,7 +481,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
 
                         {getArr(headings, 'issues').length > 0 && (
                           <div>
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Heading Issues</p>
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">Heading Issues</p>
                             <div className="space-y-1">
                               {getArr(headings, 'issues').map((issue, i) => (
                                 <div key={i} className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
@@ -495,14 +495,14 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
 
                         {getArr(formLbl, 'violations').length > 0 && (
                           <div>
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Unlabeled Inputs ({getArr(formLbl,'violations').length})</p>
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">Unlabeled Inputs ({getArr(formLbl,'violations').length})</p>
                             <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200">
                               {getArr(formLbl, 'violations').map((v, i) => {
                                 const vv = v as Record<string,unknown>;
                                 return (
                                   <div key={i} className="border-b border-gray-100 px-3 py-2 last:border-0 text-xs text-gray-500">
                                     <span className="text-red-500 font-mono">{String(vv.element ?? '')}{vv.type ? `[type=${String(vv.type)}]` : ''}</span>
-                                    {!!vv.name && <span className="ml-2 text-gray-400">name="{String(vv.name)}"</span>}
+                                    {!!vv.name && <span className="ml-2 text-gray-600 dark:text-gray-400">name="{String(vv.name)}"</span>}
                                   </div>
                                 );
                               })}
@@ -512,14 +512,14 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
 
                         {getArr(ariaLbl, 'violations').length > 0 && (
                           <div>
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">ARIA Violations ({getArr(ariaLbl,'violations').length})</p>
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">ARIA Violations ({getArr(ariaLbl,'violations').length})</p>
                             <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200">
                               {getArr(ariaLbl, 'violations').map((v, i) => {
                                 const vv = v as Record<string,unknown>;
                                 return (
                                   <div key={i} className="border-b border-gray-100 px-3 py-2 last:border-0">
                                     <p className="text-xs text-red-500">{String(vv.issue ?? '')}</p>
-                                    {!!vv.href && <p className="text-xs text-gray-400 truncate">{String(vv.href ?? '')}</p>}
+                                    {!!vv.href && <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{String(vv.href ?? '')}</p>}
                                   </div>
                                 );
                               })}
@@ -529,8 +529,8 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
 
                         {getArr(contrast, 'violations').length > 0 && (
                           <div>
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-400">Contrast Violations ({getArr(contrast,'violations').length})</p>
-                            {contrast && <p className="mb-2 text-xs text-gray-400">{getStr(contrast,'note')}</p>}
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">Contrast Violations ({getArr(contrast,'violations').length})</p>
+                            {contrast && <p className="mb-2 text-xs text-gray-600 dark:text-gray-400">{getStr(contrast,'note')}</p>}
                             <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200">
                               {getArr(contrast, 'violations').map((v, i) => {
                                 const vv = v as Record<string,unknown>;
@@ -552,7 +552,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     );
                   })()}
                 </div>
-              ) : <p className="px-4 py-3 text-sm text-gray-400">No data available.</p>}
+              ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">No data available.</p>}
             </Section>
 
           </div>
@@ -561,7 +561,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
 
       {/* Agency footer */}
       <footer style={{ backgroundColor: secondary }} className="py-6 text-center">
-        <p className="text-sm text-white/70">
+        <p className="text-sm text-gray-600 dark:text-white/70">
           {agency?.footer_text ?? (agency?.name ? `Report by ${agency.name}` : 'Website Audit Report')}
         </p>
       </footer>

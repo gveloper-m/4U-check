@@ -84,7 +84,7 @@ function scoreColor(score: number | null) {
 }
 
 function scoreBg(score: number | null) {
-    if (score === null) return 'bg-gray-700';
+    if (score === null) return 'bg-gray-200 dark:bg-gray-700';
     if (score >= 80) return 'bg-emerald-500';
     if (score >= 60) return 'bg-amber-500';
     return 'bg-rose-500';
@@ -97,15 +97,15 @@ function SubscriptionBadge({ sub, unlimited }: { sub: Subscription | null; unlim
         </span>
     );
     if (!sub) return (
-        <span className="rounded-full bg-gray-700 border border-gray-600 px-3 py-1 text-sm font-medium text-gray-400">Free</span>
+        <span className="rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">Free</span>
     );
     const map: Record<string, string> = {
         active: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
         trialing: 'bg-violet-500/15 border-violet-500/30 text-violet-400',
         past_due: 'bg-amber-500/15 border-amber-500/30 text-amber-400',
-        canceled: 'bg-gray-700 border-gray-600 text-gray-400',
+        canceled: 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
     };
-    const cls = map[sub.stripe_status] ?? 'bg-gray-700 border-gray-600 text-gray-400';
+    const cls = map[sub.stripe_status] ?? 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400';
     return (
         <span className={`rounded-full border px-3 py-1 text-sm font-medium capitalize ${cls}`}>
             {sub.stripe_status}
@@ -119,7 +119,7 @@ function BarChart({ data }: { data: MonthlyCrawl[] }) {
         <div className="flex items-end gap-2 h-28">
             {data.map(d => (
                 <div key={d.month} className="flex flex-1 flex-col items-center gap-1">
-                    <span className="text-xs font-medium text-gray-300">{d.count || ''}</span>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{d.count || ''}</span>
                     <div className="w-full rounded-t-sm bg-violet-500/80" style={{ height: `${Math.max((d.count / max) * 80, d.count > 0 ? 4 : 0)}px` }} />
                     <span className="text-[10px] text-gray-600 text-center">{d.month.split(' ')[0]}</span>
                 </div>
@@ -171,16 +171,16 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                 {/* Header */}
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-4">
-                        <Link href="/admin/users" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-300 transition-colors">
+                        <Link href="/admin/users" className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                             <ArrowLeft className="h-4 w-4" /> All users
                         </Link>
                         <div>
                             <div className="flex items-center gap-3">
-                                <h1 className="text-2xl font-bold text-white">{u.name}</h1>
+                                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{u.name}</h1>
                                 {u.is_admin && <span title="Admin"><ShieldCheck className="h-5 w-5 text-violet-400" /></span>}
                                 {u.is_agency && <span title="Agency"><Star className="h-5 w-5 text-amber-400" /></span>}
                             </div>
-                            <p className="mt-0.5 text-sm text-gray-400">{u.email}</p>
+                            <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{u.email}</p>
                             {u.company_name && (
                                 <p className="text-xs text-gray-500 mt-0.5">{u.company_name}{u.company_site ? ` — ${u.company_site}` : ''}</p>
                             )}
@@ -190,7 +190,7 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                         <button
                             onClick={toggleUnlimited}
                             disabled={togglingUnlimited}
-                            className="flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:border-gray-600 hover:text-white disabled:opacity-50 transition-colors"
+                            className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white disabled:opacity-50 transition-colors"
                         >
                             {togglingUnlimited ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Infinity className="h-3.5 w-3.5" />}
                             {u.is_unlimited ? 'Remove unlimited' : 'Grant unlimited'}
@@ -215,7 +215,7 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                         { icon: BarChart2, label: 'Avg score',      value: u.stats.avg_score || '—', color: scoreColor(u.stats.avg_score) },
                         { icon: Ticket,    label: 'Open tickets',   value: u.stats.open_tickets,   color: u.stats.open_tickets > 0 ? 'text-rose-400' : 'text-gray-500' },
                     ].map(s => (
-                        <div key={s.label} className="rounded-xl border border-gray-800 bg-gray-900 p-4">
+                        <div key={s.label} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
                             <s.icon className={`mb-2 h-5 w-5 ${s.color}`} />
                             <div className={`text-xl font-bold ${s.color}`}>{s.value}</div>
                             <div className="text-xs text-gray-500">{s.label}</div>
@@ -227,15 +227,15 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                     {/* Left col (2/3) */}
                     <div className="space-y-6 lg:col-span-2">
                         {/* 6-month bar chart */}
-                        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-                            <h2 className="mb-4 text-sm font-semibold text-white">Crawls — last 6 months</h2>
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+                            <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Crawls — last 6 months</h2>
                             <BarChart data={monthlyCrawls} />
                         </div>
 
                         {/* Top sites */}
-                        <div className="rounded-xl border border-gray-800 bg-gray-900">
-                            <div className="border-b border-gray-800 px-5 py-3">
-                                <h2 className="text-sm font-semibold text-white">Top crawled sites</h2>
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                            <div className="border-b border-gray-200 dark:border-gray-800 px-5 py-3">
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Top crawled sites</h2>
                             </div>
                             <div className="divide-y divide-gray-800/60">
                                 {topSites.length === 0 && (
@@ -245,15 +245,15 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                     <div key={s.site_url} className="flex items-center gap-4 px-5 py-3">
                                         <span className="w-5 text-xs text-gray-600 text-right">{i + 1}</span>
                                         <div className="min-w-0 flex-1">
-                                            <div className="truncate text-sm text-gray-200">{s.site_url}</div>
+                                            <div className="truncate text-sm text-gray-800 dark:text-gray-200">{s.site_url}</div>
                                             <div className="text-xs text-gray-500">Last: {formatDate(s.last_crawl)}</div>
                                         </div>
-                                        <div className="text-sm text-gray-400">{s.crawls} crawls</div>
+                                        <div className="text-sm text-gray-600 dark:text-gray-400">{s.crawls} crawls</div>
                                         <div className={`text-sm font-semibold ${scoreColor(s.avg_score)}`}>
                                             {s.avg_score ?? '—'}
                                         </div>
                                         {/* score bar */}
-                                        <div className="w-16 h-1.5 rounded-full bg-gray-800">
+                                        <div className="w-16 h-1.5 rounded-full bg-gray-100 dark:bg-gray-800">
                                             <div className={`h-1.5 rounded-full ${scoreBg(s.avg_score)}`} style={{ width: `${s.avg_score ?? 0}%` }} />
                                         </div>
                                     </div>
@@ -262,9 +262,9 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                         </div>
 
                         {/* Recent reports */}
-                        <div className="rounded-xl border border-gray-800 bg-gray-900">
-                            <div className="border-b border-gray-800 px-5 py-3">
-                                <h2 className="text-sm font-semibold text-white">Recent reports</h2>
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+                            <div className="border-b border-gray-200 dark:border-gray-800 px-5 py-3">
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Recent reports</h2>
                             </div>
                             <div className="divide-y divide-gray-800/60">
                                 {recentReports.length === 0 && (
@@ -273,7 +273,7 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                 {recentReports.map(r => (
                                     <div key={r.id} className="flex items-center gap-4 px-5 py-3">
                                         <div className="min-w-0 flex-1">
-                                            <div className="truncate text-sm text-gray-200">{r.name || r.site_url}</div>
+                                            <div className="truncate text-sm text-gray-800 dark:text-gray-200">{r.name || r.site_url}</div>
                                             <div className="text-xs text-gray-500 truncate">{r.site_url}</div>
                                         </div>
                                         <div className={`text-sm font-semibold ${scoreColor(r.health_score)}`}>
@@ -282,7 +282,7 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                         <div className="text-xs text-gray-500">{formatDate(r.created_at)}</div>
                                         <Link
                                             href={`/audits/${r.id}`}
-                                            className="text-gray-600 hover:text-gray-300 transition-colors"
+                                            className="text-gray-600 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
                                         >
                                             <ExternalLink className="h-3.5 w-3.5" />
                                         </Link>
@@ -295,17 +295,17 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                     {/* Right col (1/3) */}
                     <div className="space-y-4">
                         {/* Account info */}
-                        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-                            <h2 className="mb-4 text-sm font-semibold text-white">Account</h2>
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+                            <h2 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Account</h2>
                             <dl className="space-y-3 text-sm">
                                 <div>
                                     <dt className="text-xs text-gray-500">Joined</dt>
-                                    <dd className="text-gray-300">{formatDate(u.created_at)}</dd>
+                                    <dd className="text-gray-700 dark:text-gray-300">{formatDate(u.created_at)}</dd>
                                 </div>
                                 {u.phone && (
                                     <div>
                                         <dt className="text-xs text-gray-500">Phone</dt>
-                                        <dd className="text-gray-300">{u.phone}</dd>
+                                        <dd className="text-gray-700 dark:text-gray-300">{u.phone}</dd>
                                     </div>
                                 )}
                                 <div>
@@ -329,9 +329,9 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                         </div>
 
                         {/* Subscription */}
-                        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
                             <div className="mb-4 flex items-center justify-between">
-                                <h2 className="text-sm font-semibold text-white">Subscription</h2>
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Subscription</h2>
                                 <SubscriptionBadge sub={subscription} unlimited={u.is_unlimited} />
                             </div>
                             {stripeData ? (
@@ -339,19 +339,19 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                     {stripeData.interval && (
                                         <div>
                                             <dt className="text-xs text-gray-500">Billing cycle</dt>
-                                            <dd className="capitalize text-gray-300">{stripeData.interval}ly</dd>
+                                            <dd className="capitalize text-gray-700 dark:text-gray-300">{stripeData.interval}ly</dd>
                                         </div>
                                     )}
                                     {stripeData.amount !== undefined && (
                                         <div>
                                             <dt className="text-xs text-gray-500">Plan amount</dt>
-                                            <dd className="text-gray-300">{formatCurrency(stripeData.amount, stripeData.currency)}</dd>
+                                            <dd className="text-gray-700 dark:text-gray-300">{formatCurrency(stripeData.amount, stripeData.currency)}</dd>
                                         </div>
                                     )}
                                     {stripeData.current_period_end && (
                                         <div>
                                             <dt className="text-xs text-gray-500">Next payment</dt>
-                                            <dd className="flex items-center gap-1 text-gray-300">
+                                            <dd className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
                                                 <Calendar className="h-3 w-3 text-gray-500" />
                                                 {formatDate(stripeData.current_period_end)}
                                             </dd>
@@ -367,9 +367,9 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                         </div>
                                     )}
                                     {stripeData.last_invoice_date && (
-                                        <div className="border-t border-gray-800 pt-3">
+                                        <div className="border-t border-gray-200 dark:border-gray-800 pt-3">
                                             <dt className="text-xs text-gray-500">Last payment</dt>
-                                            <dd className="text-gray-300">
+                                            <dd className="text-gray-700 dark:text-gray-300">
                                                 {formatCurrency(stripeData.last_invoice_amount, stripeData.currency)}
                                                 <span className="ml-2 text-xs text-gray-500">{formatDate(stripeData.last_invoice_date)}</span>
                                             </dd>
@@ -398,12 +398,12 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                         </div>
 
                         {/* Quick links */}
-                        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-                            <h2 className="mb-3 text-sm font-semibold text-white">Quick actions</h2>
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+                            <h2 className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">Quick actions</h2>
                             <div className="space-y-2">
                                 <Link
                                     href={`/admin/tickets?user=${u.id}`}
-                                    className="flex items-center justify-between rounded-lg border border-gray-700 px-3 py-2.5 text-sm text-gray-400 hover:border-gray-600 hover:text-white transition-colors"
+                                    className="flex items-center justify-between rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2.5 text-sm text-gray-600 dark:text-gray-400 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
                                 >
                                     View tickets <ChevronRight className="h-4 w-4" />
                                 </Link>
@@ -411,10 +411,10 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                         </div>
 
                         {/* Grant extra crawls */}
-                        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
                             <div className="mb-4 flex items-center gap-2">
                                 <Gift className="h-4 w-4 text-violet-400" />
-                                <h2 className="text-sm font-semibold text-white">Grant extra crawls</h2>
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Grant extra crawls</h2>
                             </div>
                             <form
                                 onSubmit={e => {
@@ -433,7 +433,7 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                     placeholder="Number of crawls…"
                                     value={crawlForm.data.amount}
                                     onChange={e => crawlForm.setData('amount', e.target.value)}
-                                    className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none"
                                 />
                                 {crawlForm.errors.amount && (
                                     <p className="text-xs text-rose-400">{crawlForm.errors.amount}</p>
@@ -449,10 +449,10 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                         </div>
 
                         {/* Send email */}
-                        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
                             <div className="mb-4 flex items-center gap-2">
                                 <Mail className="h-4 w-4 text-sky-400" />
-                                <h2 className="text-sm font-semibold text-white">Send email</h2>
+                                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Send email</h2>
                             </div>
                             <form
                                 onSubmit={e => {
@@ -469,7 +469,7 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                     placeholder="Subject…"
                                     value={emailForm.data.subject}
                                     onChange={e => emailForm.setData('subject', e.target.value)}
-                                    className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none"
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none"
                                 />
                                 {emailForm.errors.subject && (
                                     <p className="text-xs text-rose-400">{emailForm.errors.subject}</p>
@@ -479,7 +479,7 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                     placeholder="Message…"
                                     value={emailForm.data.body}
                                     onChange={e => emailForm.setData('body', e.target.value)}
-                                    className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none resize-none"
+                                    className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 placeholder-gray-600 focus:border-violet-500 focus:outline-none resize-none"
                                 />
                                 {emailForm.errors.body && (
                                     <p className="text-xs text-rose-400">{emailForm.errors.body}</p>

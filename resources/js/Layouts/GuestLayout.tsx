@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, useEffect, useState } from 'react';
 import { Zap, CheckCircle2, XCircle, X } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
+import ThemeToggle from '@/Components/ThemeToggle';
 import CookieBanner from '@/Components/CookieBanner';
 
 export default function Guest({ children }: PropsWithChildren) {
@@ -20,9 +21,10 @@ export default function Guest({ children }: PropsWithChildren) {
     }, [toast]);
 
     return (
-        <div className="min-h-screen bg-gray-950 flex flex-col items-center justify-center px-4">
-            {/* Language switcher top-right */}
-            <div className="fixed top-4 right-4">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col items-center justify-center px-4">
+            {/* Language switcher + theme toggle top-right */}
+            <div className="fixed top-4 right-4 flex items-center gap-2">
+                <ThemeToggle />
                 <LanguageSwitcher />
             </div>
 
@@ -31,14 +33,14 @@ export default function Guest({ children }: PropsWithChildren) {
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-600">
                         <Zap className="h-6 w-6 text-white" />
                     </div>
-                    <span className="text-2xl font-bold text-white tracking-tight">
+                    <span className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
                         4u<span className="text-violet-400">test</span>
                     </span>
                 </Link>
-                <p className="mt-2 text-sm text-gray-400">Website audit platform</p>
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Website audit platform</p>
             </div>
 
-            <div className="w-full max-w-md rounded-2xl border border-gray-800 bg-gray-900 p-8 shadow-2xl">
+            <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 shadow-2xl">
                 {children}
             </div>
 
@@ -50,8 +52,8 @@ export default function Guest({ children }: PropsWithChildren) {
             {toast && (
                 <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl text-sm font-medium ${
                     toast.type === 'success'
-                        ? 'border-emerald-500/30 bg-gray-900 text-emerald-300'
-                        : 'border-red-500/30 bg-gray-900 text-red-300'
+                        ? 'border-emerald-500/30 bg-white dark:bg-gray-900 text-emerald-300'
+                        : 'border-red-500/30 bg-white dark:bg-gray-900 text-red-300'
                 }`}>
                     {toast.type === 'success'
                         ? <CheckCircle2 className="h-5 w-5 shrink-0" />

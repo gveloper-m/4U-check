@@ -22,19 +22,19 @@ export default function BlogShow({ post }: { post: Post }) {
         <BlogLayout>
             <Head title={`${post.title} — 4utest Blog`} />
 
-            <Link href="/blog" className="mb-8 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-300 transition-colors">
+            <Link href="/blog" className="mb-8 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                 <ArrowLeft className="h-3.5 w-3.5" />
                 Back to Blog
             </Link>
 
             <article>
                 {post.featured_image && (
-                    <div className="mb-8 overflow-hidden rounded-xl bg-gray-800">
+                    <div className="mb-8 overflow-hidden rounded-xl bg-gray-100 dark:bg-gray-800">
                         <img src={post.featured_image} alt={post.title} className="w-full object-cover max-h-80" />
                     </div>
                 )}
 
-                <h1 className="text-3xl font-bold leading-tight text-white sm:text-4xl">{post.title}</h1>
+                <h1 className="text-3xl font-bold leading-tight text-gray-900 dark:text-white sm:text-4xl">{post.title}</h1>
 
                 <div className="mt-4 flex items-center gap-4 text-sm text-gray-500">
                     <span className="flex items-center gap-1.5">
@@ -48,7 +48,7 @@ export default function BlogShow({ post }: { post: Post }) {
                 </div>
 
                 {post.excerpt && (
-                    <p className="mt-6 text-lg leading-relaxed text-gray-300 border-l-2 border-violet-500 pl-4">
+                    <p className="mt-6 text-lg leading-relaxed text-gray-700 dark:text-gray-300 border-l-2 border-violet-500 pl-4">
                         {post.excerpt}
                     </p>
                 )}

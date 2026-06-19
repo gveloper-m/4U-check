@@ -38,7 +38,7 @@ export default function CookieBanner() {
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 sm:p-6">
-            <div className="mx-auto max-w-4xl rounded-2xl border border-gray-700 bg-gray-900 shadow-2xl shadow-black/60">
+            <div className="mx-auto max-w-4xl rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl shadow-black/60">
                 <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:gap-6">
                     {/* Icon */}
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-600/20 border border-violet-500/30">
@@ -47,10 +47,10 @@ export default function CookieBanner() {
 
                     {/* Text */}
                     <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-white">
+                        <p className="text-sm font-semibold text-gray-900 dark:text-white">
                             {t('cookie.title')}
                         </p>
-                        <p className="mt-1 text-xs leading-relaxed text-gray-400">
+                        <p className="mt-1 text-xs leading-relaxed text-gray-600 dark:text-gray-400">
                             {t('cookie.body')}{' '}
                             <Link
                                 href="/terms"
@@ -66,7 +66,7 @@ export default function CookieBanner() {
                     <div className="flex shrink-0 items-center gap-3">
                         <button
                             onClick={decline}
-                            className="rounded-lg border border-gray-700 px-4 py-2 text-xs font-medium text-gray-400 hover:border-gray-600 hover:text-gray-200 transition-colors"
+                            className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-xs font-medium text-gray-600 dark:text-gray-400 hover:border-gray-600 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                         >
                             {t('cookie.decline')}
                         </button>

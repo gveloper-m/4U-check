@@ -39,14 +39,14 @@ interface ShowProps extends PageProps {
 }
 
 function healthColor(score?: number): string {
-  if (score === undefined || score === null) return 'text-gray-400';
+  if (score === undefined || score === null) return 'text-gray-600 dark:text-gray-400';
   if (score >= 80) return 'text-emerald-400';
   if (score >= 50) return 'text-amber-400';
   return 'text-red-400';
 }
 
 function healthRingColor(score?: number): string {
-  if (score === undefined || score === null) return 'border-gray-600';
+  if (score === undefined || score === null) return 'border-gray-300 dark:border-gray-600';
   if (score >= 80) return 'border-emerald-500';
   if (score >= 50) return 'border-amber-500';
   return 'border-red-500';
@@ -103,13 +103,13 @@ function Section({ title, icon: Icon, color, bg, border, children, defaultOpen =
           <span className={`font-semibold ${color}`}>{title}</span>
         </div>
         {open ? (
-          <ChevronUp className="h-4 w-4 text-gray-400" />
+          <ChevronUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
         ) : (
-          <ChevronDown className="h-4 w-4 text-gray-400" />
+          <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
         )}
       </button>
       {open && (
-        <div className="border-t border-gray-800 bg-gray-900 p-5">
+        <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
           {children}
         </div>
       )}
@@ -133,12 +133,12 @@ function ModuleError({ result }: { result: Record<string, unknown> | undefined |
 
 function MetaRow({ label, value, ok }: { label: string; value: React.ReactNode; ok?: boolean }) {
   return (
-    <div className="flex items-start justify-between gap-4 py-2 border-b border-gray-800 last:border-0">
-      <span className="text-sm text-gray-400 shrink-0">{label}</span>
+    <div className="flex items-start justify-between gap-4 py-2 border-b border-gray-200 dark:border-gray-800 last:border-0">
+      <span className="text-sm text-gray-600 dark:text-gray-400 shrink-0">{label}</span>
       <div className="flex items-center gap-1.5 text-right">
         {ok === true && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />}
         {ok === false && <XCircle className="h-3.5 w-3.5 shrink-0 text-red-400" />}
-        <span className="text-sm text-gray-200">{value ?? 'N/A'}</span>
+        <span className="text-sm text-gray-800 dark:text-gray-200">{value ?? 'N/A'}</span>
       </div>
     </div>
   );
@@ -295,14 +295,14 @@ export default function AuditShow({ report }: ShowProps) {
         {/* Back */}
         <Link
           href="/audits"
-          className="inline-flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
           {t('show.backToAudits')}
         </Link>
 
         {/* Header */}
-        <div className="flex flex-col gap-4 rounded-xl border border-gray-800 bg-gray-900 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-5">
             {/* Health score circle */}
             <div
@@ -314,7 +314,7 @@ export default function AuditShow({ report }: ShowProps) {
               <span className="text-[10px] text-gray-500">{t('show.score')}</span>
             </div>
             <div>
-              <h1 className="text-xl font-bold text-white break-all">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-white break-all">
                 {report.name ?? report.site_url}
               </h1>
               {report.name && (
@@ -322,7 +322,7 @@ export default function AuditShow({ report }: ShowProps) {
                   href={report.site_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-0.5 flex items-center gap-1 text-sm text-gray-400 hover:text-violet-400 transition-colors"
+                  className="mt-0.5 flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 hover:text-violet-400 transition-colors"
                 >
                   {report.site_url} <ExternalLink className="h-3 w-3" />
                 </a>
@@ -341,14 +341,14 @@ export default function AuditShow({ report }: ShowProps) {
             <div className="flex items-center gap-2 shrink-0">
               <a
                 href={`/audits/${report.id}/export/pdf`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 <FileDown className="h-4 w-4" />
                 {t('show.pdf')}
               </a>
               <a
                 href={`/audits/${report.id}/export/csv`}
-                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
                 <FileDown className="h-4 w-4" />
                 {t('show.csv')}
@@ -388,12 +388,12 @@ export default function AuditShow({ report }: ShowProps) {
                   <input
                     readOnly
                     value={shareUrl}
-                    className="flex-1 rounded-lg border border-gray-700 bg-gray-900 px-3 py-2 text-sm text-gray-300 font-mono select-all"
+                    className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 font-mono select-all"
                     onClick={(e) => (e.target as HTMLInputElement).select()}
                   />
                   <button
                     onClick={copyShareUrl}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
                     {copied ? t('show.shareCopied') : t('show.shareCopy')}
@@ -434,7 +434,7 @@ export default function AuditShow({ report }: ShowProps) {
               ].map(({ key, label }) => {
                 const done = progress?.auditors?.[key] === 'done';
                 return (
-                  <div key={key} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium border ${done ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-gray-800/50 border-gray-700 text-gray-500'}`}>
+                  <div key={key} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium border ${done ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-gray-100/50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 text-gray-500'}`}>
                     {done
                       ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
                       : <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />}
@@ -707,13 +707,13 @@ export default function AuditShow({ report }: ShowProps) {
                     <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('show.broken.topBroken')} ({brokenLinks.length})
                     </p>
-                    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-800 divide-y divide-gray-800">
+                    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
                       {brokenLinks.map((link, i) => {
                         const l = link as Record<string, unknown>;
                         return (
                           <div key={i} className="px-3 py-2.5">
                             <div className="flex items-start justify-between gap-3">
-                              <span className="break-all text-xs text-gray-300">{String(l.url ?? link)}</span>
+                              <span className="break-all text-xs text-gray-700 dark:text-gray-300">{String(l.url ?? link)}</span>
                               {l.status_code != null && (
                                 <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">
                                   {String(l.status_code)}
@@ -737,13 +737,13 @@ export default function AuditShow({ report }: ShowProps) {
                     <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('show.broken.brokenImages')} ({brokenImages.length})
                     </p>
-                    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-800 divide-y divide-gray-800">
+                    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
                       {brokenImages.map((img, i) => {
                         const im = img as Record<string, unknown>;
                         return (
                           <div key={i} className="px-3 py-2.5">
                             <div className="flex items-start justify-between gap-3">
-                              <span className="break-all text-xs text-gray-300">{String(im.url ?? img)}</span>
+                              <span className="break-all text-xs text-gray-700 dark:text-gray-300">{String(im.url ?? img)}</span>
                               {im.status_code != null && (
                                 <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">
                                   {String(im.status_code)}
@@ -966,11 +966,11 @@ export default function AuditShow({ report }: ShowProps) {
                       {getArr(formLbl, 'violations').length > 0 && (
                         <div>
                           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.unlabeledInputs')} ({getArr(formLbl,'violations').length})</p>
-                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-800">
+                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
                             {getArr(formLbl, 'violations').map((v, i) => {
                               const vv = v as Record<string,unknown>;
                               return (
-                                <div key={i} className="border-b border-gray-800 px-3 py-2 last:border-0 text-xs text-gray-400">
+                                <div key={i} className="border-b border-gray-200 dark:border-gray-800 px-3 py-2 last:border-0 text-xs text-gray-600 dark:text-gray-400">
                                   <span className="text-red-400 font-mono">{String(vv.element ?? '')}{vv.type ? `[type=${String(vv.type)}]` : ''}</span>
                                   {!!vv.name && <span className="ml-2 text-gray-500">name="{String(vv.name)}"</span>}
                                 </div>
@@ -984,11 +984,11 @@ export default function AuditShow({ report }: ShowProps) {
                       {getArr(ariaLbl, 'violations').length > 0 && (
                         <div>
                           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.ariaViolations')} ({getArr(ariaLbl,'violations').length})</p>
-                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-800">
+                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
                             {getArr(ariaLbl, 'violations').map((v, i) => {
                               const vv = v as Record<string,unknown>;
                               return (
-                                <div key={i} className="border-b border-gray-800 px-3 py-2 last:border-0">
+                                <div key={i} className="border-b border-gray-200 dark:border-gray-800 px-3 py-2 last:border-0">
                                   <p className="text-xs text-red-400">{String(vv.issue ?? '')}</p>
                                   {!!vv.href && <p className="text-xs text-gray-500 truncate">{String(vv.href ?? '')}</p>}
                                 </div>
@@ -1003,16 +1003,16 @@ export default function AuditShow({ report }: ShowProps) {
                         <div>
                           <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.contrastViolations')} ({getArr(contrast,'violations').length})</p>
                           {contrast && <p className="mb-2 text-xs text-gray-600">{getStr(contrast,'note')}</p>}
-                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-800">
+                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
                             {getArr(contrast, 'violations').map((v, i) => {
                               const vv = v as Record<string,unknown>;
                               return (
-                                <div key={i} className="flex items-center gap-3 border-b border-gray-800 px-3 py-2 last:border-0">
+                                <div key={i} className="flex items-center gap-3 border-b border-gray-200 dark:border-gray-800 px-3 py-2 last:border-0">
                                   <div className="flex items-center gap-1.5 shrink-0">
-                                    <span className="inline-block h-4 w-4 rounded border border-gray-700" style={{ background: String(vv.bg_color ?? '#000') }} />
-                                    <span className="inline-block h-4 w-4 rounded border border-gray-700" style={{ background: String(vv.fg_color ?? '#fff') }} />
+                                    <span className="inline-block h-4 w-4 rounded border border-gray-300 dark:border-gray-700" style={{ background: String(vv.bg_color ?? '#000') }} />
+                                    <span className="inline-block h-4 w-4 rounded border border-gray-300 dark:border-gray-700" style={{ background: String(vv.fg_color ?? '#fff') }} />
                                   </div>
-                                  <span className="text-xs text-gray-400 flex-1 truncate">{vv.selector ? String(vv.selector) : String(vv.element ?? '')}</span>
+                                  <span className="text-xs text-gray-600 dark:text-gray-400 flex-1 truncate">{vv.selector ? String(vv.selector) : String(vv.element ?? '')}</span>
                                   <span className="shrink-0 text-xs text-red-400 font-mono">{String(vv.ratio ?? '')}:1</span>
                                 </div>
                               );

@@ -51,14 +51,14 @@ function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
 }
 
 function healthColor(score?: number): string {
-  if (score === undefined || score === null) return 'text-gray-400';
+  if (score === undefined || score === null) return 'text-gray-600 dark:text-gray-400';
   if (score >= 80) return 'text-emerald-400';
   if (score >= 50) return 'text-amber-400';
   return 'text-red-400';
 }
 
 function healthRingColor(score?: number): string {
-  if (score === undefined || score === null) return 'border-gray-600';
+  if (score === undefined || score === null) return 'border-gray-300 dark:border-gray-600';
   if (score >= 80) return 'border-emerald-500';
   if (score >= 50) return 'border-amber-500';
   return 'border-red-500';
@@ -100,8 +100,8 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-white">{t('audits.title')}</h1>
-          <p className="mt-1 text-sm text-gray-400">{t('audits.sub')}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('audits.title')}</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t('audits.sub')}</p>
         </div>
 
         {/* Flash messages */}
@@ -117,11 +117,11 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
         )}
 
         {/* Quota bar */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Zap className="h-4 w-4 text-violet-400" />
-              <span className="text-sm font-medium text-white">{t('audits.quotaTitle')}</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">{t('audits.quotaTitle')}</span>
             </div>
             {isUnlimited ? (
               <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
@@ -136,7 +136,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
           </div>
           {!isUnlimited && (
             <>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-800">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
                 <div
                   className={`h-full rounded-full transition-all duration-500 ${barColor}`}
                   style={{ width: `${pct}%` }}
@@ -158,8 +158,8 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
         )}
 
         {/* New Scan Panel */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
-          <h2 className="mb-4 text-base font-semibold text-white">{t('audits.newScan')}</h2>
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
+          <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">{t('audits.newScan')}</h2>
           <form onSubmit={submit} className="space-y-4">
             {/* Honeypot: invisible to humans, catches automated bots */}
             <input
@@ -174,7 +174,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
             />
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="site_url" className="mb-1.5 block text-sm font-medium text-gray-300">
+                <label htmlFor="site_url" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {t('audits.urlLabel')} <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -184,14 +184,14 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                   value={data.site_url}
                   onChange={(e) => setData('site_url', e.target.value)}
                   required
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
                 {errors.site_url && (
                   <p className="mt-1 text-xs text-red-400">{errors.site_url}</p>
                 )}
               </div>
               <div>
-                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-gray-300">
+                <label htmlFor="name" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {t('audits.nameLabel')} <span className="text-gray-500">({t('audits.nameOptional')})</span>
                 </label>
                 <input
@@ -200,7 +200,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                   placeholder={t('audits.namePlaceholder')}
                   value={data.name}
                   onChange={(e) => setData('name', e.target.value)}
-                  className="w-full rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
+                  className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
                 {errors.name && (
                   <p className="mt-1 text-xs text-red-400">{errors.name}</p>
@@ -225,11 +225,11 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
         </div>
 
         {/* Scan History Table */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900">
-          <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
-            <h2 className="text-base font-semibold text-white">
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-5 py-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">
               {t('audits.history')}
-              <span className="ml-2 rounded-full bg-gray-800 px-2 py-0.5 text-xs text-gray-400">
+              <span className="ml-2 rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-400">
                 {reports.total}
               </span>
             </h2>
@@ -238,7 +238,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
           {reports.data.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <Search className="mb-3 h-10 w-10 text-gray-600" />
-              <p className="text-gray-400">{t('audits.noScans')}</p>
+              <p className="text-gray-600 dark:text-gray-400">{t('audits.noScans')}</p>
               <p className="mt-1 text-sm text-gray-500">
                 {t('audits.noScansSub')}
               </p>
@@ -248,7 +248,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-800">
+                    <tr className="border-b border-gray-200 dark:border-gray-800">
                       <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('audits.site')}
                       </th>
@@ -268,10 +268,10 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                   </thead>
                   <tbody className="divide-y divide-gray-800">
                     {reports.data.map((report) => (
-                      <tr key={report.id} className="hover:bg-gray-800/40 transition-colors">
+                      <tr key={report.id} className="hover:bg-gray-100/40 dark:hover:bg-gray-100/40 dark:bg-gray-800/40 transition-colors">
                         <td className="px-5 py-3.5">
                           <div>
-                            <p className="font-medium text-white truncate max-w-[220px]">
+                            <p className="font-medium text-gray-900 dark:text-white truncate max-w-[220px]">
                               {report.name ?? report.site_url}
                             </p>
                             {report.name && (
@@ -295,14 +295,14 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                             <span className="text-gray-500">—</span>
                           )}
                         </td>
-                        <td className="px-5 py-3.5 text-gray-400 whitespace-nowrap">
+                        <td className="px-5 py-3.5 text-gray-600 dark:text-gray-400 whitespace-nowrap">
                           {new Date(report.created_at).toLocaleDateString()}
                         </td>
                         <td className="px-5 py-3.5">
                           <div className="flex items-center justify-end gap-2">
                             <Link
                               href={`/audits/${report.id}`}
-                              className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                              className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
                             >
                               <ExternalLink className="h-3 w-3" />
                               {t('audits.view')}
@@ -311,14 +311,14 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                               <>
                                 <a
                                   href={`/audits/${report.id}/export/pdf`}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
                                 >
                                   <FileDown className="h-3 w-3" />
                                   {t('show.pdf')}
                                 </a>
                                 <a
                                   href={`/audits/${report.id}/export/csv`}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-2.5 py-1.5 text-xs text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                                  className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700 px-2.5 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
                                 >
                                   <FileDown className="h-3 w-3" />
                                   {t('show.csv')}
@@ -342,7 +342,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
 
               {/* Pagination */}
               {reports.last_page > 1 && (
-                <div className="flex items-center justify-between border-t border-gray-800 px-5 py-4">
+                <div className="flex items-center justify-between border-t border-gray-200 dark:border-gray-800 px-5 py-4">
                   <p className="text-xs text-gray-500">
                     {t('audits.showing')} {reports.from}–{reports.to} {t('audits.of')} {reports.total}
                   </p>
@@ -353,7 +353,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                           <Link
                             key={index}
                             href={link.url ?? '#'}
-                            className={`rounded-lg p-1.5 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
+                            className={`rounded-lg p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
                           >
                             <ChevronLeft className="h-4 w-4" />
                           </Link>
@@ -364,7 +364,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                           <Link
                             key={index}
                             href={link.url ?? '#'}
-                            className={`rounded-lg p-1.5 text-gray-400 hover:bg-gray-800 hover:text-white transition-colors ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
+                            className={`rounded-lg p-1.5 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white transition-colors ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
                           >
                             <ChevronRight className="h-4 w-4" />
                           </Link>
@@ -377,7 +377,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                           className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                             link.active
                               ? 'bg-violet-600 text-white'
-                              : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                              : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                           } ${!link.url ? 'pointer-events-none opacity-40' : ''}`}
                         >
                           {link.label}

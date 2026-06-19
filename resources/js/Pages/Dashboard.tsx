@@ -32,14 +32,14 @@ interface DashboardProps extends PageProps {
 }
 
 function healthColor(score?: number): string {
-  if (score === undefined || score === null) return 'text-gray-400';
+  if (score === undefined || score === null) return 'text-gray-600 dark:text-gray-400';
   if (score >= 80) return 'text-emerald-400';
   if (score >= 50) return 'text-amber-400';
   return 'text-red-400';
 }
 
 function healthBg(score?: number): string {
-  if (score === undefined || score === null) return 'bg-gray-500/10 border-gray-500/20';
+  if (score === undefined || score === null) return 'bg-gray-500/10 border-gray-400 dark:border-gray-500/20';
   if (score >= 80) return 'bg-emerald-500/10 border-emerald-500/20';
   if (score >= 50) return 'bg-amber-500/10 border-amber-500/20';
   return 'bg-red-500/10 border-red-500/20';
@@ -117,9 +117,9 @@ export default function Dashboard({
       label: t('dashboard.avgScore'),
       value: avg !== null ? `${avg}` : t('dashboard.noScore'),
       icon: Activity,
-      color: avg !== null ? healthColor(avg) : 'text-gray-400',
+      color: avg !== null ? healthColor(avg) : 'text-gray-600 dark:text-gray-400',
       bg: avg !== null ? healthBg(avg).split(' ')[0] : 'bg-gray-500/10',
-      border: avg !== null ? healthBg(avg).split(' ')[1] : 'border-gray-500/20',
+      border: avg !== null ? healthBg(avg).split(' ')[1] : 'border-gray-400 dark:border-gray-500/20',
     },
   ];
 
@@ -131,8 +131,8 @@ export default function Dashboard({
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">{t('dashboard.title')}</h1>
-            <p className="mt-1 text-sm text-gray-400">{t('dashboard.greeting')}</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('dashboard.title')}</h1>
+            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t('dashboard.greeting')}</p>
           </div>
           <Link
             href="/audits"
@@ -152,7 +152,7 @@ export default function Dashboard({
                 className={`rounded-xl border ${stat.border} ${stat.bg} p-5`}
               >
                 <div className="flex items-center justify-between">
-                  <p className="text-sm font-medium text-gray-400">{stat.label}</p>
+                  <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.label}</p>
                   <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.bg} border ${stat.border}`}>
                     <Icon className={`h-4 w-4 ${stat.color}`} />
                   </div>
@@ -165,20 +165,20 @@ export default function Dashboard({
 
         {/* Crawl quota */}
         {quota && (
-          <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h2 className="text-sm font-semibold text-white">Monthly crawl quota</h2>
+                <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Monthly crawl quota</h2>
                 <p className="mt-0.5 text-xs text-gray-500">Resets {quota.resets_at}</p>
               </div>
               <div className="text-right">
-                <span className={`text-2xl font-bold ${quota.remaining === 0 ? 'text-rose-400' : quota.percent >= 80 ? 'text-amber-400' : 'text-white'}`}>
+                <span className={`text-2xl font-bold ${quota.remaining === 0 ? 'text-rose-400' : quota.percent >= 80 ? 'text-amber-400' : 'text-gray-900 dark:text-white'}`}>
                   {quota.remaining}
                 </span>
                 <span className="text-sm text-gray-500"> remaining</span>
               </div>
             </div>
-            <div className="h-2 w-full rounded-full bg-gray-800">
+            <div className="h-2 w-full rounded-full bg-gray-100 dark:bg-gray-800">
               <div
                 className={`h-2 rounded-full transition-all ${quota.percent >= 95 ? 'bg-rose-500' : quota.percent >= 80 ? 'bg-amber-500' : 'bg-violet-500'}`}
                 style={{ width: `${quota.percent}%` }}
@@ -195,9 +195,9 @@ export default function Dashboard({
         )}
 
         {/* Recent Scans */}
-        <div className="rounded-xl border border-gray-800 bg-gray-900">
-          <div className="flex items-center justify-between border-b border-gray-800 px-5 py-4">
-            <h2 className="text-base font-semibold text-white">{t('dashboard.recentScans')}</h2>
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
+          <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-5 py-4">
+            <h2 className="text-base font-semibold text-gray-900 dark:text-white">{t('dashboard.recentScans')}</h2>
             <Link href="/audits" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
               {t('dashboard.viewAll')}
             </Link>
@@ -206,7 +206,7 @@ export default function Dashboard({
           {recentReports.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 text-center">
               <FileSearch className="mb-3 h-10 w-10 text-gray-600" />
-              <p className="text-gray-400">{t('dashboard.noRecent')}</p>
+              <p className="text-gray-600 dark:text-gray-400">{t('dashboard.noRecent')}</p>
               <p className="mt-1 text-sm text-gray-500">
                 {t('dashboard.noRecentSub')}
               </p>
@@ -221,7 +221,7 @@ export default function Dashboard({
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-800">
+                  <tr className="border-b border-gray-200 dark:border-gray-800">
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('dashboard.site')}
                     </th>
@@ -241,10 +241,10 @@ export default function Dashboard({
                 </thead>
                 <tbody className="divide-y divide-gray-800">
                   {recentReports.map((report) => (
-                    <tr key={report.id} className="hover:bg-gray-800/50 transition-colors">
+                    <tr key={report.id} className="hover:bg-gray-100/50 dark:hover:bg-gray-100/50 dark:bg-gray-800/50 transition-colors">
                       <td className="px-5 py-3.5">
                         <div>
-                          <p className="font-medium text-white truncate max-w-[200px]">
+                          <p className="font-medium text-gray-900 dark:text-white truncate max-w-[200px]">
                             {report.name ?? report.site_url}
                           </p>
                           {report.name && (
@@ -266,13 +266,13 @@ export default function Dashboard({
                           <span className="text-gray-500">—</span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 text-gray-400">
+                      <td className="px-5 py-3.5 text-gray-600 dark:text-gray-400">
                         {new Date(report.created_at).toLocaleDateString()}
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         <Link
                           href={`/audits/${report.id}`}
-                          className="inline-flex items-center gap-1 rounded-lg border border-gray-700 px-3 py-1.5 text-xs text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
                         >
                           {t('audits.view')} <ExternalLink className="h-3 w-3" />
                         </Link>

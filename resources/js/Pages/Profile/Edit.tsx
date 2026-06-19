@@ -25,13 +25,13 @@ interface EditProps extends PageProps {
 
 /* ─────────────── Shared input style ─────────────── */
 const inputCls =
-  'w-full rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50';
-const labelCls = 'mb-1.5 block text-sm font-medium text-gray-300';
+  'w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500 disabled:opacity-50';
+const labelCls = 'mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300';
 
 /* ─────────────── Card wrapper ─────────────── */
 function Card({ children }: { children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-gray-800 bg-gray-900 p-6">
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
       {children}
     </div>
   );
@@ -58,8 +58,8 @@ function CardHeader({
         <Icon className={`h-4 w-4 ${color}`} />
       </div>
       <div>
-        <h2 className="text-base font-semibold text-white">{title}</h2>
-        <p className="mt-0.5 text-sm text-gray-400">{sub}</p>
+        <h2 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h2>
+        <p className="mt-0.5 text-sm text-gray-600 dark:text-gray-400">{sub}</p>
       </div>
     </div>
   );
@@ -262,10 +262,10 @@ function AgencyCard() {
           <div className="relative flex-shrink-0">
             <input type="checkbox" className="sr-only" checked={data.is_agency}
               onChange={(e) => setData('is_agency', e.target.checked)} />
-            <div className={`h-6 w-11 rounded-full transition-colors ${data.is_agency ? 'bg-violet-600' : 'bg-gray-700'}`} />
+            <div className={`h-6 w-11 rounded-full transition-colors ${data.is_agency ? 'bg-violet-600' : 'bg-gray-200 dark:bg-gray-700'}`} />
             <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${data.is_agency ? 'translate-x-5' : 'translate-x-0'}`} />
           </div>
-          <span className="text-sm font-medium text-gray-200">{t('profile.agencyToggle')}</span>
+          <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{t('profile.agencyToggle')}</span>
         </label>
 
         {data.is_agency && (
@@ -275,14 +275,14 @@ function AgencyCard() {
               <label className={labelCls}>{t('profile.agencyLogo')}</label>
               {preview && (
                 <div className="mb-3 flex items-center gap-3">
-                  <img src={preview} alt="logo" className="h-12 max-w-[160px] rounded border border-gray-700 bg-gray-800 object-contain p-1" />
+                  <img src={preview} alt="logo" className="h-12 max-w-[160px] rounded border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 object-contain p-1" />
                   <button type="button" onClick={removeLogo}
                     className="flex items-center gap-1 text-xs text-red-400 hover:text-red-300">
                     <X className="h-3 w-3" />{t('profile.agencyLogoRemove')}
                   </button>
                 </div>
               )}
-              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-600 bg-gray-800 px-4 py-3 text-sm text-gray-400 hover:border-violet-500 hover:text-violet-400 transition-colors">
+              <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 px-4 py-3 text-sm text-gray-600 dark:text-gray-400 hover:border-violet-500 hover:text-violet-400 transition-colors">
                 <Upload className="h-4 w-4" />
                 <span>{t('profile.agencyLogoHint')}</span>
                 <input ref={fileRef} type="file"
@@ -302,7 +302,7 @@ function AgencyCard() {
                   <label className={labelCls}>{t(`profile.${labelKey}`)}</label>
                   <div className="flex items-center gap-2">
                     <input type="color" value={data[key]} onChange={(e) => setData(key, e.target.value)}
-                      className="h-9 w-12 cursor-pointer rounded border border-gray-600 bg-gray-800 p-0.5" />
+                      className="h-9 w-12 cursor-pointer rounded border border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 p-0.5" />
                     <input type="text" value={data[key]} onChange={(e) => setData(key, e.target.value)}
                       className={inputCls} placeholder={def} maxLength={7} />
                   </div>
@@ -502,7 +502,7 @@ function DeleteAccountForm() {
             <button
               type="button"
               onClick={() => { setOpen(false); reset(); }}
-              className="rounded-lg border border-gray-700 px-4 py-2 text-sm text-gray-300 hover:border-gray-600 hover:text-white transition-colors"
+              className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
             >
               {t('profile.cancel')}
             </button>
@@ -532,24 +532,24 @@ function InstructionsSection() {
 
       <div className="space-y-2">
         {items.map((item, i) => (
-          <div key={i} className="rounded-lg border border-gray-800 overflow-hidden">
+          <div key={i} className="rounded-lg border border-gray-200 dark:border-gray-800 overflow-hidden">
             <button
               onClick={() => setOpenIdx(openIdx === i ? null : i)}
-              className="flex w-full items-center justify-between bg-gray-800/60 px-4 py-3 text-left hover:bg-gray-800 transition-colors"
+              className="flex w-full items-center justify-between bg-gray-100/60 dark:bg-gray-800/60 px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
-              <span className="text-sm font-medium text-white">
+              <span className="text-sm font-medium text-gray-900 dark:text-white">
                 <span className="mr-2.5 inline-flex h-5 w-5 items-center justify-center rounded-full bg-violet-500/20 text-xs font-bold text-violet-400">
                   {i + 1}
                 </span>
                 {item.title}
               </span>
               {openIdx === i
-                ? <ChevronUp className="h-4 w-4 shrink-0 text-gray-400" />
-                : <ChevronDown className="h-4 w-4 shrink-0 text-gray-400" />}
+                ? <ChevronUp className="h-4 w-4 shrink-0 text-gray-600 dark:text-gray-400" />
+                : <ChevronDown className="h-4 w-4 shrink-0 text-gray-600 dark:text-gray-400" />}
             </button>
             {openIdx === i && (
-              <div className="border-t border-gray-800 bg-gray-900 px-4 py-3">
-                <p className="text-sm leading-relaxed text-gray-300">{item.body}</p>
+              <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 py-3">
+                <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{item.body}</p>
               </div>
             )}
           </div>
@@ -569,8 +569,8 @@ export default function ProfileEdit({ mustVerifyEmail, status }: EditProps) {
 
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold text-white">{t('profile.title')}</h1>
-          <p className="mt-1 text-sm text-gray-400">{t('profile.infoSub')}</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('profile.title')}</h1>
+          <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{t('profile.infoSub')}</p>
         </div>
 
         <ProfileInfoForm mustVerifyEmail={mustVerifyEmail} status={status} />

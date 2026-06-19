@@ -13,8 +13,8 @@ interface Post {
     status: 'draft' | 'published';
 }
 
-const inputCls = 'w-full rounded-lg border border-gray-700 bg-gray-800 px-3.5 py-2.5 text-sm text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500';
-const labelCls = 'mb-1.5 block text-sm font-medium text-gray-300';
+const inputCls = 'w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500';
+const labelCls = 'mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300';
 
 export default function AdminBlogEdit({ post }: { post: Post | null }) {
     const isNew = !post;
@@ -42,10 +42,10 @@ export default function AdminBlogEdit({ post }: { post: Post | null }) {
 
             <div className="mb-6 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                    <Link href="/admin/blog" className="rounded-lg border border-gray-700 p-2 text-gray-400 hover:border-gray-600 hover:text-gray-200 transition-colors">
+                    <Link href="/admin/blog" className="rounded-lg border border-gray-300 dark:border-gray-700 p-2 text-gray-600 dark:text-gray-400 hover:border-gray-600 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
                         <ArrowLeft className="h-4 w-4" />
                     </Link>
-                    <h1 className="text-xl font-bold text-white">{isNew ? 'New Post' : 'Edit Post'}</h1>
+                    <h1 className="text-xl font-bold text-gray-900 dark:text-white">{isNew ? 'New Post' : 'Edit Post'}</h1>
                 </div>
 
                 {!isNew && post.status === 'published' && (
@@ -53,7 +53,7 @@ export default function AdminBlogEdit({ post }: { post: Post | null }) {
                         href={`/blog/${post.slug}`}
                         target="_blank"
                         rel="noreferrer"
-                        className="flex items-center gap-2 rounded-lg border border-gray-700 px-3 py-2 text-sm text-gray-400 hover:border-gray-600 hover:text-gray-200 transition-colors"
+                        className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:border-gray-600 hover:text-gray-800 dark:hover:text-gray-200 transition-colors"
                     >
                         <Eye className="h-4 w-4" />
                         View live
@@ -103,8 +103,8 @@ export default function AdminBlogEdit({ post }: { post: Post | null }) {
                 {/* Sidebar - 1/3 */}
                 <div className="space-y-5">
                     {/* Publish panel */}
-                    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-                        <h3 className="mb-4 text-sm font-semibold text-white">Publish</h3>
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+                        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Publish</h3>
 
                         <div className="mb-4">
                             <label className={labelCls}>Status</label>
@@ -135,8 +135,8 @@ export default function AdminBlogEdit({ post }: { post: Post | null }) {
                     </div>
 
                     {/* Featured image */}
-                    <div className="rounded-xl border border-gray-800 bg-gray-900 p-5">
-                        <h3 className="mb-4 text-sm font-semibold text-white">Featured Image</h3>
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+                        <h3 className="mb-4 text-sm font-semibold text-gray-900 dark:text-white">Featured Image</h3>
                         <label className={labelCls}>Image URL</label>
                         <input
                             type="url"
