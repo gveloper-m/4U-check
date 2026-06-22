@@ -19,6 +19,7 @@ import {
     XCircle,
     X,
     Ticket,
+    Tag,
     HelpCircle,
     Activity,
 } from 'lucide-react';
@@ -59,10 +60,11 @@ export default function AppLayout({ children }: PropsWithChildren) {
         { label: t('nav.scheduled'),  href: '/scheduled-scans',  icon: Clock,           routeName: 'scheduled-scans.index' },
         { label: t('nav.billing'),    href: '/billing',          icon: CreditCard,      routeName: 'billing' },
         ...(auth.user.is_admin ? [
-            { label: 'Blog',       href: '/admin/blog',       icon: FileText, routeName: 'admin.blog.index' },
-            { label: 'Tickets',   href: '/admin/tickets',   icon: Ticket,   routeName: 'admin.tickets.index' },
-            { label: 'Users',     href: '/admin/users',     icon: Users,    routeName: 'admin.users.index' },
-            { label: 'Monitoring',href: '/admin/monitoring', icon: Activity, routeName: 'admin.monitoring.index' },
+            { label: 'Blog',         href: '/admin/blog',         icon: FileText, routeName: 'admin.blog.index' },
+            { label: 'Tickets',      href: '/admin/tickets',      icon: Ticket,   routeName: 'admin.tickets.index' },
+            { label: 'Users',        href: '/admin/users',        icon: Users,    routeName: 'admin.users.index' },
+            { label: 'Monitoring',   href: '/admin/monitoring',   icon: Activity, routeName: 'admin.monitoring.index' },
+            { label: 'Trial Codes',  href: '/admin/trial-codes',  icon: Tag,      routeName: 'admin.trial-codes.index' },
         ] : []),
     ];
 

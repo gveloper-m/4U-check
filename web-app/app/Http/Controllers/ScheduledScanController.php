@@ -17,13 +17,19 @@ class ScheduledScanController extends Controller
      */
     public function index(): InertiaResponse
     {
-        $scans = auth()->user()
-            ->scheduledScans()
-            ->with('lastReport')
-            ->latest()
-            ->get();
+        $user  = auth()->user();
+        $scans = $user->scheduledScans()->with('lastReport')->latest()->get();
+        $sites = $user->monitoredSites()->orderBy('is_primary', 'desc')->orderBy('created_at')->get();
 
-        return Inertia::render('ScheduledScans/Index', ['scans' => $scans]);
+        return Inertia::render('ScheduledScans/Index', [
+            'scans' => $scans,
+            'sites' => $sites->map(fn($s) => [
+                'id'         => $s->id,
+                'url'        => $s->url,
+                'label'      => $s->label,
+                'is_primary' => $s->is_primary,
+            ])->values(),
+        ]);
     }
 
     /**
@@ -38,7 +44,22 @@ class ScheduledScanController extends Controller
             'notify_email' => 'boolean',
         ]);
 
-        auth()->user()->scheduledScans()->create([
+        $user      = auth()->user();
+        $userSites = $user->monitoredSites()->pluck('url')->toArray();
+        if (! empty($userSites)) {
+            $scanHost     = strtolower(parse_url($validated['site_url'], PHP_URL_HOST) ?? '');
+            $allowedHosts = array_map(
+                fn($s) => strtolower(parse_url($s, PHP_URL_HOST) ?? ''),
+                $userSites
+            );
+            if (! in_array($scanHost, $allowedHosts, true)) {
+                return back()->withErrors([
+                    'site_url' => 'You can only schedule scans for websites registered in your plan.',
+                ]);
+            }
+        }
+
+        $user->scheduledScans()->create([
             'name'         => $validated['name'],
             'site_url'     => $validated['site_url'],
             'interval'     => $validated['interval'],
@@ -64,6 +85,23 @@ class ScheduledScanController extends Controller
             'interval'     => 'sometimes|in:hourly,daily,weekly,monthly',
             'notify_email' => 'sometimes|boolean',
         ]);
+
+        if (isset($validated['site_url'])) {
+            $user      = auth()->user();
+            $userSites = $user->monitoredSites()->pluck('url')->toArray();
+            if (! empty($userSites)) {
+                $scanHost     = strtolower(parse_url($validated['site_url'], PHP_URL_HOST) ?? '');
+                $allowedHosts = array_map(
+                    fn($s) => strtolower(parse_url($s, PHP_URL_HOST) ?? ''),
+                    $userSites
+                );
+                if (! in_array($scanHost, $allowedHosts, true)) {
+                    return back()->withErrors([
+                        'site_url' => 'You can only schedule scans for websites registered in your plan.',
+                    ]);
+                }
+            }
+        }
 
         if (isset($validated['interval']) && $validated['interval'] !== $scheduledScan->interval) {
             $validated['next_run_at'] = ScheduledScan::computeNextRun($validated['interval']);
@@ -95,8 +133,11 @@ class ScheduledScanController extends Controller
     {
         abort_unless($scheduledScan->user_id === auth()->id(), 403);
 
-        if (auth()->user()->hasReachedScanLimit()) {
-            return back()->with('error', 'Monthly scan limit reached (120/120). Your quota resets on the 1st of next month.');
+        $user = auth()->user();
+        if ($user->hasReachedScanLimit()) {
+            $used  = $user->scansThisMonth();
+            $limit = $user->monthlyLimit();
+            return back()->with('error', "Monthly scan limit reached ({$used}/{$limit}). Your quota resets on the 1st of next month.");
         }
 
         ProcessScheduledScan::dispatch($scheduledScan);

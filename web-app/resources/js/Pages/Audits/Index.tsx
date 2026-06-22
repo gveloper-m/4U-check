@@ -4,24 +4,23 @@ import { PageProps, FullAuditReport, PaginatedData } from '@/types';
 import { FormEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Search,
-  CheckCircle2,
-  XCircle,
-  Loader2,
-  ExternalLink,
-  FileDown,
-  Trash2,
-  ChevronLeft,
-  ChevronRight,
-  Infinity,
-  Zap,
+  Search, CheckCircle2, XCircle, Loader2, ExternalLink, FileDown,
+  Trash2, ChevronLeft, ChevronRight, Infinity, Zap, Globe,
 } from 'lucide-react';
+
+interface SiteData {
+  id: number;
+  url: string;
+  label: string | null;
+  is_primary: boolean;
+}
 
 interface AuditsIndexProps extends PageProps {
   reports: PaginatedData<FullAuditReport>;
   scansUsed: number;
   scanLimit: number;
   isUnlimited: boolean;
+  sites: SiteData[];
 }
 
 function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
@@ -64,7 +63,7 @@ function healthRingColor(score?: number): string {
   return 'border-red-500';
 }
 
-export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUnlimited }: AuditsIndexProps) {
+export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUnlimited, sites }: AuditsIndexProps) {
   const { t } = useTranslation();
   const { data, setData, post, processing, errors, reset } = useForm({
     site_url: '',
@@ -172,6 +171,30 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
               aria-hidden="true"
               style={{ position: 'absolute', width: '1px', height: '1px', overflow: 'hidden', opacity: 0, pointerEvents: 'none' }}
             />
+            {/* Site quick-select pills (only shown when user has registered sites) */}
+            {sites.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-gray-500">{t('audits.registeredSites')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {sites.map(site => (
+                    <button
+                      key={site.id}
+                      type="button"
+                      onClick={() => setData('site_url', site.url)}
+                      className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                        (() => { try { return new URL(data.site_url).hostname === new URL(site.url).hostname; } catch { return false; } })()
+                          ? 'border-violet-500/60 bg-violet-600/15 text-violet-300'
+                          : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-violet-500/40 hover:text-violet-300'
+                      }`}
+                    >
+                      <Globe className="h-3 w-3" />
+                      {site.label || new URL(site.url).hostname}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="site_url" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -186,6 +209,9 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                   required
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
+                {sites.length > 0 && (
+                  <p className="mt-1 text-xs text-gray-500">{t('audits.urlRestricted')}</p>
+                )}
                 {errors.site_url && (
                   <p className="mt-1 text-xs text-red-400">{errors.site_url}</p>
                 )}

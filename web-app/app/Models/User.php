@@ -46,11 +46,22 @@ class User extends Authenticatable
         ];
     }
 
-    public const MONTHLY_SCAN_LIMIT = 120;
+    public const SCANS_PER_SITE    = 30;
+    public const LEGACY_SCAN_LIMIT = 120;
+
+    public function siteCount(): int
+    {
+        return $this->monitoredSites()->count();
+    }
 
     public function monthlyLimit(): int
     {
-        return self::MONTHLY_SCAN_LIMIT + (int) ($this->crawl_quota_bonus ?? 0);
+        $count = $this->siteCount();
+        $base  = $count > 0
+            ? self::SCANS_PER_SITE * $count
+            : self::LEGACY_SCAN_LIMIT;
+
+        return $base + (int) ($this->crawl_quota_bonus ?? 0);
     }
 
     public function scansThisMonth(): int
@@ -83,7 +94,21 @@ class User extends Authenticatable
             return true;
         }
 
+        if ($this->onGenericTrial()) {
+            return true;
+        }
+
         return $this->subscribed('default');
+    }
+
+    public function primarySite(): ?MonitoredSite
+    {
+        return $this->monitoredSites()->where('is_primary', true)->first();
+    }
+
+    public function monitoredSites(): HasMany
+    {
+        return $this->hasMany(MonitoredSite::class);
     }
 
     public function auditReports(): HasMany

@@ -5,12 +5,12 @@ FROM node:20-bookworm-slim AS node-builder
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY web-app/package*.json ./
 RUN npm ci --legacy-peer-deps
 
-COPY resources/ resources/
-COPY public/ public/
-COPY vite.config.js tailwind.config.js postcss.config.js tsconfig.json ./
+COPY web-app/resources/ resources/
+COPY web-app/public/ public/
+COPY web-app/vite.config.js web-app/tailwind.config.js web-app/postcss.config.js web-app/tsconfig.json ./
 
 RUN npm run build
 
@@ -68,7 +68,7 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 
 # Copy composer manifests first for layer-cache efficiency
-COPY composer.json composer.lock ./
+COPY web-app/composer.json web-app/composer.lock ./
 
 # Install PHP production dependencies (no dev, optimised autoloader)
 RUN composer install \
@@ -79,16 +79,16 @@ RUN composer install \
     --prefer-dist
 
 # Copy full application source (respects .dockerignore)
-COPY --chown=www-data:www-data . .
+COPY --chown=www-data:www-data web-app/. .
 
 # Overwrite public/build with assets compiled in node-builder stage
 COPY --from=node-builder --chown=www-data:www-data /app/public/build public/build/
 
 # Copy custom PHP production settings
-COPY deploy/backend/php.ini /usr/local/etc/php/conf.d/99-production.ini
+COPY app-deploy/backend/php.ini /usr/local/etc/php/conf.d/99-production.ini
 
 # Copy and make entrypoint executable
-COPY deploy/backend/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY app-deploy/backend/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 # Run safe post-install Composer scripts

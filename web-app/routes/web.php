@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BlogController as AdminBlogController;
 use App\Http\Controllers\Admin\MonitoringController as AdminMonitoringController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
+use App\Http\Controllers\Admin\TrialCodeController as AdminTrialCodeController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\AuditController;
@@ -54,6 +55,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/billing', [BillingController::class, 'index'])->name('billing');
     Route::post('/billing/subscribe', [BillingController::class, 'subscribe'])->name('billing.subscribe');
     Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+    Route::post('/billing/sites', [BillingController::class, 'addSite'])->name('billing.sites.add');
+    Route::delete('/billing/sites/{site}', [BillingController::class, 'removeSite'])->name('billing.sites.remove');
 
     // Subscription required for audits
     Route::middleware('subscription')->group(function () {
@@ -84,6 +87,7 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::get('/blog', [AdminBlogController::class, 'index'])->name('blog.index');
     Route::get('/blog/create', [AdminBlogController::class, 'create'])->name('blog.create');
     Route::post('/blog', [AdminBlogController::class, 'store'])->name('blog.store');
+    Route::post('/blog/ai-generate', [AdminBlogController::class, 'aiGenerate'])->name('blog.ai-generate');
     Route::get('/blog/{blog}/edit', [AdminBlogController::class, 'edit'])->name('blog.edit');
     Route::patch('/blog/{blog}', [AdminBlogController::class, 'update'])->name('blog.update');
     Route::delete('/blog/{blog}', [AdminBlogController::class, 'destroy'])->name('blog.destroy');
@@ -102,6 +106,11 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/users/{user}/send-email', [AdminUserController::class, 'sendEmail'])->name('users.send-email');
 
     Route::get('/monitoring', [AdminMonitoringController::class, 'index'])->name('monitoring.index');
+
+    Route::get('/trial-codes', [AdminTrialCodeController::class, 'index'])->name('trial-codes.index');
+    Route::post('/trial-codes', [AdminTrialCodeController::class, 'store'])->name('trial-codes.store');
+    Route::patch('/trial-codes/{trialCode}/note', [AdminTrialCodeController::class, 'updateNote'])->name('trial-codes.update-note');
+    Route::delete('/trial-codes/{trialCode}', [AdminTrialCodeController::class, 'destroy'])->name('trial-codes.destroy');
 });
 
 // Stripe webhook — CSRF-exempt (see bootstrap/app.php), signature verified by Cashier internals

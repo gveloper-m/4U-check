@@ -24,7 +24,7 @@ services:
   nginx:
     build:
       context: ../
-      dockerfile: deploy/frontend/Dockerfile
+      dockerfile: app-deploy/frontend/Dockerfile
     image: 4utest-frontend:latest
     restart: unless-stopped
     ports:
@@ -52,7 +52,7 @@ services:
   php-fpm:
     build:
       context: ../
-      dockerfile: deploy/backend/Dockerfile
+      dockerfile: app-deploy/backend/Dockerfile
     image: 4utest-backend:latest
     restart: unless-stopped
     volumes:

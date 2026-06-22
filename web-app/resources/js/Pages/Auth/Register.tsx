@@ -1,17 +1,20 @@
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { FormEventHandler } from 'react';
-import { Loader2, Building2 } from 'lucide-react';
+import { FormEventHandler, useState } from 'react';
+import { Loader2, Building2, Globe, Lock, AlertTriangle, X, Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export default function Register() {
   const { t } = useTranslation();
+  const [showConfirm, setShowConfirm] = useState(false);
+
   const { data, setData, post, processing, errors, reset } = useForm({
     name: '',
     email: '',
     phone: '',
     company_name: '',
-    company_site: '',
+    primary_site: '',
+    trial_code: '',
     password: '',
     password_confirmation: '',
     is_agency: false,
@@ -19,8 +22,14 @@ export default function Register() {
     agency_secondary_color: '#2d3748',
   });
 
-  const submit: FormEventHandler = (e) => {
+  const handleSubmit: FormEventHandler = (e) => {
     e.preventDefault();
+    if (!data.primary_site) return;
+    setShowConfirm(true);
+  };
+
+  const confirmAndSubmit = () => {
+    setShowConfirm(false);
     post(route('register'), {
       onFinish: () => reset('password', 'password_confirmation'),
     });
@@ -35,12 +44,10 @@ export default function Register() {
 
       <h2 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">{t('auth.register.title')}</h2>
 
-      <form onSubmit={submit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4">
         {/* Full Name */}
         <div>
-          <label htmlFor="name" className={labelCls}>
-            {t('auth.register.name')}
-          </label>
+          <label htmlFor="name" className={labelCls}>{t('auth.register.name')}</label>
           <input
             id="name"
             type="text"
@@ -57,9 +64,7 @@ export default function Register() {
 
         {/* Email */}
         <div>
-          <label htmlFor="email" className={labelCls}>
-            {t('auth.register.email')}
-          </label>
+          <label htmlFor="email" className={labelCls}>{t('auth.register.email')}</label>
           <input
             id="email"
             type="email"
@@ -75,9 +80,7 @@ export default function Register() {
 
         {/* Phone */}
         <div>
-          <label htmlFor="phone" className={labelCls}>
-            {t('auth.register.phone')}
-          </label>
+          <label htmlFor="phone" className={labelCls}>{t('auth.register.phone')}</label>
           <input
             id="phone"
             type="tel"
@@ -90,47 +93,75 @@ export default function Register() {
           {errors.phone && <p className="mt-1 text-xs text-red-400">{errors.phone}</p>}
         </div>
 
-        {/* Company row */}
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <label htmlFor="company_name" className={labelCls}>
-              {t('auth.register.companyName')}{' '}
-              <span className="text-xs text-gray-500">({t('auth.register.optionalLabel')})</span>
-            </label>
-            <input
-              id="company_name"
-              type="text"
-              value={data.company_name}
-              autoComplete="organization"
-              onChange={(e) => setData('company_name', e.target.value)}
-              className={inputCls}
-              placeholder="Acme Ltd"
-            />
-            {errors.company_name && <p className="mt-1 text-xs text-red-400">{errors.company_name}</p>}
-          </div>
-          <div>
-            <label htmlFor="company_site" className={labelCls}>
-              {t('auth.register.companySite')}{' '}
-              <span className="text-xs text-gray-500">({t('auth.register.optionalLabel')})</span>
-            </label>
-            <input
-              id="company_site"
-              type="url"
-              value={data.company_site}
-              autoComplete="url"
-              onChange={(e) => setData('company_site', e.target.value)}
-              className={inputCls}
-              placeholder="https://acme.gr"
-            />
-            {errors.company_site && <p className="mt-1 text-xs text-red-400">{errors.company_site}</p>}
-          </div>
+        {/* Company name */}
+        <div>
+          <label htmlFor="company_name" className={labelCls}>
+            {t('auth.register.companyName')}{' '}
+            <span className="text-xs text-gray-500">({t('auth.register.optionalLabel')})</span>
+          </label>
+          <input
+            id="company_name"
+            type="text"
+            value={data.company_name}
+            autoComplete="organization"
+            onChange={(e) => setData('company_name', e.target.value)}
+            className={inputCls}
+            placeholder="Acme Ltd"
+          />
+          {errors.company_name && <p className="mt-1 text-xs text-red-400">{errors.company_name}</p>}
+        </div>
+
+        {/* Primary site — required, locked at subscription */}
+        <div>
+          <label htmlFor="primary_site" className={labelCls}>
+            <span className="flex items-center gap-1.5">
+              <Globe className="h-3.5 w-3.5 text-violet-400" />
+              {t('auth.register.primarySite')} <span className="text-red-400">*</span>
+            </span>
+          </label>
+          <input
+            id="primary_site"
+            type="url"
+            value={data.primary_site}
+            autoComplete="url"
+            onChange={(e) => setData('primary_site', e.target.value)}
+            required
+            className={inputCls}
+            placeholder="https://yourwebsite.com"
+          />
+          <p className="mt-1 flex items-center gap-1 text-xs text-amber-500 dark:text-amber-400">
+            <Lock className="h-3 w-3 shrink-0" />
+            {t('auth.register.primarySiteHint')}
+          </p>
+          {errors.primary_site && <p className="mt-1 text-xs text-red-400">{errors.primary_site}</p>}
+        </div>
+
+        {/* Trial code — optional */}
+        <div>
+          <label htmlFor="trial_code" className={labelCls}>
+            <span className="flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-emerald-400" />
+              {t('auth.register.trialCode')}
+              <span className="text-xs font-normal text-gray-500 dark:text-gray-400">({t('common.optional')})</span>
+            </span>
+          </label>
+          <input
+            id="trial_code"
+            type="text"
+            value={data.trial_code}
+            onChange={(e) => setData('trial_code', e.target.value.toUpperCase())}
+            className={inputCls}
+            placeholder="XXXX-XXXX"
+            maxLength={9}
+            style={{ fontFamily: 'monospace', letterSpacing: '0.08em' }}
+          />
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('auth.register.trialCodeHint')}</p>
+          {errors.trial_code && <p className="mt-1 text-xs text-red-400">{errors.trial_code}</p>}
         </div>
 
         {/* Password */}
         <div>
-          <label htmlFor="password" className={labelCls}>
-            {t('auth.register.password')}
-          </label>
+          <label htmlFor="password" className={labelCls}>{t('auth.register.password')}</label>
           <input
             id="password"
             type="password"
@@ -146,9 +177,7 @@ export default function Register() {
 
         {/* Confirm password */}
         <div>
-          <label htmlFor="password_confirmation" className={labelCls}>
-            {t('auth.register.confirmPassword')}
-          </label>
+          <label htmlFor="password_confirmation" className={labelCls}>{t('auth.register.confirmPassword')}</label>
           <input
             id="password_confirmation"
             type="password"
@@ -198,7 +227,6 @@ export default function Register() {
                       onChange={(e) => setData('agency_primary_color', e.target.value)}
                       className={inputCls} placeholder="#1a1a2e" maxLength={7} />
                   </div>
-                  <p className="mt-0.5 text-xs text-gray-500">{t('profile.agencyPrimaryColorHint')}</p>
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-gray-600 dark:text-gray-400">
@@ -212,7 +240,6 @@ export default function Register() {
                       onChange={(e) => setData('agency_secondary_color', e.target.value)}
                       className={inputCls} placeholder="#2d3748" maxLength={7} />
                   </div>
-                  <p className="mt-0.5 text-xs text-gray-500">{t('profile.agencySecondaryColorHint')}</p>
                 </div>
               </div>
               <p className="text-xs text-gray-500">You can upload your logo and set a report footer after signing in.</p>
@@ -236,6 +263,64 @@ export default function Register() {
           {t('auth.register.login')}
         </Link>
       </p>
+
+      {/* Confirmation modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowConfirm(false)} />
+          <div className="relative w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-2xl">
+            <button
+              onClick={() => setShowConfirm(false)}
+              className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
+              <AlertTriangle className="h-6 w-6 text-amber-400" />
+            </div>
+
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
+              {t('auth.register.confirmModal.title')}
+            </h3>
+
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+              {t('auth.register.confirmModal.body')}
+            </p>
+
+            <div className="mb-5 flex items-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3">
+              <Globe className="h-4 w-4 shrink-0 text-violet-400" />
+              <span className="text-sm font-semibold text-violet-300 break-all">{data.primary_site}</span>
+            </div>
+
+            <div className="mb-5 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-3">
+              <Lock className="mt-0.5 h-4 w-4 shrink-0 text-amber-400" />
+              <p className="text-xs text-amber-300">
+                {t('auth.register.confirmModal.lockWarning')}
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowConfirm(false)}
+                className="flex-1 rounded-xl border border-gray-300 dark:border-gray-700 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-gray-500 transition-colors"
+              >
+                {t('auth.register.confirmModal.change')}
+              </button>
+              <button
+                type="button"
+                onClick={confirmAndSubmit}
+                disabled={processing}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 transition-colors"
+              >
+                {processing && <Loader2 className="h-4 w-4 animate-spin" />}
+                {t('auth.register.confirmModal.confirm')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </GuestLayout>
   );
 }

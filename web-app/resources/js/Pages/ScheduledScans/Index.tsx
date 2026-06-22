@@ -4,19 +4,20 @@ import { PageProps, ScheduledScan } from '@/types';
 import { FormEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  Clock,
-  Play,
-  Pause,
-  Trash2,
-  Plus,
-  Loader2,
-  CheckCircle2,
-  XCircle,
-  Mail,
+  Clock, Play, Pause, Trash2, Plus, Loader2,
+  CheckCircle2, XCircle, Mail, Globe,
 } from 'lucide-react';
+
+interface SiteData {
+  id: number;
+  url: string;
+  label: string | null;
+  is_primary: boolean;
+}
 
 interface ScheduledScansProps extends PageProps {
   scans: ScheduledScan[];
+  sites: SiteData[];
 }
 
 function formatDate(dateStr?: string | null, neverLabel?: string): string {
@@ -24,7 +25,7 @@ function formatDate(dateStr?: string | null, neverLabel?: string): string {
   return new Date(dateStr).toLocaleString();
 }
 
-export default function ScheduledScansIndex({ scans, flash }: ScheduledScansProps) {
+export default function ScheduledScansIndex({ scans, flash, sites }: ScheduledScansProps) {
   const { t } = useTranslation();
 
   const intervalLabels: Record<ScheduledScan['interval'], string> = {
@@ -90,6 +91,28 @@ export default function ScheduledScansIndex({ scans, flash }: ScheduledScansProp
         <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
           <h2 className="mb-4 text-base font-semibold text-gray-900 dark:text-white">{t('scheduled.createTitle')}</h2>
           <form onSubmit={submit} className="space-y-4">
+            {sites.length > 0 && (
+              <div>
+                <p className="mb-2 text-xs font-medium text-gray-500">{t('audits.registeredSites')}</p>
+                <div className="flex flex-wrap gap-2">
+                  {sites.map(site => (
+                    <button
+                      key={site.id}
+                      type="button"
+                      onClick={() => setData('site_url', site.url)}
+                      className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                        data.site_url === site.url
+                          ? 'border-violet-500/60 bg-violet-600/15 text-violet-300'
+                          : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-violet-500/40 hover:text-violet-300'
+                      }`}
+                    >
+                      <Globe className="h-3 w-3" />
+                      {site.label || new URL(site.url).hostname}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="grid gap-4 sm:grid-cols-3">
               <div>
                 <label htmlFor="sched_name" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -120,6 +143,7 @@ export default function ScheduledScansIndex({ scans, flash }: ScheduledScansProp
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3.5 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none focus:ring-1 focus:ring-violet-500"
                 />
                 {errors.site_url && <p className="mt-1 text-xs text-red-400">{errors.site_url}</p>}
+                {sites.length > 0 && <p className="mt-1 text-xs text-gray-500">{t('audits.urlRestricted')}</p>}
               </div>
               <div>
                 <label htmlFor="sched_interval" className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">

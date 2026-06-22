@@ -33,18 +33,21 @@ class AuditController extends Controller
      */
     public function index(): InertiaResponse
     {
-        $reports = auth()->user()
-            ->auditReports()
-            ->latest()
-            ->paginate(15);
-
-        $user = auth()->user();
+        $user    = auth()->user();
+        $reports = $user->auditReports()->latest()->paginate(15);
+        $sites   = $user->monitoredSites()->orderBy('is_primary', 'desc')->orderBy('created_at')->get();
 
         return Inertia::render('Audits/Index', [
             'reports'     => $reports,
             'scansUsed'   => $user->is_unlimited ? 0 : $user->scansThisMonth(),
             'scanLimit'   => $user->is_unlimited ? null : $user->monthlyLimit(),
             'isUnlimited' => $user->is_unlimited,
+            'sites'       => $sites->map(fn($s) => [
+                'id'         => $s->id,
+                'url'        => $s->url,
+                'label'      => $s->label,
+                'is_primary' => $s->is_primary,
+            ])->values(),
         ]);
     }
 
@@ -58,7 +61,9 @@ class AuditController extends Controller
             return redirect()->route('audits.index');
         }
 
-        if (auth()->user()->hasReachedScanLimit()) {
+        $user = auth()->user();
+
+        if ($user->hasReachedScanLimit()) {
             $used  = $user->scansThisMonth();
             $limit = $user->monthlyLimit();
             return back()->with('error', "Monthly scan limit reached ({$used}/{$limit}). Your quota resets on the 1st of next month.");
@@ -68,6 +73,21 @@ class AuditController extends Controller
             'site_url' => ['required', 'url', new PublicUrl],
             'name'     => 'nullable|string|max:255',
         ]);
+
+        // Enforce site restriction: only allow scanning registered sites (if user has any)
+        $userSites = $user->monitoredSites()->pluck('url')->toArray();
+        if (! empty($userSites)) {
+            $scanHost    = strtolower(parse_url($validated['site_url'], PHP_URL_HOST) ?? '');
+            $allowedHosts = array_map(
+                fn($s) => strtolower(parse_url($s, PHP_URL_HOST) ?? ''),
+                $userSites
+            );
+            if (! in_array($scanHost, $allowedHosts, true)) {
+                return back()->withErrors([
+                    'site_url' => 'You can only scan websites registered in your plan. Add the site in Billing first.',
+                ]);
+            }
+        }
 
         $reportId = DB::table('full_audit_reports')->insertGetId([
             'user_id'     => auth()->id(),

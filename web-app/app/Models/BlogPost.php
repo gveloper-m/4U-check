@@ -10,17 +10,21 @@ class BlogPost extends Model
 {
     protected $fillable = [
         'user_id',
+        'locale',
         'title',
         'slug',
         'excerpt',
+        'meta_description',
         'content',
         'featured_image',
         'status',
         'published_at',
+        'scheduled_at',
     ];
 
     protected $casts = [
         'published_at' => 'datetime',
+        'scheduled_at' => 'datetime',
     ];
 
     public static function generateSlug(string $title): string
