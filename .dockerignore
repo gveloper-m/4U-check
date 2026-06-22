@@ -1,40 +1,41 @@
 # ── Git ──────────────────────────────────────────────────────────────────────
 .git
-.gitignore
+web-app/.gitignore
 .gitattributes
 .github
 
 # ── Sensitive files ───────────────────────────────────────────────────────────
-.env
-.env.*
-!.env.example
+web-app/.env
+web-app/.env.*
+!web-app/.env.example
+app-deploy/.env
 
 # ── Heavy directories (rebuilt inside Docker) ─────────────────────────────────
-vendor/
-node_modules/
+web-app/vendor/
+web-app/node_modules/
+web-app/chrome/
 chrome/
 
 # ── Build artefacts ───────────────────────────────────────────────────────────
-public/hot
-public/storage
-public/fonts-manifest.dev.json
+web-app/public/hot
+web-app/public/storage
+web-app/public/fonts-manifest.dev.json
 
 # ── Writable runtime directories (replaced by named volumes) ─────────────────
-storage/logs/*
-storage/framework/cache/*
-storage/framework/sessions/*
-storage/framework/views/*
-storage/app/*
+web-app/storage/logs/*
+web-app/storage/framework/cache/*
+web-app/storage/framework/sessions/*
+web-app/storage/framework/views/*
+web-app/storage/app/*
 
 # ── Development tools ─────────────────────────────────────────────────────────
-.editorconfig
-.phpactor.json
-.phpunit.cache
-.phpunit.result.cache
-phpunit.xml
-tests/
-*.md
-!README.md
+web-app/.editorconfig
+web-app/.phpactor.json
+web-app/.phpunit.cache
+web-app/.phpunit.result.cache
+web-app/phpunit.xml
+web-app/tests/
+web-app/*.md
 
 # ── IDE ───────────────────────────────────────────────────────────────────────
 .idea/
@@ -42,9 +43,13 @@ tests/
 .cursor/
 .zed/
 .nova/
-_ide_helper.php
-Homestead.json
-Homestead.yaml
+web-app/_ide_helper.php
+web-app/Homestead.json
+web-app/Homestead.yaml
+
+# ── Deployment scripts not needed in build context ───────────────────────────
+app-deploy/scripts/
+app-deploy/compose.yaml
 
 # ── OS ────────────────────────────────────────────────────────────────────────
 .DS_Store
