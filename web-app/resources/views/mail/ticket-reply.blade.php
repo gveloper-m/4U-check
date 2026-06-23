@@ -19,7 +19,7 @@
   <p class="subject">{{ $ticket->subject }}</p>
   <p class="meta">Ticket #{{ $ticket->id }} &mdash; Support Team replied:</p>
   <div class="message-body">{{ $message->body }}</div>
-  <a href="{{ $ticketUrl }}" class="btn">View Full Conversation</a>
+  <a href="{{ $ticketUrl }}" class="btn" style="display:inline-block;background:#7c3aed;color:#ffffff !important;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;margin-top:20px;">View Full Conversation</a>
   <div class="footer">
     <p>4utest &mdash; Automated website auditing</p>
     <p>You received this email because you have an open support ticket.</p>

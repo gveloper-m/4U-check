@@ -21,7 +21,7 @@
   <div class="score">{{ $score }}</div>
   @endif
   <br>
-  <a href="{{ $reportUrl }}" class="btn">View Full Report</a>
+  <a href="{{ $reportUrl }}" class="btn" style="display:inline-block;background:#7c3aed;color:#ffffff !important;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;">View Full Report</a>
   <div class="footer">
     <p>4utest &mdash; Automated website auditing</p>
     <p>You received this because email notifications are enabled for this scheduled scan.</p>

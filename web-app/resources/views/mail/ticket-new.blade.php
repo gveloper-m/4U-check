@@ -25,7 +25,7 @@
     @endif
   </div>
   <div class="message-body">{{ $message->body }}</div>
-  <a href="{{ $adminUrl }}" class="btn">View &amp; Reply in Admin Panel</a>
+  <a href="{{ $adminUrl }}" class="btn" style="display:inline-block;background:#7c3aed;color:#ffffff !important;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:600;margin-top:20px;">View &amp; Reply in Admin Panel</a>
   <div class="footer">
     <p>4utest &mdash; Support System</p>
   </div>
