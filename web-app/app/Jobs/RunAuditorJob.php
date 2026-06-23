@@ -109,7 +109,7 @@ class RunAuditorJob implements ShouldQueue
                 $reportUrl = url('/audits/' . $this->reportId);
                 $locale    = $scan->user->language ?? 'en';
                 Mail::to($scan->user->email)
-                    ->queue((new ScanCompletedMail($scan, $score, $reportUrl))->locale($locale));
+                    ->queue((new ScanCompletedMail($scan, $score, $reportUrl, $record, $deductions))->locale($locale));
             }
         });
     }
@@ -199,8 +199,7 @@ class RunAuditorJob implements ShouldQueue
             $formFail  = $checks['form_labels']['fail']        ?? 0;
             $imgFail   = $checks['image_alt']['missing_count'] ?? 0;
             $ariaFail  = $checks['aria_labels']['fail']        ?? 0;
-            $hIssues   = count($checks['heading_hierarchy']['issues'] ?? []);
-            $lmIssues  = count($checks['landmarks']['issues']  ?? []);
+            $hIssues   = \count($checks['heading_hierarchy']['issues'] ?? []);
             $csFail    = $checks['color_contrast']['fail']     ?? 0;
 
             if ($formFail > 3)  { $score -= 8;  $deductions[] = "Accessibility: {$formFail} unlabeled form inputs (-8)"; }

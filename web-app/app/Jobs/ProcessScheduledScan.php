@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Http\Controllers\AccessibilityAuditController;
 use App\Http\Controllers\BrokenResourceController;
 use App\Http\Controllers\EcommerceCatalogAuditController;
 use App\Http\Controllers\PerformanceAuditController;
@@ -31,6 +32,7 @@ class ProcessScheduledScan implements ShouldQueue
         'marketing_tracking' => TrackingAuditController::class,
         'broken_resources'   => BrokenResourceController::class,
         'performance'        => PerformanceAuditController::class,
+        'accessibility'      => AccessibilityAuditController::class,
     ];
 
     public function __construct(public readonly ScheduledScan $scan) {}
@@ -56,7 +58,7 @@ class ProcessScheduledScan implements ShouldQueue
             'updated_at'  => now(),
         ]);
 
-        // Dispatch all 6 auditor jobs
+        // Dispatch all 7 auditor jobs
         foreach (self::AUDITORS as $key => $controllerClass) {
             RunAuditorJob::dispatch($reportId, $key, $controllerClass, $scan->site_url);
         }
