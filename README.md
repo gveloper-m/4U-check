@@ -46,6 +46,21 @@ Any report can be shared via a public link with a unique UUID — no login requi
 
 Users can upload their own logo and set their brand colours. The white-label shared reports and exported PDFs reflect the agency's identity, not 4uTest's.
 
+### MCP Agent
+
+Every plan includes a free MCP Agent — a lightweight Docker container the user deploys on the same server as their website. The agent connects Claude Code (Anthropic's AI coding assistant) to the server via the Model Context Protocol (MCP), giving Claude direct, live access to:
+
+- **Server files** — Claude can read and edit files directly; no copy-pasting code snippets back and forth
+- **Server health metrics** — real-time CPU, RAM, and disk usage so Claude understands the server context
+- **Audit results** — the latest 4uTest scan is pushed to the agent automatically, so Claude knows exactly which issues exist and where
+- **Automatic backups** — the agent creates a ZIP backup of the project before Claude makes any changes
+
+With the agent running, a user can open Claude Code and say *"Check my latest 4uTest audit and fix the top security and SEO issues"* — and Claude will read the audit report, inspect the affected files on the live server, apply the fixes, and verify them, without the user doing anything manually.
+
+**Deployment.** Users deploy the agent directly from their dashboard without touching the command line. They enter their server IP, SSH credentials, and project path, and the platform SSHes into the server and runs the full setup — pulling `4utest/mcp-agent:latest` from Docker Hub, creating the required directories, and starting the container. Only the `4utest-agent` container is ever touched; no other services on the server are affected. A manual single-command fallback is also shown for users who prefer it.
+
+**Security.** The agent image is distributed via Docker Hub. The API base URL (`https://4utest.io`) is hardcoded inside the image and cannot be changed, so the agent can only communicate with 4utest.io and cannot be repurposed. Each agent authenticates with a unique per-site token generated on registration.
+
 ### Support tickets
 
 A built-in support ticket system lets users open tickets and receive replies from the support team. All messages trigger email notifications in both directions. Tickets support photo attachments and full threaded conversation history.

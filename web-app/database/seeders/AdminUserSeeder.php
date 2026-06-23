@@ -16,6 +16,7 @@ class AdminUserSeeder extends Seeder
                 'name'         => 'Admin',
                 'password'     => Hash::make('admin4utest2024'),
                 'is_unlimited' => true,
+                'is_admin'     => true,
             ]
         );
 

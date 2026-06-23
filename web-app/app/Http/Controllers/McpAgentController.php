@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\McpAgent;
 use App\Models\FullAuditReport;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
+use phpseclib3\Net\SSH2;
+use phpseclib3\Crypt\PublicKeyLoader;
 
 class McpAgentController extends Controller
 {
@@ -75,6 +78,89 @@ class McpAgentController extends Controller
         ]);
 
         return back()->with('success', 'Agent registered. Copy the token and configure your server.');
+    }
+
+    public function autoSetup(Request $request, McpAgent $agent): JsonResponse
+    {
+        abort_unless($agent->user_id === auth()->id(), 403);
+
+        $validated = $request->validate([
+            'host'         => 'required|string|max:255',
+            'port'         => 'nullable|integer|min:1|max:65535',
+            'ssh_user'     => 'required|string|max:100',
+            'auth_method'  => 'required|in:password,key',
+            'password'     => 'nullable|string',
+            'private_key'  => 'nullable|string',
+            'project_path' => 'required|string|max:500',
+        ]);
+
+        try {
+            $ssh = new SSH2($validated['host'], (int) ($validated['port'] ?? 22));
+            $ssh->setTimeout(120);
+
+            if ($validated['auth_method'] === 'password') {
+                if (empty($validated['password'])) {
+                    return response()->json(['error' => 'Password is required.'], 422);
+                }
+                $ok = $ssh->login($validated['ssh_user'], $validated['password']);
+            } else {
+                if (empty($validated['private_key'])) {
+                    return response()->json(['error' => 'Private key is required.'], 422);
+                }
+                $key = PublicKeyLoader::load($validated['private_key']);
+                $ok  = $ssh->login($validated['ssh_user'], $key);
+            }
+
+            if (! $ok) {
+                return response()->json(['error' => 'SSH authentication failed. Check your credentials.'], 422);
+            }
+
+            $token       = escapeshellarg($agent->token);
+            $projectPath = escapeshellarg($validated['project_path']);
+
+            $script = <<<BASH
+set -e
+echo '→ Creating /opt/4utest-agent/backups directory...'
+mkdir -p /opt/4utest-agent/backups
+
+echo '→ Pulling latest 4utest/mcp-agent image...'
+docker pull 4utest/mcp-agent:latest
+
+if docker ps -a --format '{{.Names}}' | grep -q '^4utest-agent$'; then
+  echo '→ Replacing existing 4utest-agent container (no other containers are affected)...'
+  docker stop 4utest-agent
+  docker rm   4utest-agent
+else
+  echo '→ No existing 4utest-agent container found, creating fresh...'
+fi
+
+docker run -d \
+  --name 4utest-agent \
+  --restart unless-stopped \
+  -p 8765:8765 \
+  -e AGENT_TOKEN={$token} \
+  -v {$projectPath}:/workspace \
+  -v /opt/4utest-agent/backups:/backups \
+  4utest/mcp-agent:latest
+
+echo '→ Done! Container state:'
+docker inspect 4utest-agent --format '{{.State.Status}}'
+BASH;
+
+            $output   = $ssh->exec($script);
+            $exitCode = $ssh->getExitStatus();
+
+            if ($exitCode !== 0) {
+                return response()->json(['error' => 'Setup script failed.', 'output' => $output], 422);
+            }
+
+            return response()->json(['success' => true, 'output' => $output]);
+
+        } catch (\phpseclib3\Exception\UnableToConnectException $e) {
+            return response()->json(['error' => 'Cannot connect to server: ' . $e->getMessage()], 422);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
     }
 
     public function destroy(McpAgent $agent): RedirectResponse

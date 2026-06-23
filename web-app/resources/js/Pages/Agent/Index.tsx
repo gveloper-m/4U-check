@@ -159,120 +159,213 @@ function AgentCard({ agent, onDelete, onRegenerate, onSync }: {
   );
 }
 
-function SetupInstructions({ token, appUrl }: { token?: string; appUrl: string }) {
-  const [open, setOpen] = useState(false);
-  const envContent = `AGENT_TOKEN=${token ?? 'your-token-here'}
-FOURTEST_API_URL=${appUrl}
-MCP_SERVER_PORT=8765
-MAX_BACKUPS=10`;
+function ClaudeCodeStep({ serverIp }: { serverIp: string }) {
+  const tunnelCmd = `ssh -L 8765:localhost:8765 user@${serverIp || 'your-server-ip'} -N`;
+  const claudeConfig = JSON.stringify(
+    { mcpServers: { "4utest-agent": { url: "http://localhost:8765/sse" } } },
+    null, 2,
+  );
+  return (
+    <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-5 space-y-4">
+      <p className="text-sm font-semibold text-violet-300">Last step — Connect Claude Code (on your local machine)</p>
+      <div>
+        <p className="text-xs text-gray-400 mb-1.5">1. Open a permanent SSH tunnel so Claude Code can reach the agent:</p>
+        <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300">
+          {tunnelCmd}
+          <div className="absolute top-2 right-2"><CopyButton text={tunnelCmd} /></div>
+        </div>
+      </div>
+      <div>
+        <p className="text-xs text-gray-400 mb-1.5">2. Add this to <code className="text-violet-300">~/.claude/settings.json</code> and restart Claude Code:</p>
+        <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
+          {claudeConfig}
+          <div className="absolute top-2 right-2"><CopyButton text={claudeConfig} /></div>
+        </div>
+      </div>
+      <p className="text-xs text-gray-500">You will see <strong className="text-gray-300">4utest-agent</strong> in Claude Code's MCP server list. Tell Claude: <em>"Check my 4uTest audit and fix the top issues."</em></p>
+    </div>
+  );
+}
 
-  const claudeConfig = JSON.stringify({
-    mcpServers: {
-      "4utest-agent": { url: "http://localhost:8765/sse" }
+function SetupInstructions({ agentId, token }: { agentId?: number; token?: string }) {
+  const [tab, setTab]             = useState<'auto' | 'manual'>('auto');
+  const [host, setHost]           = useState('');
+  const [port, setPort]           = useState('22');
+  const [sshUser, setSshUser]     = useState('root');
+  const [authMethod, setAuthMethod] = useState<'password' | 'key'>('password');
+  const [password, setPassword]   = useState('');
+  const [privateKey, setPrivateKey] = useState('');
+  const [projectPath, setProjectPath] = useState('/var/www/html');
+  const [status, setStatus]       = useState<'idle' | 'running' | 'success' | 'error'>('idle');
+  const [output, setOutput]       = useState('');
+  const [errMsg, setErrMsg]       = useState('');
+
+  const manualCmd = [
+    'docker run -d \\',
+    '  --name 4utest-agent \\',
+    '  --restart unless-stopped \\',
+    '  -p 8765:8765 \\',
+    `  -e AGENT_TOKEN=${token ?? 'your-token-here'} \\`,
+    `  -v ${projectPath}:/workspace \\`,
+    '  -v /opt/4utest-agent/backups:/backups \\',
+    '  4utest/mcp-agent:latest',
+  ].join('\n');
+
+  async function handleDeploy(e: React.FormEvent) {
+    e.preventDefault();
+    if (!agentId) return;
+    setStatus('running');
+    setOutput('');
+    setErrMsg('');
+    try {
+      const csrf = document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')?.content ?? '';
+      const res  = await fetch(`/agent/${agentId}/auto-setup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrf, 'Accept': 'application/json' },
+        body: JSON.stringify({
+          host, port: parseInt(port) || 22, ssh_user: sshUser,
+          auth_method: authMethod,
+          password:    authMethod === 'password' ? password    : undefined,
+          private_key: authMethod === 'key'      ? privateKey  : undefined,
+          project_path: projectPath,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.success) { setStatus('success'); setOutput(data.output ?? ''); }
+      else { setStatus('error'); setErrMsg(data.error ?? 'Unknown error'); setOutput(data.output ?? ''); }
+    } catch (err) {
+      setStatus('error');
+      setErrMsg('Network error: ' + String(err));
     }
-  }, null, 2);
+  }
+
+  const inputCls = 'w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none';
+  const labelCls = 'block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1';
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="flex w-full items-center justify-between px-5 py-4 text-sm font-semibold text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
-      >
-        <div className="flex items-center gap-2">
-          <Terminal className="h-4 w-4 text-violet-400" />
-          Setup &amp; Connection Instructions
-        </div>
-        {open ? <ChevronUp className="h-4 w-4 text-gray-500" /> : <ChevronDown className="h-4 w-4 text-gray-500" />}
-      </button>
+      {/* Tab bar */}
+      <div className="flex border-b border-gray-200 dark:border-gray-800">
+        {(['auto', 'manual'] as const).map(t => (
+          <button key={t} onClick={() => setTab(t)}
+            className={`px-5 py-3 text-xs font-semibold transition-colors ${
+              tab === t
+                ? 'border-b-2 border-violet-500 text-violet-400'
+                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+            }`}
+          >
+            {t === 'auto' ? 'Auto Deploy (Recommended)' : 'Manual'}
+          </button>
+        ))}
+      </div>
 
-      {open && (
-        <div className="border-t border-gray-200 dark:border-gray-800 px-5 py-5 space-y-6 text-sm">
-
-          {/* What it does */}
-          <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
-            <p className="font-semibold text-violet-300 mb-2 flex items-center gap-2">
-              <Info className="h-4 w-4" /> What does the MCP Agent do?
+      <div className="px-5 py-5 space-y-5 text-sm">
+        {tab === 'auto' ? (
+          <>
+            <p className="text-xs text-gray-500">
+              Enter your server details and we'll SSH in and deploy the agent for you.{' '}
+              <span className="text-gray-400">Your credentials are used once and never stored.</span>
             </p>
-            <ul className="space-y-1.5 text-gray-400 text-xs leading-relaxed list-disc list-inside">
-              <li>Lets Claude Code read and edit files directly on your server — no manual copy-paste</li>
-              <li>Gives Claude real-time server metrics (CPU, RAM, disk) so it understands server health</li>
-              <li>Automatically receives your 4uTest audit results and makes them available to Claude</li>
-              <li>Creates automatic ZIP backups of your project before Claude makes changes</li>
-              <li>Claude can then fix SEO issues, security headers, or performance problems it discovered in the audit — directly on your server</li>
-            </ul>
-            <p className="mt-3 text-xs text-gray-500">Best for: agencies who want Claude to fix issues it finds, developers who want AI-assisted server management, and teams running scheduled audits who want automated remediation.</p>
-          </div>
 
-          {/* Step 1 */}
-          <div>
-            <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 1 — SSH into your server</p>
-            <div className="rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300">
-              ssh user@your-server-ip
+            {status === 'success' ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/30 px-4 py-3">
+                  <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" />
+                  <p className="text-sm font-medium text-green-300">Agent deployed successfully!</p>
+                </div>
+                {output && (
+                  <pre className="rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">{output}</pre>
+                )}
+                <ClaudeCodeStep serverIp={host} />
+              </div>
+            ) : (
+              <form onSubmit={handleDeploy} className="space-y-4">
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="col-span-2 sm:col-span-1">
+                    <label className={labelCls}>Server IP / Hostname</label>
+                    <input className={inputCls} value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.1 or example.com" required />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3 col-span-2 sm:col-span-1">
+                    <div>
+                      <label className={labelCls}>SSH Port</label>
+                      <input className={inputCls} value={port} onChange={e => setPort(e.target.value)} placeholder="22" />
+                    </div>
+                    <div>
+                      <label className={labelCls}>SSH User</label>
+                      <input className={inputCls} value={sshUser} onChange={e => setSshUser(e.target.value)} placeholder="root" required />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Project path on server</label>
+                  <input className={inputCls} value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="/var/www/html" required />
+                  <p className="mt-1 text-xs text-gray-500">The folder the agent should have access to (mounted as /workspace inside the container).</p>
+                </div>
+
+                <div>
+                  <label className={labelCls}>Authentication</label>
+                  <div className="flex gap-4 mt-1">
+                    {(['password', 'key'] as const).map(m => (
+                      <label key={m} className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+                        <input type="radio" checked={authMethod === m} onChange={() => setAuthMethod(m)} className="accent-violet-500" />
+                        {m === 'password' ? 'Password' : 'SSH Private Key'}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                {authMethod === 'password' ? (
+                  <div>
+                    <label className={labelCls}>Password</label>
+                    <input type="password" className={inputCls} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
+                  </div>
+                ) : (
+                  <div>
+                    <label className={labelCls}>Private Key (PEM / OpenSSH)</label>
+                    <textarea rows={5} className={inputCls + ' font-mono resize-none'} value={privateKey} onChange={e => setPrivateKey(e.target.value)} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" required />
+                  </div>
+                )}
+
+                {status === 'error' && (
+                  <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-3">
+                    <p className="text-xs font-medium text-red-400 mb-1">{errMsg}</p>
+                    {output && <pre className="text-xs text-gray-400 whitespace-pre-wrap overflow-x-auto">{output}</pre>}
+                  </div>
+                )}
+
+                <div className="flex items-start gap-3">
+                  <button type="submit" disabled={status === 'running' || !agentId}
+                    className="flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50 transition-colors shrink-0"
+                  >
+                    {status === 'running' ? <><RefreshCw className="h-4 w-4 animate-spin" /> Deploying…</> : <><Terminal className="h-4 w-4" /> Deploy Agent</>}
+                  </button>
+                  <p className="text-xs text-gray-500 leading-relaxed pt-0.5">
+                    Your SSH credentials are transmitted over HTTPS, used once to run the setup, and are never stored.{' '}
+                    <a href="/terms" target="_blank" className="text-violet-400 hover:underline">See §9 of our Terms</a> for full details.
+                  </p>
+                </div>
+              </form>
+            )}
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-gray-500">SSH into your server manually and run the command below. Docker must already be installed.</p>
+            <div>
+              <label className={labelCls}>Your project path on the server</label>
+              <input className={inputCls} value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="/var/www/html" />
             </div>
-          </div>
-
-          {/* Step 2 */}
-          <div>
-            <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 2 — Install Docker (if not already installed)</p>
-            <div className="rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300">
-              curl -fsSL https://get.docker.com | sh
+            <div>
+              <p className={labelCls}>Run this command on your server</p>
+              <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
+                {manualCmd}
+                <div className="absolute top-2 right-2"><CopyButton text={manualCmd} /></div>
+              </div>
             </div>
-          </div>
-
-          {/* Step 3 */}
-          <div>
-            <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 3 — Download the agent</p>
-            <div className="rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">{`git clone https://github.com/gveloper-m/4U-check.git /opt/4utest-agent
-cd /opt/4utest-agent/4u-test-agent
-cp .env.example .env`}</div>
-          </div>
-
-          {/* Step 4 */}
-          <div>
-            <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 4 — Configure <code className="text-violet-300">.env</code></p>
-            <p className="text-xs text-gray-500 mb-2">Edit <code>/opt/4utest-agent/4u-test-agent/.env</code> with your values:</p>
-            <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
-              {envContent}
-              <div className="absolute top-2 right-2"><CopyButton text={envContent} /></div>
-            </div>
-            <p className="mt-2 text-xs text-gray-500">Change the left side of the workspace volume in <code>docker-compose.yml</code> to point to your project directory.</p>
-          </div>
-
-          {/* Step 5 */}
-          <div>
-            <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 5 — Start the agent</p>
-            <div className="rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">{`docker compose up -d --build
-docker compose logs -f   # watch for "Heartbeat OK"`}</div>
-          </div>
-
-          {/* Step 6 — Claude Code */}
-          <div>
-            <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 6 — Connect Claude Code via SSH tunnel</p>
-            <p className="text-xs text-gray-500 mb-2">On your local machine, open a tunnel so Claude Code can reach the agent:</p>
-            <div className="rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300">
-              ssh -L 8765:localhost:8765 user@your-server-ip -N
-            </div>
-            <p className="mt-3 text-xs text-gray-500 mb-2">Then add this to your Claude Code MCP settings (<code>~/.claude/settings.json</code>):</p>
-            <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
-              {claudeConfig}
-              <div className="absolute top-2 right-2"><CopyButton text={claudeConfig} /></div>
-            </div>
-            <p className="mt-2 text-xs text-gray-500">Restart Claude Code. You will see "4uTest Agent" in your MCP servers list with all tools available.</p>
-          </div>
-
-          {/* Step 7 */}
-          <div>
-            <p className="font-semibold text-gray-800 dark:text-gray-200 mb-2">Step 7 — Let Claude fix your audit issues</p>
-            <p className="text-xs text-gray-400 leading-relaxed">
-              Run a 4uTest audit on your site, then click <strong>Push Latest Scan</strong> on the agent card above. Claude now has access to the full audit report via the <code className="text-violet-300">get_audit_report</code> tool. Tell Claude:
-            </p>
-            <div className="mt-2 rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs text-gray-300 italic">
-              "Check the latest 4uTest audit for my site and fix the top security and SEO issues you find."
-            </div>
-          </div>
-
-        </div>
-      )}
+            <ClaudeCodeStep serverIp="" />
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -294,8 +387,8 @@ export default function AgentIndex({ agents, sites, auth }: Props) {
   const regenerate  = (id: number) => router.post(route('agent.regenerate', id));
   const sync        = (id: number) => router.post(route('agent.sync', id));
 
-  const appUrl = window.location.origin;
-  const firstToken = agents[0]?.token;
+  const firstAgent = agents[0];
+  const firstToken = firstAgent?.token;
 
   return (
     <AppLayout>
@@ -401,7 +494,7 @@ export default function AgentIndex({ agents, sites, auth }: Props) {
         ))}
 
         {/* Setup instructions */}
-        <SetupInstructions token={firstToken} appUrl={appUrl} />
+        <SetupInstructions agentId={firstAgent?.id} token={firstToken} />
       </div>
     </AppLayout>
   );

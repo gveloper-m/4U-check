@@ -222,7 +222,7 @@ export default function Welcome({ auth }: PageProps) {
               <p className="text-sm text-gray-600 dark:text-gray-400">{t('welcome.agencyBody')}</p>
             </div>
 
-            <p className="mt-4 text-xs text-gray-600">{t('welcome.nofees')} All prices excl. VAT.</p>
+            <p className="mt-4 text-xs text-gray-600">{t('welcome.nofees')}</p>
           </div>
         </section>
 
@@ -235,52 +235,51 @@ export default function Welcome({ auth }: PageProps) {
                 <div>
                   <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
                     <Bot className="h-3.5 w-3.5" />
-                    MCP Agent — included free
+                    {t('welcome.agent.badge')}
                   </div>
                   <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-start gap-2">
-                    Claude fixes what the audit finds
+                    {t('welcome.agent.title')}
                     <div className="relative mt-1">
                       <button
                         onMouseEnter={() => setAgentTooltip(true)}
                         onMouseLeave={() => setAgentTooltip(false)}
                         className="text-gray-400 hover:text-gray-300 transition-colors"
-                        aria-label="What is the MCP Agent?"
+                        aria-label={t('welcome.agent.tooltipTitle')}
                       >
                         <HelpCircle className="h-5 w-5" />
                       </button>
                       {agentTooltip && (
                         <div className="absolute left-0 top-7 z-50 w-72 rounded-xl border border-gray-700 bg-gray-900 p-4 shadow-2xl text-xs text-gray-300 leading-relaxed">
-                          <p className="font-semibold text-white mb-2">What is the MCP Agent?</p>
-                          <p>The MCP Agent is a small Docker container you deploy on the same server as your website. It connects to Claude Code via the Model Context Protocol (MCP), giving Claude direct access to your server's files, system metrics, and your 4uTest audit results.</p>
-                          <p className="mt-2">Claude can then read files, apply fixes, and verify changes — all on your live server, without any manual copy-paste.</p>
+                          <p className="font-semibold text-white mb-2">{t('welcome.agent.tooltipTitle')}</p>
+                          <p>{t('welcome.agent.tooltipBody1')}</p>
+                          <p className="mt-2">{t('welcome.agent.tooltipBody2')}</p>
                         </div>
                       )}
                     </div>
                   </h2>
                   <p className="mt-4 text-gray-600 dark:text-gray-400 leading-relaxed">
-                    Deploy a lightweight agent on your server. Claude Code connects to it via MCP and gets instant access to your files, server health metrics, and your latest audit results — so it can fix broken headers, missing alt text, or slow response times directly on your site.
+                    {t('welcome.agent.sub')}
                   </p>
                   <ul className="mt-6 space-y-3">
-                    {[
-                      { icon: Terminal, text: 'Read and edit server files — no copy-paste needed' },
-                      { icon: Server,   text: 'Real-time CPU, RAM and disk monitoring' },
-                      { icon: Bot,      text: 'Audit results auto-synced so Claude knows exactly what to fix' },
-                      { icon: Clock,    text: 'Auto backup before every Claude session' },
-                    ].map(({ icon: Icon, text }) => (
-                      <li key={text} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500/15">
-                          <Icon className="h-3.5 w-3.5 text-violet-400" />
-                        </div>
-                        {text}
-                      </li>
-                    ))}
+                    {(t('welcome.agent.bullets', { returnObjects: true }) as string[]).map((text, i) => {
+                      const icons = [Terminal, Server, Bot, Clock];
+                      const Icon = icons[i] ?? Bot;
+                      return (
+                        <li key={i} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500/15">
+                            <Icon className="h-3.5 w-3.5 text-violet-400" />
+                          </div>
+                          {text}
+                        </li>
+                      );
+                    })}
                   </ul>
-                  <p className="mt-4 text-xs text-gray-500">One agent per registered site. Included at no extra cost on every plan.</p>
+                  <p className="mt-4 text-xs text-gray-500">{t('welcome.agent.note')}</p>
                   <Link
                     href="/register"
                     className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition-colors"
                   >
-                    Get started <ArrowRight className="h-4 w-4" />
+                    {t('welcome.getStarted')} <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
 

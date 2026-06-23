@@ -81,6 +81,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/agent/{agent}', [\App\Http\Controllers\McpAgentController::class, 'destroy'])->name('agent.destroy');
     Route::post('/agent/{agent}/regenerate', [\App\Http\Controllers\McpAgentController::class, 'regenerate'])->name('agent.regenerate');
     Route::post('/agent/{agent}/sync', [\App\Http\Controllers\McpAgentController::class, 'sync'])->name('agent.sync');
+    Route::post('/agent/{agent}/auto-setup', [\App\Http\Controllers\McpAgentController::class, 'autoSetup'])->name('agent.autoSetup');
 
     // Support tickets (all authenticated users)
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');

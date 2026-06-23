@@ -62,6 +62,12 @@ export default function Terms() {
                 <p>{t('terms.s8Body')}</p>
             </Section>
 
+            <Section title={t('terms.s9Title')}>
+                <p>{t('terms.s9Body1')}</p>
+                <p>{t('terms.s9Body2')}</p>
+                <p>{t('terms.s9Body3')}</p>
+            </Section>
+
             <p className="mt-8 text-xs text-gray-600">
                 &copy; {year} 4utest. {t('terms.allRights')}
             </p>

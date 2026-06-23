@@ -2,20 +2,13 @@ name: 4utest-agent
 
 services:
   agent:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: 4utest-agent:latest
+    image: 4utest/mcp-agent:latest
     restart: unless-stopped
     ports:
       - "${MCP_SERVER_PORT:-8765}:8765"
     env_file:
       - .env
     volumes:
-      # Mount the project directory you want Claude to read/edit
-      # Change the left side to your actual project path
+      # ⚠  Change the left side to your actual project path
       - /var/www/your-project:/workspace
-      # Backup snapshots are stored here
       - ./backups:/backups
-    environment:
-      - MCP_SERVER_PORT=8765
