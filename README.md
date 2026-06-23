@@ -210,19 +210,23 @@ Leave Stripe, mail, and Mistral fields blank for now — you'll fill them in the
 
 Go to [dashboard.stripe.com](https://dashboard.stripe.com) → **Products** → **Add product**.
 
-Create two products:
+Create four products:
 
 | Product name | Price | Billing period | Tax behaviour |
 |---|---|---|---|
 | 4uTest Pro Monthly | €19.99 | Monthly recurring | **Exclusive of tax** |
 | 4uTest Pro Yearly | €199.99 | Yearly recurring | **Exclusive of tax** |
+| 4uTest Extra Site Monthly | €9.99 | Monthly recurring | **Exclusive of tax** |
+| 4uTest Extra Site Yearly | €99.99 | Yearly recurring | **Exclusive of tax** |
 
-Setting "Exclusive of tax" means the price shown is before VAT — Stripe adds VAT on top based on the customer's country. This is the correct setup for EU compliance.
+The base plan includes one monitored site. The extra site products are add-ons users subscribe to for each additional site. Setting "Exclusive of tax" means Stripe adds VAT on top based on the customer's country — correct for EU compliance.
 
 Copy the `price_...` ID from each product into `.env`:
 ```env
 STRIPE_MONTHLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxxxxxxxx
 STRIPE_YEARLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxxxxxxxx
+STRIPE_MONTHLY_EXTRA_SITE_PRICE_ID=price_xxxxxxxxxxxxxxxxxxxxxxxx
+STRIPE_YEARLY_EXTRA_SITE_PRICE_ID=price_xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
 #### 5b. Get your API keys
@@ -353,7 +357,7 @@ chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 ```
 
-This script does everything: pulls the latest code, builds the Docker images, waits for MySQL to be healthy, runs database migrations, caches the Laravel config/routes/views, and starts all six containers (Nginx, PHP-FPM, Horizon, Scheduler, MySQL, Redis, Certbot).
+This script does everything: pulls the latest code, builds the Docker images, waits for MySQL to be healthy, runs database migrations, caches the Laravel config/routes/views, and starts all seven containers (Nginx, PHP-FPM, Horizon, Scheduler, MySQL, Redis, Certbot).
 
 At the end it prints the URL and shows container status.
 
@@ -418,7 +422,7 @@ Work through this checklist after first deploy:
 The steps above used test keys. Once you have tested everything:
 
 1. Go to Stripe dashboard → toggle from **Test mode** to **Live mode** (top left)
-2. Repeat step 5a — create the same two products and prices in live mode
+2. Repeat step 5a — create the same four products and prices in live mode
 3. Get your live API keys (step 5b) and live webhook (step 5c)
 4. Update `.env` with all the live `pk_live_`, `sk_live_`, `whsec_`, and `price_` values
 5. Redeploy:
@@ -442,6 +446,18 @@ A simple daily backup to a local file:
 ```
 
 Or use a managed backup service — DigitalOcean Spaces, AWS S3, or Backblaze B2 with `rclone`.
+
+---
+
+### 14. Set up GitHub Actions secrets (required for the MCP Agent image)
+
+The MCP Agent Docker image (`4utest/mcp-agent:latest`) is built and pushed to Docker Hub automatically whenever you push changes to the `4u-test-agent/` directory. This requires two secrets set in your GitHub repository:
+
+1. Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+2. Add `DOCKERHUB_USERNAME` — your Docker Hub username (e.g. `4utest`)
+3. Add `DOCKERHUB_TOKEN` — a Docker Hub access token (Docker Hub → **Account Settings** → **Security** → **New Access Token**)
+
+Once these are set, pushing any change to `4u-test-agent/` will automatically rebuild and publish the image. To publish the initial image immediately, push any small change (e.g. a whitespace edit) to that directory, or trigger the workflow manually from the GitHub Actions tab.
 
 ---
 
