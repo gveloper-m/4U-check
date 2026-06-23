@@ -50,7 +50,8 @@ class BillingController extends Controller
             'site_count'          => $siteCount,
             'current_plan'        => $plan,
             'monthly_total'       => $monthlyTotal,
-            'extra_sites_enabled' => !empty(config('services.stripe.monthly_extra_site_price_id'))
+            'extra_sites_enabled' => $user->is_unlimited
+                                  || !empty(config('services.stripe.monthly_extra_site_price_id'))
                                   || !empty(config('services.stripe.yearly_extra_site_price_id')),
         ]);
     }
