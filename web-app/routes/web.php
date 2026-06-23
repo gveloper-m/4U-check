@@ -75,6 +75,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/scheduled-scans/{scheduledScan}/toggle', [ScheduledScanController::class, 'toggle'])->name('scheduled-scans.toggle');
     });
 
+    // MCP Agents
+    Route::get('/agent', [\App\Http\Controllers\McpAgentController::class, 'index'])->name('agent.index');
+    Route::post('/agent', [\App\Http\Controllers\McpAgentController::class, 'store'])->name('agent.store');
+    Route::delete('/agent/{agent}', [\App\Http\Controllers\McpAgentController::class, 'destroy'])->name('agent.destroy');
+    Route::post('/agent/{agent}/regenerate', [\App\Http\Controllers\McpAgentController::class, 'regenerate'])->name('agent.regenerate');
+    Route::post('/agent/{agent}/sync', [\App\Http\Controllers\McpAgentController::class, 'sync'])->name('agent.sync');
+
     // Support tickets (all authenticated users)
     Route::get('/tickets', [TicketController::class, 'index'])->name('tickets.index');
     Route::post('/tickets', [TicketController::class, 'store'])->middleware('throttle:10,1')->name('tickets.store');

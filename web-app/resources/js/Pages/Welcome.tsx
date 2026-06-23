@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star, XCircle, X, Accessibility } from 'lucide-react';
+import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star, XCircle, X, Accessibility, Bot, HelpCircle, Terminal, Server } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CookieBanner from '@/Components/CookieBanner';
 import { useEffect, useState } from 'react';
@@ -9,6 +9,7 @@ export default function Welcome({ auth }: PageProps) {
   const { t } = useTranslation();
   const { flash } = usePage().props as { flash?: { success?: string; error?: string } };
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [agentTooltip, setAgentTooltip] = useState(false);
 
   useEffect(() => {
     if (flash?.success) setToast({ message: flash.success, type: 'success' });
@@ -222,6 +223,91 @@ export default function Welcome({ auth }: PageProps) {
             </div>
 
             <p className="mt-4 text-xs text-gray-600">{t('welcome.nofees')} All prices excl. VAT.</p>
+          </div>
+        </section>
+
+        {/* MCP Agent Section */}
+        <section className="px-6 py-20 border-t border-gray-200 dark:border-gray-800">
+          <div className="mx-auto max-w-6xl">
+            <div className="rounded-2xl border border-violet-500/20 bg-gradient-to-br from-violet-500/5 to-purple-500/5 p-8 lg:p-12">
+              <div className="grid gap-10 lg:grid-cols-2 items-center">
+                {/* Left */}
+                <div>
+                  <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-xs font-medium text-violet-300">
+                    <Bot className="h-3.5 w-3.5" />
+                    MCP Agent — included free
+                  </div>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-start gap-2">
+                    Claude fixes what the audit finds
+                    <div className="relative mt-1">
+                      <button
+                        onMouseEnter={() => setAgentTooltip(true)}
+                        onMouseLeave={() => setAgentTooltip(false)}
+                        className="text-gray-400 hover:text-gray-300 transition-colors"
+                        aria-label="What is the MCP Agent?"
+                      >
+                        <HelpCircle className="h-5 w-5" />
+                      </button>
+                      {agentTooltip && (
+                        <div className="absolute left-0 top-7 z-50 w-72 rounded-xl border border-gray-700 bg-gray-900 p-4 shadow-2xl text-xs text-gray-300 leading-relaxed">
+                          <p className="font-semibold text-white mb-2">What is the MCP Agent?</p>
+                          <p>The MCP Agent is a small Docker container you deploy on the same server as your website. It connects to Claude Code via the Model Context Protocol (MCP), giving Claude direct access to your server's files, system metrics, and your 4uTest audit results.</p>
+                          <p className="mt-2">Claude can then read files, apply fixes, and verify changes — all on your live server, without any manual copy-paste.</p>
+                        </div>
+                      )}
+                    </div>
+                  </h2>
+                  <p className="mt-4 text-gray-600 dark:text-gray-400 leading-relaxed">
+                    Deploy a lightweight agent on your server. Claude Code connects to it via MCP and gets instant access to your files, server health metrics, and your latest audit results — so it can fix broken headers, missing alt text, or slow response times directly on your site.
+                  </p>
+                  <ul className="mt-6 space-y-3">
+                    {[
+                      { icon: Terminal, text: 'Read and edit server files — no copy-paste needed' },
+                      { icon: Server,   text: 'Real-time CPU, RAM and disk monitoring' },
+                      { icon: Bot,      text: 'Audit results auto-synced so Claude knows exactly what to fix' },
+                      { icon: Clock,    text: 'Auto backup before every Claude session' },
+                    ].map(({ icon: Icon, text }) => (
+                      <li key={text} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-violet-500/15">
+                          <Icon className="h-3.5 w-3.5 text-violet-400" />
+                        </div>
+                        {text}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-4 text-xs text-gray-500">One agent per registered site. Included at no extra cost on every plan.</p>
+                  <Link
+                    href="/register"
+                    className="mt-6 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition-colors"
+                  >
+                    Get started <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+
+                {/* Right — terminal mockup */}
+                <div className="rounded-xl border border-gray-700 bg-gray-950 overflow-hidden shadow-2xl">
+                  <div className="flex items-center gap-2 px-4 py-3 border-b border-gray-800 bg-gray-900">
+                    <span className="h-3 w-3 rounded-full bg-red-500/70" />
+                    <span className="h-3 w-3 rounded-full bg-amber-500/70" />
+                    <span className="h-3 w-3 rounded-full bg-emerald-500/70" />
+                    <span className="ml-2 text-xs text-gray-500 font-mono">Claude Code — 4uTest Agent</span>
+                  </div>
+                  <div className="p-5 font-mono text-xs space-y-2 text-left">
+                    <p><span className="text-violet-400">Claude:</span> <span className="text-gray-300">get_audit_report()</span></p>
+                    <p className="text-gray-500 pl-4">→ Health score: 61 · 8 issues found</p>
+                    <p className="text-gray-500 pl-4">→ Missing HSTS header · No SPF record</p>
+                    <p className="text-gray-500 pl-4">→ TTFB 1240ms · 3 broken links</p>
+                    <p className="mt-3"><span className="text-violet-400">Claude:</span> <span className="text-gray-300">create_session_backup()</span></p>
+                    <p className="text-gray-500 pl-4">→ Backup created: backup_20260623_142301.zip</p>
+                    <p className="mt-3"><span className="text-violet-400">Claude:</span> <span className="text-gray-300">read_file(".htaccess")</span></p>
+                    <p className="mt-1"><span className="text-violet-400">Claude:</span> <span className="text-gray-300">write_file(".htaccess", ...)</span></p>
+                    <p className="text-gray-500 pl-4">→ Added: Strict-Transport-Security header</p>
+                    <p className="text-gray-500 pl-4">→ Added: Referrer-Policy header</p>
+                    <p className="mt-3 text-emerald-400">✓ Security score improved from 61 → 79</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

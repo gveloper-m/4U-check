@@ -15,6 +15,10 @@ use Illuminate\Support\Facades\Redis;
 |
 */
 
+// MCP Agent heartbeat — token auth (no session/CSRF needed)
+Route::post('/agent/heartbeat', [\App\Http\Controllers\Api\McpAgentController::class, 'heartbeat'])
+    ->middleware('throttle:120,1');
+
 Route::get('/health', function () {
     try {
         \DB::connection()->getPdo();

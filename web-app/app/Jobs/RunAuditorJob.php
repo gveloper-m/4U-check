@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Mail\ScanCompletedMail;
+use App\Models\McpAgent;
 use App\Models\ScheduledScan;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -110,6 +111,35 @@ class RunAuditorJob implements ShouldQueue
                 $locale    = $scan->user->language ?? 'en';
                 Mail::to($scan->user->email)
                     ->queue((new ScanCompletedMail($scan, $score, $reportUrl, $record, $deductions))->locale($locale));
+            }
+
+            // Auto-push scan data to any agent linked to this site URL
+            $reportRecord = DB::table('full_audit_reports')->find($this->reportId);
+            if ($reportRecord) {
+                $agent = McpAgent::whereHas('monitoredSite', fn ($q) => $q->where('url', $reportRecord->url))
+                    ->first();
+
+                if ($agent) {
+                    $agent->update([
+                        'latest_report_json' => json_encode([
+                            'report_id'    => $this->reportId,
+                            'url'          => $reportRecord->url,
+                            'health_score' => $score,
+                            'status'       => 'completed',
+                            'scanned_at'   => now()->toIso8601String(),
+                            'deductions'   => $deductions,
+                            'modules'      => [
+                                'seo_schema'         => json_decode($record->seo_schema_result         ?? 'null', true),
+                                'security'           => json_decode($record->security_result           ?? 'null', true),
+                                'performance'        => json_decode($record->performance_result        ?? 'null', true),
+                                'broken_resources'   => json_decode($record->broken_resources_result   ?? 'null', true),
+                                'catalog_integrity'  => json_decode($record->catalog_result            ?? 'null', true),
+                                'marketing_tracking' => json_decode($record->tracking_result           ?? 'null', true),
+                                'accessibility'      => json_decode($record->accessibility_result      ?? 'null', true),
+                            ],
+                        ], JSON_UNESCAPED_UNICODE),
+                    ]);
+                }
             }
         });
     }

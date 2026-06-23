@@ -22,6 +22,7 @@ import {
     Tag,
     HelpCircle,
     Activity,
+    Bot,
 } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import ThemeToggle from '@/Components/ThemeToggle';
@@ -59,6 +60,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         { label: t('nav.history'),    href: '/audits',           icon: History,         routeName: 'audits.index' },
         { label: t('nav.scheduled'),  href: '/scheduled-scans',  icon: Clock,           routeName: 'scheduled-scans.index' },
         { label: t('nav.billing'),    href: '/billing',          icon: CreditCard,      routeName: 'billing' },
+        { label: t('nav.agent'),      href: '/agent',            icon: Bot,             routeName: 'agent.index' },
         ...(auth.user.is_admin ? [
             { label: 'Blog',         href: '/admin/blog',         icon: FileText, routeName: 'admin.blog.index' },
             { label: 'Tickets',      href: '/admin/tickets',      icon: Ticket,   routeName: 'admin.tickets.index' },

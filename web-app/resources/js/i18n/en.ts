@@ -14,6 +14,7 @@ const en = {
     history: 'Scan History',
     scheduled: 'Scheduled Scans',
     billing: 'Billing',
+    agent: 'MCP Agent',
     profile: 'Profile',
     logout: 'Log Out',
   },
