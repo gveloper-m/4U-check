@@ -46,7 +46,7 @@ class MistralBlogService
             $topic = str_replace('{{year}}', $year, self::$DEFAULT_TOPICS[array_rand(self::$DEFAULT_TOPICS)]);
         }
 
-        $prompt = $this->buildPrompt($language, $topic, $year);
+        $prompt = $this->buildPrompt($language, $topic);
 
         $response = Http::withToken($apiKey)
             ->timeout(120)
@@ -66,10 +66,20 @@ class MistralBlogService
         $raw = $response->json('choices.0.message.content', '');
         $raw = preg_replace('/^```(?:json)?\s*/m', '', $raw);
         $raw = preg_replace('/\s*```\s*$/m', '', $raw);
+        $raw = trim($raw);
 
-        $data = json_decode(trim($raw), true);
+        // Extract just the JSON object if there's any surrounding prose
+        if (preg_match('/\{.*\}/s', $raw, $m)) {
+            $raw = $m[0];
+        }
+
+        $data = json_decode($raw, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new \RuntimeException('Mistral returned invalid JSON: ' . json_last_error_msg());
+            // Escape literal control characters inside JSON string values
+            $data = json_decode($this->repairJson($raw), true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \RuntimeException('Mistral returned invalid JSON: ' . json_last_error_msg());
+            }
         }
 
         $required = ['title', 'slug', 'meta_description', 'excerpt', 'content', 'featured_image', 'best_publish_day', 'best_publish_hour_utc'];
@@ -82,7 +92,46 @@ class MistralBlogService
         return $data;
     }
 
-    private function buildPrompt(string $language, string $topic, int $year): string
+    private function repairJson(string $raw): string
+    {
+        $result    = '';
+        $inString  = false;
+        $escaped   = false;
+
+        for ($i = 0, $len = \strlen($raw); $i < $len; $i++) {
+            $char = $raw[$i];
+
+            if ($escaped) {
+                $result  .= $char;
+                $escaped  = false;
+                continue;
+            }
+
+            if ($char === '\\' && $inString) {
+                $result .= $char;
+                $escaped = true;
+                continue;
+            }
+
+            if ($char === '"') {
+                $inString = !$inString;
+                $result  .= $char;
+                continue;
+            }
+
+            if ($inString) {
+                if ($char === "\n") { $result .= '\\n'; continue; }
+                if ($char === "\r") { $result .= '\\r'; continue; }
+                if ($char === "\t") { $result .= '\\t'; continue; }
+            }
+
+            $result .= $char;
+        }
+
+        return $result;
+    }
+
+    private function buildPrompt(string $language, string $topic): string
     {
         return <<<PROMPT
 Write a complete, publication-ready blog post in {$language} on this topic: "{$topic}"
@@ -95,7 +144,7 @@ Requirements:
 - Meta description: exactly 150–160 characters, includes the primary keyword, subtle value proposition
 - Use proper HTML tags only: h2, h3, p, ul, ol, li, strong, em, img
 - Structure: intro → 3-5 main sections with h2 headings → practical takeaways → conclusion
-- Include exactly 3 images using this URL pattern: https://source.unsplash.com/1200x630/?keyword1,keyword2 (replace keyword1,keyword2 with 2–3 relevant English keywords, no spaces, comma-separated). Place each image after a section heading.
+- Include exactly 3 images using this URL pattern: https://loremflickr.com/1200/630/keyword1,keyword2 (replace keyword1,keyword2 with 2–3 relevant English keywords, no spaces, comma-separated). Place each image after a section heading as an <img> tag with descriptive alt text.
 - Near the end (second-to-last paragraph), naturally mention 4uTest in one sentence as a useful free tool — not promotional, just helpful context. Example: "Tools like [4uTest](https://4utest.io) automate this entire audit process, scanning your site across all these dimensions in minutes and giving you an actionable health score."
 - Do NOT say "In conclusion" or "In summary" — end with a strong final thought
 - The writing must feel authored by a senior web professional, not AI-generated

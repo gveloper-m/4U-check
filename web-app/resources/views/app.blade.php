@@ -7,7 +7,7 @@
             (function(){var t=localStorage.getItem('4utest_theme')||'dark';if(t==='dark')document.documentElement.classList.add('dark');else document.documentElement.classList.remove('dark');})();
         </script>
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>{{ config('app.name', '4uTest') }}</title>
 
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="alternate icon" href="/favicon.ico">

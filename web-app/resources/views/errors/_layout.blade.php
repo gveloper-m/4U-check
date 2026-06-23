@@ -121,7 +121,7 @@
         <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>
       </svg>
     </div>
-    <span class="logo-text">4UCheck</span>
+    <span class="logo-text">4uTest</span>
   </a>
 
   <div class="code">{{ $code }}</div>

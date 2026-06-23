@@ -7,7 +7,15 @@ export default defineConfig({
         laravel({
             input: 'resources/js/app.tsx',
             refresh: true,
+            detectTls: false,
         }),
         react(),
     ],
+    server: {
+        host: '0.0.0.0',
+        port: 5173,
+        hmr: {
+            host: 'localhost',
+        },
+    },
 });

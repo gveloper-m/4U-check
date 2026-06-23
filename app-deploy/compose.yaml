@@ -22,22 +22,8 @@ services:
             PHP_POST_MAX_SIZE: '100M'
             PHP_UPLOAD_MAX_FILESIZE: '100M'
         volumes:
-            - '../web-app:/var/www/html'
-            - './php-custom.ini:/etc/php/8.5/cli/conf.d/99-custom.ini'
-        networks:
-            - sail
-        depends_on:
-            - mysql
-            - redis
-    queue:
-        image: 'sail-8.5/app'
-        command: 'php artisan queue:work redis --sleep=3 --tries=3 --max-time=3600 --queue=default'
-        environment:
-            WWWUSER: '${WWWUSER}'
-            LARAVEL_SAIL: 1
-            PHP_MEMORY_LIMIT: '2G'
-        volumes:
-            - '../web-app:/var/www/html'
+            - '..:/var/www/html'
+            - './supervisord.conf:/etc/supervisor/conf.d/supervisord.conf'
             - './php-custom.ini:/etc/php/8.5/cli/conf.d/99-custom.ini'
         networks:
             - sail
