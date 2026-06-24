@@ -51,10 +51,12 @@ class MistralBlogService
         $response = Http::withToken($apiKey)
             ->timeout(120)
             ->post(self::API_URL, [
-                'model'       => self::MODEL,
-                'temperature' => 0.7,
-                'messages'    => [
-                    ['role' => 'system', 'content' => 'You are an expert SEO content writer and web marketing specialist. You always return valid JSON with no markdown fences, no prose, only the JSON object.'],
+                'model'           => self::MODEL,
+                'temperature'     => 0.7,
+                // Forces Mistral to return a valid JSON object — no markdown fences, no prose
+                'response_format' => ['type' => 'json_object'],
+                'messages'        => [
+                    ['role' => 'system', 'content' => 'You are an expert SEO content writer and web marketing specialist. You must respond with a single valid JSON object and nothing else.'],
                     ['role' => 'user', 'content' => $prompt],
                 ],
             ]);
@@ -63,20 +65,16 @@ class MistralBlogService
             throw new \RuntimeException('Mistral API error: ' . $response->status() . ' — ' . $response->body());
         }
 
-        $raw = $response->json('choices.0.message.content', '');
-        $raw = preg_replace('/^```(?:json)?\s*/m', '', $raw);
-        $raw = preg_replace('/\s*```\s*$/m', '', $raw);
-        $raw = trim($raw);
-
-        // Extract just the JSON object if there's any surrounding prose
-        if (preg_match('/\{.*\}/s', $raw, $m)) {
-            $raw = $m[0];
-        }
-
+        $raw  = trim($response->json('choices.0.message.content', ''));
         $data = json_decode($raw, true);
+
         if (json_last_error() !== JSON_ERROR_NONE) {
-            // Escape literal control characters inside JSON string values
-            $data = json_decode($this->repairJson($raw), true);
+            // Last-resort: strip markdown fences and retry
+            $raw  = preg_replace('/^```(?:json)?\s*/m', '', $raw);
+            $raw  = preg_replace('/\s*```\s*$/m', '', $raw);
+            $raw  = trim($raw);
+            $data = json_decode($raw, true);
+
             if (json_last_error() !== JSON_ERROR_NONE) {
                 throw new \RuntimeException('Mistral returned invalid JSON: ' . json_last_error_msg());
             }
@@ -90,45 +88,6 @@ class MistralBlogService
         }
 
         return $data;
-    }
-
-    private function repairJson(string $raw): string
-    {
-        $result    = '';
-        $inString  = false;
-        $escaped   = false;
-
-        for ($i = 0, $len = \strlen($raw); $i < $len; $i++) {
-            $char = $raw[$i];
-
-            if ($escaped) {
-                $result  .= $char;
-                $escaped  = false;
-                continue;
-            }
-
-            if ($char === '\\' && $inString) {
-                $result .= $char;
-                $escaped = true;
-                continue;
-            }
-
-            if ($char === '"') {
-                $inString = !$inString;
-                $result  .= $char;
-                continue;
-            }
-
-            if ($inString) {
-                if ($char === "\n") { $result .= '\\n'; continue; }
-                if ($char === "\r") { $result .= '\\r'; continue; }
-                if ($char === "\t") { $result .= '\\t'; continue; }
-            }
-
-            $result .= $char;
-        }
-
-        return $result;
     }
 
     private function buildPrompt(string $language, string $topic): string
@@ -149,19 +108,18 @@ Requirements:
 - Do NOT say "In conclusion" or "In summary" — end with a strong final thought
 - The writing must feel authored by a senior web professional, not AI-generated
 
-Return ONLY a valid JSON object with NO markdown fences, NO explanation before or after, starting with {{ and ending with }}:
-{{
-  "title": "...",
-  "slug": "url-friendly-slug-max-60-chars",
-  "meta_description": "...",
-  "excerpt": "2–3 sentence teaser shown on the blog listing page",
-  "content": "<h2>...</h2><p>...</p>... (full HTML, min 1400 words, with 3 img tags)",
-  "featured_image": "https://source.unsplash.com/1200x630/?keyword1,keyword2",
-  "best_publish_day": "tuesday",
-  "best_publish_hour_utc": 8
-}}
+Respond with a single JSON object (no markdown, no explanation) using exactly these keys:
 
-For best_publish_day choose the optimal weekday (lowercase english: monday–friday) for this content type to maximise organic engagement. For best_publish_hour_utc choose an integer 7–11 (morning UTC, which targets European business hours 9–13).
+  title                 — SEO-optimized, max 65 chars
+  slug                  — URL-friendly, max 60 chars, lowercase hyphens only
+  meta_description      — exactly 150–160 chars, includes primary keyword
+  excerpt               — 2–3 sentence teaser for the blog listing page
+  content               — full HTML article body, min 1400 words, using only h2 h3 p ul ol li strong em img tags
+  featured_image        — use this exact pattern: https://loremflickr.com/1200/630/keyword1,keyword2 (2–3 relevant English keywords, comma-separated, no spaces)
+  best_publish_day      — optimal lowercase weekday (monday–friday) for maximum organic engagement
+  best_publish_hour_utc — integer 7–11 (morning UTC = European business hours 9–13)
+
+For best_publish_day and best_publish_hour_utc, choose based on what maximises organic reach for this content type.
 PROMPT;
     }
 }
