@@ -84,6 +84,11 @@ COPY --chown=www-data:www-data web-app/. .
 # Overwrite public/build with assets compiled in node-builder stage
 COPY --from=node-builder --chown=www-data:www-data /app/public/build public/build/
 
+# Inject MCP agent source so auto-deploy can SFTP-upload and build on user servers
+COPY --chown=www-data:www-data 4u-test-agent/Dockerfile       resources/agent/Dockerfile
+COPY --chown=www-data:www-data 4u-test-agent/requirements.txt resources/agent/requirements.txt
+COPY --chown=www-data:www-data 4u-test-agent/server.py        resources/agent/server.py
+
 # Copy custom PHP production settings
 COPY app-deploy/backend/php.ini /usr/local/etc/php/conf.d/99-production.ini
 

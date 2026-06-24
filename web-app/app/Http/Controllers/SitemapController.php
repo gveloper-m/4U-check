@@ -13,8 +13,10 @@ class SitemapController extends Controller
             ->select('slug', 'updated_at', 'published_at')
             ->get();
 
-        return response()
-            ->view('sitemap', compact('posts'))
+        $body = '<?xml version="1.0" encoding="UTF-8"?>' . "\n"
+            . view('sitemap', compact('posts'))->render();
+
+        return response($body)
             ->header('Content-Type', 'application/xml; charset=utf-8');
     }
 

@@ -9,7 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
-use phpseclib3\Net\SSH2;
+use phpseclib3\Net\SFTP;
 use phpseclib3\Crypt\PublicKeyLoader;
 
 class McpAgentController extends Controller
@@ -95,36 +95,53 @@ class McpAgentController extends Controller
         ]);
 
         try {
-            $ssh = new SSH2($validated['host'], (int) ($validated['port'] ?? 22));
-            $ssh->setTimeout(120);
+            // SFTP extends SSH2 — one connection for both file upload and exec
+            $sftp = new SFTP($validated['host'], (int) ($validated['port'] ?? 22));
+            $sftp->setTimeout(600); // docker build can take a few minutes on first run
 
             if ($validated['auth_method'] === 'password') {
                 if (empty($validated['password'])) {
                     return response()->json(['error' => 'Password is required.'], 422);
                 }
-                $ok = $ssh->login($validated['ssh_user'], $validated['password']);
+                $ok = $sftp->login($validated['ssh_user'], $validated['password']);
             } else {
                 if (empty($validated['private_key'])) {
                     return response()->json(['error' => 'Private key is required.'], 422);
                 }
                 $key = PublicKeyLoader::load($validated['private_key']);
-                $ok  = $ssh->login($validated['ssh_user'], $key);
+                $ok  = $sftp->login($validated['ssh_user'], $key);
             }
 
             if (! $ok) {
                 return response()->json(['error' => 'SSH authentication failed. Check your credentials.'], 422);
             }
 
+            // Agent source lives at resources/agent/ inside the production container
+            // (copied there by the backend Dockerfile from 4u-test-agent/).
+            $agentSrcDir = resource_path('agent');
+            if (! is_dir($agentSrcDir) || ! file_exists("$agentSrcDir/server.py")) {
+                return response()->json(['error' => 'Agent source files not found. Rebuild the backend container.'], 500);
+            }
+
+            // Upload source files to a temp directory on the user's server
+            $buildDir = '/tmp/4utest-agent-' . substr(md5(uniqid('', true)), 0, 8);
+            $sftp->mkdir($buildDir);
+            $sftp->put("$buildDir/Dockerfile",       file_get_contents("$agentSrcDir/Dockerfile"));
+            $sftp->put("$buildDir/requirements.txt", file_get_contents("$agentSrcDir/requirements.txt"));
+            $sftp->put("$buildDir/server.py",        file_get_contents("$agentSrcDir/server.py"));
+
             $token       = escapeshellarg($agent->token);
             $projectPath = escapeshellarg($validated['project_path']);
+            $buildDirEsc = escapeshellarg($buildDir);
 
             $script = <<<BASH
 set -e
 echo '→ Creating /opt/4utest-agent/backups directory...'
 mkdir -p /opt/4utest-agent/backups
 
-echo '→ Pulling latest 4utest/mcp-agent image...'
-docker pull 4utest/mcp-agent:latest
+echo '→ Building 4utest/mcp-agent image from source...'
+docker build -t 4utest/mcp-agent:latest {$buildDirEsc}
+rm -rf {$buildDirEsc}
 
 if docker ps -a --format '{{.Names}}' | grep -q '^4utest-agent$'; then
   echo '→ Replacing existing 4utest-agent container (no other containers are affected)...'
@@ -159,8 +176,8 @@ echo '→ Done! Container state:'
 docker inspect 4utest-agent --format '{{.State.Status}}'
 BASH;
 
-            $output   = $ssh->exec($script);
-            $exitCode = $ssh->getExitStatus();
+            $output   = $sftp->exec($script);
+            $exitCode = $sftp->getExitStatus();
 
             if ($exitCode !== 0) {
                 return response()->json(['error' => 'Setup script failed.', 'output' => $output], 422);
