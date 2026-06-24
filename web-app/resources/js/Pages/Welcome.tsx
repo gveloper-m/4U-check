@@ -145,87 +145,6 @@ export default function Welcome({ auth }: PageProps) {
           </div>
         </section>
 
-        {/* Pricing */}
-        <section className="px-6 py-20 bg-white/50 dark:bg-gray-900/50">
-          <div className="mx-auto max-w-4xl text-center">
-            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('welcome.pricingTitle')}</h2>
-            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('welcome.pricingSub')}</p>
-
-            <div className="mt-10 grid gap-4 sm:grid-cols-2">
-              {/* Monthly */}
-              <div className="rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 text-left shadow-xl">
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">{t('welcome.monthly')}</p>
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">€19.99</span>
-                  <span className="mb-1 text-gray-600 dark:text-gray-400">{t('welcome.perMonth')}</span>
-                </div>
-                <p className="mt-1 text-xs text-gray-500">+ excl. VAT · {t('welcome.includesOneSite')}</p>
-                <div className="mt-4 rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2">
-                  <p className="text-xs text-violet-300">
-                    {t('welcome.extraSiteMonthly')}
-                  </p>
-                </div>
-                <ul className="mt-5 space-y-3">
-                  {planFeatures.map((f) => (
-                    <li key={f} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-400" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register"
-                  className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-700 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
-                >
-                  {t('welcome.getStarted')} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-
-              {/* Yearly */}
-              <div className="rounded-2xl border border-violet-500/40 bg-white dark:bg-gray-900 p-8 text-left shadow-2xl shadow-violet-500/10 relative">
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white">
-                    {t('welcome.twoMonthsFree')}
-                  </span>
-                </div>
-                <p className="text-sm font-medium text-violet-400 mb-4">{t('welcome.yearly')}</p>
-                <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">€199.99</span>
-                  <span className="mb-1 text-gray-600 dark:text-gray-400">{t('welcome.perYear')}</span>
-                </div>
-                <p className="mt-1 text-xs text-gray-500">+ excl. VAT · {t('welcome.includesOneSite')}</p>
-                <div className="mt-4 rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2">
-                  <p className="text-xs text-violet-300">
-                    {t('welcome.extraSiteYearly')}
-                  </p>
-                </div>
-                <ul className="mt-5 space-y-3">
-                  {planFeatures.map((f) => (
-                    <li key={f} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-400" />
-                      {f}
-                    </li>
-                  ))}
-                </ul>
-                <Link
-                  href="/register"
-                  className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/25"
-                >
-                  {t('welcome.getStarted')} <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-
-            {/* Per-site expansion callout */}
-            <div className="mt-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 text-left">
-              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{t('welcome.agencyTitle')}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{t('welcome.agencyBody')}</p>
-            </div>
-
-            <p className="mt-4 text-xs text-gray-600">{t('welcome.nofees')}</p>
-          </div>
-        </section>
-
         {/* MCP Agent Section */}
         <section className="px-6 py-20 border-t border-gray-200 dark:border-gray-800">
           <div className="mx-auto max-w-6xl">
@@ -307,6 +226,87 @@ export default function Welcome({ auth }: PageProps) {
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section className="px-6 py-20 bg-white/50 dark:bg-gray-900/50">
+          <div className="mx-auto max-w-4xl text-center">
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white">{t('welcome.pricingTitle')}</h2>
+            <p className="mt-4 text-gray-600 dark:text-gray-400">{t('welcome.pricingSub')}</p>
+
+            <div className="mt-10 grid gap-4 sm:grid-cols-2">
+              {/* Monthly */}
+              <div className="rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 text-left shadow-xl">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">{t('welcome.monthly')}</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">€19.99</span>
+                  <span className="mb-1 text-gray-600 dark:text-gray-400">{t('welcome.perMonth')}</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">+ excl. VAT · {t('welcome.includesOneSite')}</p>
+                <div className="mt-4 rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2">
+                  <p className="text-xs text-violet-300">
+                    {t('welcome.extraSiteMonthly')}
+                  </p>
+                </div>
+                <ul className="mt-5 space-y-3">
+                  {planFeatures.map((f) => (
+                    <li key={f} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/register"
+                  className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-700 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
+                >
+                  {t('welcome.getStarted')} <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+
+              {/* Yearly */}
+              <div className="rounded-2xl border border-violet-500/40 bg-white dark:bg-gray-900 p-8 text-left shadow-2xl shadow-violet-500/10 relative">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <span className="rounded-full bg-emerald-500 px-3 py-1 text-xs font-semibold text-white">
+                    {t('welcome.twoMonthsFree')}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-violet-400 mb-4">{t('welcome.yearly')}</p>
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">€199.99</span>
+                  <span className="mb-1 text-gray-600 dark:text-gray-400">{t('welcome.perYear')}</span>
+                </div>
+                <p className="mt-1 text-xs text-gray-500">+ excl. VAT · {t('welcome.includesOneSite')}</p>
+                <div className="mt-4 rounded-lg border border-violet-500/20 bg-violet-500/5 px-3 py-2">
+                  <p className="text-xs text-violet-300">
+                    {t('welcome.extraSiteYearly')}
+                  </p>
+                </div>
+                <ul className="mt-5 space-y-3">
+                  {planFeatures.map((f) => (
+                    <li key={f} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-violet-400" />
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                <Link
+                  href="/register"
+                  className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/25"
+                >
+                  {t('welcome.getStarted')} <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+
+            {/* Per-site expansion callout */}
+            <div className="mt-6 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5 text-left">
+              <p className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{t('welcome.agencyTitle')}</p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">{t('welcome.agencyBody')}</p>
+            </div>
+
+            <p className="mt-4 text-xs text-gray-600">{t('welcome.nofees')}</p>
           </div>
         </section>
 

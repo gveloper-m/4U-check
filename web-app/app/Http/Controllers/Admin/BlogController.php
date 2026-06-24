@@ -90,8 +90,14 @@ class BlogController extends Controller
             'topic'  => 'nullable|string|max:300',
         ]);
 
-        $service = new MistralBlogService();
-        $data    = $service->generate($validated['locale'], $validated['topic'] ?? '');
+        try {
+            $service = new MistralBlogService();
+            $data    = $service->generate($validated['locale'], $validated['topic'] ?? '');
+        } catch (\RuntimeException $e) {
+            return back()->with('error', 'AI generation failed: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            return back()->with('error', 'Unexpected error during AI generation. Please try again.');
+        }
 
         $scheduledAt = $this->calculateScheduledAt(
             $data['best_publish_day'],
