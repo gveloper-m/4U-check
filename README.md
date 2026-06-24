@@ -29,6 +29,8 @@ Built for digital agencies, e-commerce businesses, and anyone who needs to monit
 19. [Production: Step-by-Step](#production-step-by-step)
 20. [Useful Commands](#useful-commands)
 
+> **Elorus / myDATA:** See [Monitored Sites & Billing → VAT & Invoicing](#vat--invoicing-elorus--mydata) for the full breakdown and production setup in step 8.
+
 ---
 
 ## Tech Stack
@@ -47,6 +49,7 @@ Built for digital agencies, e-commerce businesses, and anyone who needs to monit
 | **DomPDF** | 3.1 | PDF generation from Blade templates |
 | **Browsershot / Puppeteer** | 5.4 | Headless Chromium control for Core Web Vitals measurement |
 | **phpseclib** | 3.0 | Pure-PHP SSH client (used for MCP Agent auto-deploy) |
+| **Elorus API** | v1.0 | Greek invoicing platform — issues Τιμολόγια / Αποδείξεις and submits to myDATA (ΑΑΔΕ) |
 | **Symfony DomCrawler** | 8.1 | HTML/DOM parsing during audits |
 | **Ziggy** | 2.0 | Exposes Laravel named routes to JavaScript |
 
@@ -98,7 +101,7 @@ Built for digital agencies, e-commerce businesses, and anyone who needs to monit
 - Built-in support ticket system with threaded messages and file attachments
 - Public blog with AI-powered draft generation (Mistral)
 - Full interface, emails, and PDFs in 7 languages
-- Stripe subscription billing with automatic VAT calculation (Stripe Tax)
+- Stripe subscription billing with automatic VAT via Stripe Tax; Elorus integration auto-issues the correct Τιμολόγιο or Απόδειξη to myDATA (ΑΑΔΕ) on every payment across all 6 customer/VAT categories
 
 ---
 
@@ -312,11 +315,49 @@ Each additional site beyond the first is billed as a separate Stripe subscriptio
 - **30 scans/month** per registered site on a paid plan
 - Admins can grant `is_unlimited` (bypass all limits) or add a `crawl_quota_bonus` to any account
 
-### VAT
+### VAT & Invoicing (Elorus + myDATA)
 
-- Handled automatically by **Stripe Tax** based on customer billing country
-- EU B2B customers with a valid VAT number get reverse charge (0% VAT)
-- Customers collect and manage their VAT number from their billing profile
+4uTest integrates with **Elorus** — a Greek accounting platform that connects directly to **myDATA (ΑΑΔΕ)**. On every successful Stripe payment, the platform automatically determines the correct document type, VAT treatment, and myDATA classification, creates the document in Elorus, and submits it to ΑΑΔΕ on your behalf.
+
+#### Customer categories
+
+| Category | Document | VAT | myDATA type |
+|---|---|---|---|
+| **GR B2B** (Greek company with VAT) | Τιμολόγιο Παροχής Υπηρεσιών | 24% | 1.1 — Τιμολόγιο Πώλησης |
+| **GR B2C** (Greek individual) | Απόδειξη Λιανικής Υπηρεσιών | 24% | 11.1 — Απόδειξη Λιανικής |
+| **EU B2B** (EU company, valid VIES) | Τιμολόγιο — Ενδοκοινοτική Παροχή | 0% (Reverse Charge / Άρθρο 14) | 1.1 with VAT exemption category 1 |
+| **EU B2C** (EU individual, no valid VAT) | Απόδειξη Λιανικής (OSS) | Local country rate via Stripe Tax | 11.1 |
+| **Non-EU B2B** (company outside EU) | Τιμολόγιο — Εξαγωγή Υπηρεσιών | 0% (Εκτός πεδίου ΦΠΑ / Άρθρο 14) | 1.1 with VAT exemption category 7 |
+| **Non-EU B2C** (individual outside EU) | Απόδειξη Λιανικής | 0% (Εκτός πεδίου) | 11.1 with VAT exemption category 7 |
+
+#### How it works
+
+1. **Stripe fires `invoice.paid`** — the webhook hits `StripeWebhookController::handleInvoicePaid()`.
+2. **Country and VAT detection** — the handler reads `invoice.customer_address.country` and `invoice.customer_tax_ids` from the Stripe payload. Falls back to the VAT number the customer entered at checkout.
+3. **VIES validation** — for EU customers with a VAT number the platform calls the EU VIES REST API (`ec.europa.eu/taxation_customs/vies`) in real time to verify it. Invalid or non-responding VIES → treated as B2C.
+4. **Elorus contact** — the customer is found in Elorus by VAT number, or created fresh. The Elorus contact ID is cached on the user record to avoid duplicates.
+5. **Document creation** — `ElorusService` calls `POST /v1.0/{org_id}/invoices/` with the correct `documenttype_id`, `client_id`, rows, and taxes. For 0% documents the correct `vat_exempt_category` is included for myDATA.
+6. **myDATA submission** — Elorus automatically transmits the document to ΑΑΔΕ via myDATA. No separate myDATA integration is needed.
+
+> **EU B2C / OSS note:** Full OSS compliance requires both Stripe Tax (`STRIPE_TAX_ENABLED=true`) and OSS mode enabled in your Elorus account. With Stripe Tax on, the correct local VAT rate is already computed by Stripe and the service extracts it from the invoice. Without Stripe Tax, EU B2C documents are created at 0% and flagged in the logs.
+
+#### Required env vars
+
+```env
+ELORUS_API_TOKEN=                 # Elorus → Settings → API & Integrations
+ELORUS_ORGANIZATION_ID=           # Visible in your Elorus dashboard URL
+ELORUS_TAX_24_ID=                 # GET /v1.0/{org_id}/taxdefinitions/
+ELORUS_DOCTYPE_INVOICE_ID=        # GET /v1.0/{org_id}/documenttypes/ → Τιμολόγιο 1.1
+ELORUS_DOCTYPE_RECEIPT_ID=        # GET /v1.0/{org_id}/documenttypes/ → Απόδειξη 11.1
+```
+
+#### Key files
+
+| File | Purpose |
+|---|---|
+| `app/Services/ElorusService.php` | Full customer categorisation, VIES validation, Elorus API calls |
+| `app/Http/Controllers/StripeWebhookController.php` | Extends Cashier's webhook to hook `invoice.paid` |
+| `config/services.php` → `elorus` key | All Elorus configuration |
 
 ### Trial Codes
 
@@ -901,7 +942,67 @@ This is only used for AI blog post generation in the admin panel. Leave it empty
 
 ---
 
-### 8. Obtain the SSL certificate (run once)
+### 8. Set up Elorus (Greek invoicing & myDATA)
+
+Elorus connects to myDATA (ΑΑΔΕ) and automatically issues the correct document — invoice or receipt, with the right VAT — for every Stripe payment.
+
+#### 8a. Create an Elorus account
+
+Go to [elorus.com](https://elorus.com) and register your business. Activate the myDATA connection in **Settings → myDATA** and ensure your company details (ΑΦΜ, ΔΟΥ, address) match ΑΑΔΕ records exactly.
+
+#### 8b. Get your API token and organisation ID
+
+Elorus → **Settings → API & Integrations** → Create an API token.
+
+Your organisation ID is the number that appears in the URL when you are logged in: `https://app.elorus.com/{organisation_id}/...`
+
+```env
+ELORUS_API_TOKEN=your-elorus-token
+ELORUS_ORGANIZATION_ID=12345
+```
+
+#### 8c. Look up your tax definition ID (24% ΦΠΑ)
+
+Run this from your server (or any machine with curl):
+
+```bash
+curl -s -H "Authorization: Token YOUR_TOKEN" \
+  "https://api.elorus.com/v1.0/YOUR_ORG_ID/taxdefinitions/" | python3 -m json.tool
+```
+
+Find the entry where `rate` is `24` and copy its `id`.
+
+```env
+ELORUS_TAX_24_ID=5   # example
+```
+
+#### 8d. Look up your document type IDs
+
+```bash
+curl -s -H "Authorization: Token YOUR_TOKEN" \
+  "https://api.elorus.com/v1.0/YOUR_ORG_ID/documenttypes/" | python3 -m json.tool
+```
+
+Find:
+- The entry for **Τιμολόγιο Πώλησης** (myDATA type 1.1) → `ELORUS_DOCTYPE_INVOICE_ID`
+- The entry for **Απόδειξη Λιανικής** (myDATA type 11.1) → `ELORUS_DOCTYPE_RECEIPT_ID`
+
+```env
+ELORUS_DOCTYPE_INVOICE_ID=1   # example
+ELORUS_DOCTYPE_RECEIPT_ID=3   # example
+```
+
+#### 8e. For EU B2C / OSS compliance
+
+Enable both:
+1. Stripe Tax (`STRIPE_TAX_ENABLED=true`) — so Stripe computes the correct local VAT per EU country
+2. OSS mode in Elorus (**Settings → OSS/MOSS**) — so Elorus can issue receipts with foreign EU VAT rates
+
+Without these two, EU B2C receipts are created at 0% VAT and you will need to handle OSS separately with your accountant.
+
+---
+
+### 9. Obtain the SSL certificate (run once)
 
 ```bash
 cd /var/www/4utest/app-deploy

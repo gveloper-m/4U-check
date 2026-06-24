@@ -122,4 +122,5 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 });
 
 // Stripe webhook — CSRF-exempt (see bootstrap/app.php), signature verified by Cashier internals
-Route::post('/stripe/webhook', [\Laravel\Cashier\Http\Controllers\WebhookController::class, 'handleWebhook'])->name('cashier.webhook');
+// Uses our extended controller to trigger Elorus document creation on invoice.paid
+Route::post('/stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handleWebhook'])->name('cashier.webhook');
