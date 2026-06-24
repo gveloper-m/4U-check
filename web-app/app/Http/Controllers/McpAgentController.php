@@ -143,6 +143,18 @@ docker run -d \
   -v /opt/4utest-agent/backups:/backups \
   4utest/mcp-agent:latest
 
+echo '→ Opening port 8765 on firewall...'
+if command -v ufw >/dev/null 2>&1 && ufw status | grep -q 'Status: active'; then
+  ufw allow 8765/tcp
+  echo '  ufw: port 8765 allowed'
+elif command -v firewall-cmd >/dev/null 2>&1; then
+  firewall-cmd --permanent --add-port=8765/tcp
+  firewall-cmd --reload
+  echo '  firewalld: port 8765 allowed'
+else
+  echo '  No active ufw or firewalld detected — port 8765 may need to be opened manually in your cloud provider firewall/security group'
+fi
+
 echo '→ Done! Container state:'
 docker inspect 4utest-agent --format '{{.State.Status}}'
 BASH;

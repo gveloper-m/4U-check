@@ -402,43 +402,54 @@ From the Agent dashboard, fill in:
 - Password or SSH private key
 - Project path on the server (e.g. `/var/www/html`)
 
-Click **Deploy Agent**. The platform SSHes into the server using phpseclib and runs:
+Click **Deploy Agent**. The platform SSHes into the server using phpseclib and runs everything automatically:
 
 1. `mkdir -p /opt/4utest-agent/backups`
 2. `docker pull 4utest/mcp-agent:latest`
 3. If a `4utest-agent` container already exists: stop and remove it only
 4. `docker run -d --name 4utest-agent --restart unless-stopped -p 8765:8765 -e AGENT_TOKEN=… -v /your/project:/workspace -v /opt/4utest-agent/backups:/backups 4utest/mcp-agent:latest`
+5. Open port 8765 on the firewall — detects `ufw` or `firewalld` automatically and adds the rule
 
-No other containers, files, or services on the server are touched.
+No other containers, files, or services on the server are touched. No SSH tunnel is needed — Claude Code connects directly to the server on port 8765.
 
 SSH credentials are transmitted over HTTPS, used for a single SSH session, and never written to the database or any log. See §9 of the Terms of Service for the full disclosure.
 
+> **Cloud provider note:** If your server is behind a cloud firewall (AWS Security Groups, DigitalOcean Cloud Firewall, Hetzner Firewall, etc.), you must also open port 8765 there manually — the script can only control the OS-level firewall.
+
 ### Deployment — Manual
 
-If you prefer not to provide SSH credentials, the dashboard shows a pre-filled `docker run` command. Enter your project path, copy the command, and run it on your server.
+If you prefer not to provide SSH credentials, the dashboard shows a pre-filled `docker run` command with your token. Enter your project path and server IP, copy the two commands, and run them on your server:
+
+```bash
+# 1. Start the agent
+docker run -d \
+  --name 4utest-agent \
+  --restart unless-stopped \
+  -p 8765:8765 \
+  -e AGENT_TOKEN=your-token \
+  -v /your/project:/workspace \
+  -v /opt/4utest-agent/backups:/backups \
+  4utest/mcp-agent:latest
+
+# 2. Open the firewall port
+ufw allow 8765/tcp
+```
 
 ### Connecting Claude Code
 
-After the container is running, on your **local machine**:
-
-```bash
-# Open a permanent SSH tunnel
-ssh -L 8765:localhost:8765 user@your-server-ip -N &
-```
-
-Add to `~/.claude/settings.json`:
+After deployment (auto or manual), port 8765 is open on the server. No SSH tunnel needed. Add this to `~/.claude/settings.json` on your local machine and restart Claude Code:
 
 ```json
 {
   "mcpServers": {
     "4utest-agent": {
-      "url": "http://localhost:8765/sse"
+      "url": "http://your-server-ip:8765/sse"
     }
   }
 }
 ```
 
-Restart Claude Code. The agent appears in the MCP servers list. Tell Claude: *"Check my latest 4uTest audit and fix the top issues."*
+The dashboard shows this config pre-filled with your server's actual IP after a successful auto-deploy. The agent appears in Claude Code's MCP servers list immediately. Tell Claude: *"Check my latest 4uTest audit and fix the top issues."*
 
 ### Agent Configuration (env vars)
 

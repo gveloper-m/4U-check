@@ -160,27 +160,18 @@ function AgentCard({ agent, onDelete, onRegenerate, onSync }: {
 }
 
 function ClaudeCodeStep({ serverIp }: { serverIp: string }) {
-  const tunnelCmd = `ssh -L 8765:localhost:8765 user@${serverIp || 'your-server-ip'} -N`;
+  const host = serverIp || 'your-server-ip';
   const claudeConfig = JSON.stringify(
-    { mcpServers: { "4utest-agent": { url: "http://localhost:8765/sse" } } },
+    { mcpServers: { "4utest-agent": { url: `http://${host}:8765/sse` } } },
     null, 2,
   );
   return (
     <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-5 space-y-4">
       <p className="text-sm font-semibold text-violet-300">Last step — Connect Claude Code (on your local machine)</p>
-      <div>
-        <p className="text-xs text-gray-400 mb-1.5">1. Open a permanent SSH tunnel so Claude Code can reach the agent:</p>
-        <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300">
-          {tunnelCmd}
-          <div className="absolute top-2 right-2"><CopyButton text={tunnelCmd} /></div>
-        </div>
-      </div>
-      <div>
-        <p className="text-xs text-gray-400 mb-1.5">2. Add this to <code className="text-violet-300">~/.claude/settings.json</code> and restart Claude Code:</p>
-        <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
-          {claudeConfig}
-          <div className="absolute top-2 right-2"><CopyButton text={claudeConfig} /></div>
-        </div>
+      <p className="text-xs text-gray-400">Port 8765 is already open on your server. Just add this to <code className="text-violet-300">~/.claude/settings.json</code> and restart Claude Code:</p>
+      <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
+        {claudeConfig}
+        <div className="absolute top-2 right-2"><CopyButton text={claudeConfig} /></div>
       </div>
       <p className="text-xs text-gray-500">You will see <strong className="text-gray-300">4utest-agent</strong> in Claude Code's MCP server list. Tell Claude: <em>"Check my 4uTest audit and fix the top issues."</em></p>
     </div>
@@ -350,19 +341,33 @@ function SetupInstructions({ agentId, token }: { agentId?: number; token?: strin
           </>
         ) : (
           <>
-            <p className="text-xs text-gray-500">SSH into your server manually and run the command below. Docker must already be installed.</p>
-            <div>
-              <label className={labelCls}>Your project path on the server</label>
-              <input className={inputCls} value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="/var/www/html" />
+            <p className="text-xs text-gray-500">SSH into your server manually and run the commands below. Docker must already be installed.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>Server IP / hostname</label>
+                <input className={inputCls} value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.1" />
+              </div>
+              <div>
+                <label className={labelCls}>Project path on server</label>
+                <input className={inputCls} value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="/var/www/html" />
+              </div>
             </div>
             <div>
-              <p className={labelCls}>Run this command on your server</p>
+              <p className={labelCls}>1. Run the agent</p>
               <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
                 {manualCmd}
                 <div className="absolute top-2 right-2"><CopyButton text={manualCmd} /></div>
               </div>
             </div>
-            <ClaudeCodeStep serverIp="" />
+            <div>
+              <p className={labelCls}>2. Open port 8765 on the firewall</p>
+              <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300">
+                {'ufw allow 8765/tcp'}
+                <div className="absolute top-2 right-2"><CopyButton text="ufw allow 8765/tcp" /></div>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">If using a cloud provider (AWS, DigitalOcean, Hetzner…) also open port 8765 in the server's security group / firewall settings.</p>
+            </div>
+            <ClaudeCodeStep serverIp={host} />
           </>
         )}
       </div>
