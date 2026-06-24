@@ -29,8 +29,37 @@ Route::get('/shared/{uuid}/pdf', [SharedReportController::class, 'pdf'])
     ->where('uuid', '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}')
     ->name('shared.pdf');
 
+// Sitemap & robots (no middleware, must be fast)
+Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'sitemap'])->name('sitemap');
+Route::get('/robots.txt',  [\App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
+
 // Public
-Route::get('/', fn () => Inertia::render('Welcome'))->name('home');
+Route::get('/', function () {
+    return Inertia::render('Welcome', [
+        'seo' => [
+            'title'       => '4utest — Website Audit Platform',
+            'description' => '4utest runs 7 deep audits in parallel — SEO, security, performance, broken links, e-commerce, marketing tracking, and accessibility — giving you a complete health score in minutes.',
+            'canonical'   => url('/'),
+            'type'        => 'website',
+            'image'       => config('app.url') . '/og-image.png',
+            'schema'      => [
+                '@context'            => 'https://schema.org',
+                '@type'               => 'SoftwareApplication',
+                'name'                => '4utest',
+                'description'         => '4utest runs 7 deep audits in parallel — SEO, security, performance, broken links, e-commerce, marketing tracking, and accessibility.',
+                'applicationCategory' => 'WebApplication',
+                'operatingSystem'     => 'All',
+                'url'                 => config('app.url'),
+                'offers'              => [
+                    '@type'           => 'Offer',
+                    'price'           => '19.99',
+                    'priceCurrency'   => 'EUR',
+                    'unitText'        => 'MON',
+                ],
+            ],
+        ],
+    ]);
+})->name('home');
 Route::get('/terms', fn () => Inertia::render('Terms'))->name('terms');
 Route::post('/cookie-consent', [CookieConsentController::class, 'store'])->name('cookie-consent.store');
 

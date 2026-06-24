@@ -27,7 +27,9 @@ function formatDate(iso: string) {
 export default function BlogIndex({ posts }: { posts: PaginatedPosts }) {
     return (
         <BlogLayout>
-            <Head title="Blog — 4utest" />
+            <Head title="Blog — 4utest">
+                <meta name="description" content="Tips, guides, and updates on website auditing, SEO, security, and performance." />
+            </Head>
 
             <div className="mb-10">
                 <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Blog</h1>

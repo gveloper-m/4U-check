@@ -17,10 +17,12 @@ function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-export default function BlogShow({ post }: { post: Post }) {
+export default function BlogShow({ post, seo }: { post: Post; seo?: { description?: string } }) {
     return (
         <BlogLayout>
-            <Head title={`${post.title} — 4utest Blog`} />
+            <Head title={`${post.title} — 4utest Blog`}>
+                {seo?.description && <meta name="description" content={seo.description} />}
+            </Head>
 
             <Link href="/blog" className="mb-8 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                 <ArrowLeft className="h-3.5 w-3.5" />
