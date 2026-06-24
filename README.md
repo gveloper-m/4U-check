@@ -1,101 +1,665 @@
 # 4uTest — Website Audit Platform
 
-4uTest is a subscription SaaS platform that automatically audits websites and tells you exactly what is wrong with them. You paste a URL, the platform runs seven analysis modules in parallel, and within about 30 seconds you have a full health report with a score out of 100 and a precise list of every issue, what it costs you in points, and why it matters.
+4uTest is a subscription SaaS platform that automatically audits websites across seven dimensions and tells you exactly what is wrong with them. You paste a URL, the platform runs seven analysis modules in parallel, and within about 30 seconds you have a full health report — a score out of 100, a precise list of every issue, what it costs you in points, and why it matters.
 
-It is built for digital agencies, e-commerce businesses, and anyone who needs to monitor multiple websites on a recurring basis without paying a consultant to manually check things every month.
+Built for digital agencies, e-commerce businesses, and anyone who needs to monitor multiple websites on a recurring schedule without paying a consultant to manually check things every month.
 
 ---
 
-## What it does
+## Table of Contents
 
-### Audits
+1. [Tech Stack](#tech-stack)
+2. [Feature Overview](#feature-overview)
+3. [The 7 Audit Modules](#the-7-audit-modules)
+4. [Health Score](#health-score)
+5. [Scheduled Scans](#scheduled-scans)
+6. [Scan History & Comparison](#scan-history--comparison)
+7. [Monitored Sites & Billing](#monitored-sites--billing)
+8. [White-Label Sharing](#white-label-sharing)
+9. [Agency Branding](#agency-branding)
+10. [MCP Agent](#mcp-agent)
+11. [Support Tickets](#support-tickets)
+12. [Blog](#blog)
+13. [Multi-Language Support](#multi-language-support)
+14. [Admin Panel](#admin-panel)
+15. [Security Architecture](#security-architecture)
+16. [API Endpoints](#api-endpoints)
+17. [Queue & Scheduler](#queue--scheduler)
+18. [Email System](#email-system)
+19. [Production: Step-by-Step](#production-step-by-step)
+20. [Useful Commands](#useful-commands)
 
-Every audit runs seven modules simultaneously on the target URL:
+---
 
-**SEO & Schema** — Checks the meta title and description (length, presence), H1 tags, canonical URL, Open Graph tags for social sharing, JSON-LD structured data, image alt text, robots.txt, and sitemap.xml. Everything search engines and social platforms need to correctly index and display the page.
+## Tech Stack
 
-**Security** — Checks the SSL certificate (validity, issuer, days until expiry), whether HTTP redirects to HTTPS, mixed content (HTTP assets on an HTTPS page), six critical HTTP security headers (HSTS, CSP, X-Frame-Options, X-Content-Type, Referrer-Policy, Permissions-Policy), and DNS email security records (SPF, DMARC).
+### Backend
+| Component | Version | Purpose |
+|---|---|---|
+| **Laravel** | 13.x | Full-stack PHP framework — routing, ORM, queues, mail, auth |
+| **PHP** | 8.3 | Runtime |
+| **MySQL** | 8.4 | Primary relational database |
+| **Redis** | 7 (Alpine) | Cache store and queue backend |
+| **Laravel Horizon** | 5.47 | Queue worker management and monitoring dashboard |
+| **Laravel Cashier** | 16.5 | Stripe subscription and billing integration |
+| **Laravel Sanctum** | 4.0 | Token-based API authentication |
+| **Laravel Breeze** | 2.4 | Authentication scaffolding (login, register, password reset, email verify) |
+| **DomPDF** | 3.1 | PDF generation from Blade templates |
+| **Browsershot / Puppeteer** | 5.4 | Headless Chromium control for Core Web Vitals measurement |
+| **phpseclib** | 3.0 | Pure-PHP SSH client (used for MCP Agent auto-deploy) |
+| **Symfony DomCrawler** | 8.1 | HTML/DOM parsing during audits |
+| **Ziggy** | 2.0 | Exposes Laravel named routes to JavaScript |
 
-**Performance** — Measures Time to First Byte (TTFB), checks whether Gzip or Brotli compression is enabled, identifies render-blocking scripts and stylesheets, and reports the overall page size and request count.
+### Frontend
+| Component | Version | Purpose |
+|---|---|---|
+| **React** | 18.2 | UI framework |
+| **TypeScript** | 5.0 | Type-safe JavaScript |
+| **Vite** | 8.0 | Build tool and dev server |
+| **Inertia.js** | 2.0 | Glues React to Laravel — no separate API, no client-side routing setup |
+| **Tailwind CSS** | 3.4 | Utility-first CSS framework |
+| **Headless UI** | 2.0 | Accessible, unstyled UI components |
+| **Lucide React** | 0.468 | SVG icon library |
+| **Recharts** | 2.10 | React charting library (admin dashboards) |
+| **TipTap** | 3.26 | Headless rich-text editor (blog post editor) |
+| **Axios** | 1.17 | HTTP client for frontend API calls |
+| **i18next** | 26.3 | Internationalisation framework |
+| **react-i18next** | 17.0 | React bindings for i18next |
+| **i18next-browser-languagedetector** | 8.2 | Auto-detects user language from browser |
 
-**Broken Resources** — Crawls all internal links and images on the page and tests each one for a working HTTP response. Reports total counts and broken percentages, and for each broken URL tells you which source page it was found on.
+### MCP Agent (Python)
+| Component | Purpose |
+|---|---|
+| **FastMCP** | Anthropic's Model Context Protocol server — exposes tools to Claude Code |
+| **psutil** | System metrics: CPU, RAM, disk, network |
+| **httpx** | Async HTTP client for heartbeat and API calls |
+| **APScheduler** | Background task scheduling (daily backups) |
+| **python-dotenv** | Environment variable loading |
 
-**E-commerce Catalog** — Detects product pages and checks for missing or malformed prices, stock status mismatches between structured data and the visible page, and disabled add-to-cart buttons.
+### Infrastructure
+| Component | Purpose |
+|---|---|
+| **Docker + Compose** | All services containerised for production |
+| **Nginx** | Reverse proxy, SSL termination |
+| **Certbot** | Automatic Let's Encrypt certificate provisioning and renewal |
+| **GitHub Actions** | CI/CD — auto-builds and publishes the MCP Agent Docker image |
 
-**Marketing & Tracking** — Detects the presence of Google Analytics 4, Google Tag Manager, Facebook Pixel, TikTok Pixel, Google Ads conversion tracking, and Hotjar across crawled pages, including which pixel IDs are active.
+---
 
-**Accessibility (WCAG)** — Checks form labels, image alt text, ARIA attributes on interactive elements, heading hierarchy (H1 → H2 → H3 with no skips), landmark elements (`<main>`, skip nav), the HTML lang attribute, and colour contrast ratios.
+## Feature Overview
 
-### Health score
+- Seven-module parallel website audits with a scored health report
+- Scheduled scans (hourly / daily / weekly / monthly) with email + PDF delivery
+- Full scan history, side-by-side comparison of up to 3 scans, PDF and CSV export
+- Per-site monitored site registry with billing integration for extra sites
+- White-label public share links — no 4uTest branding, no login required
+- Agency branding — custom logo, colours, footer text on all exports and shared reports
+- MCP Agent — deploy a Docker container on your server; Claude Code gets live file access, server metrics, and audit results
+- Built-in support ticket system with threaded messages and file attachments
+- Public blog with AI-powered draft generation (Mistral)
+- Full interface, emails, and PDFs in 7 languages
+- Stripe subscription billing with automatic VAT calculation (Stripe Tax)
 
-Every completed scan produces a score from 0 to 100. Issues deduct points — for example, a missing SSL certificate costs 20 points, a very slow server response costs 10, missing security headers cost 5–10 depending on severity. The score is colour-coded (green ≥70, amber ≥40, red below 40), and every deduction is listed so users know exactly what to fix first.
+---
 
-### Scheduled scans
+## The 7 Audit Modules
 
-Users can set up automatic scans on any site — hourly, daily, weekly, or monthly. When a scheduled scan completes, the platform emails the results including a full branded PDF report attached to the email. This means a business can wake up every Monday morning with an audit report already in their inbox.
+All seven modules are dispatched as independent queue jobs and run in parallel. The report is marked "completed" and the health score is computed only when all seven finish.
 
-### Scan history and comparison
+---
 
-Every audit is saved. Users can browse their full scan history, compare two or three scans side-by-side to track improvements over time, and export any report as a PDF or CSV.
+### 1. SEO & Schema
 
-### White-label sharing
+Checks everything search engines and social platforms need to correctly index and display the page.
 
-Any report can be shared via a public link with a unique UUID — no login required, no 4uTest branding visible to the recipient. Agencies can send clients a clean report that looks like their own work.
+| Check | Detail |
+|---|---|
+| Meta title | Presence; optimal length 30–60 chars; reports too short / too long / missing |
+| Meta description | Presence; optimal ~150 chars |
+| H1 tags | Optimal: exactly one. Reports missing or multiple |
+| Canonical URL | Presence; must match the audited URL |
+| Open Graph tags | Checks `og:title`, `og:description`, `og:image`, `og:url`; lists missing |
+| JSON-LD structured data | Validates schema markup; reports parse errors |
+| Image alt text | Counts images missing `alt` attribute; lists affected URLs |
+| robots.txt | Existence check |
+| sitemap.xml | Existence check |
 
-### Agency branding
+**Score deductions:** missing or malformed meta title/description −5 each; H1 issue −5; missing canonical −3; canonical mismatch −5; no structured data −5; missing OG tags −5; images missing alt −5; missing robots.txt −3; missing sitemap −3.
 
-Users can upload their own logo and set their brand colours. The white-label shared reports and exported PDFs reflect the agency's identity, not 4uTest's.
+---
 
-### MCP Agent
+### 2. Security
 
-Every plan includes a free MCP Agent — a lightweight Docker container the user deploys on the same server as their website. The agent connects Claude Code (Anthropic's AI coding assistant) to the server via the Model Context Protocol (MCP), giving Claude direct, live access to:
+Checks SSL, transport security, HTTP security headers, and DNS email authentication records.
 
-- **Server files** — Claude can read and edit files directly; no copy-pasting code snippets back and forth
-- **Server health metrics** — real-time CPU, RAM, and disk usage so Claude understands the server context
-- **Audit results** — the latest 4uTest scan is pushed to the agent automatically, so Claude knows exactly which issues exist and where
-- **Automatic backups** — the agent creates a ZIP backup of the project before Claude makes any changes
+| Check | Detail |
+|---|---|
+| SSL certificate | Validity, issuer, days to expiry (alerts if ≤ 30 days) |
+| HTTPS redirect | Confirms HTTP → HTTPS redirect is in place |
+| Mixed content | Detects HTTP assets loaded on an HTTPS page |
+| HSTS | `Strict-Transport-Security` header presence |
+| CSP | `Content-Security-Policy` header presence |
+| X-Frame-Options | Clickjacking protection |
+| X-Content-Type-Options | MIME-type sniffing prevention |
+| Referrer-Policy | Controls referrer information sent to third parties |
+| Permissions-Policy | Controls browser feature access |
+| Server disclosure | Detects `Server` and `X-Powered-By` header leaks |
+| SPF record | DNS TXT record for email sender authentication |
+| DMARC record | DNS TXT record for email policy |
 
-With the agent running, a user can open Claude Code and say *"Check my latest 4uTest audit and fix the top security and SEO issues"* — and Claude will read the audit report, inspect the affected files on the live server, apply the fixes, and verify them, without the user doing anything manually.
+**Score deductions:** invalid / missing SSL −20; SSL expiring ≤ 30 days −10; mixed content −10; no SPF −5; no DMARC −5; most headers missing (≤ 2 present) −10; some headers missing (≤ 4 present) −5; HTTP not redirecting to HTTPS −5.
 
-**Deployment.** Users deploy the agent directly from their dashboard without touching the command line. They enter their server IP, SSH credentials, and project path, and the platform SSHes into the server and runs the full setup — pulling `4utest/mcp-agent:latest` from Docker Hub, creating the required directories, and starting the container. Only the `4utest-agent` container is ever touched; no other services on the server are affected. A manual single-command fallback is also shown for users who prefer it.
+---
 
-**Security.** The agent image is distributed via Docker Hub. The API base URL (`https://4utest.io`) is hardcoded inside the image and cannot be changed, so the agent can only communicate with 4utest.io and cannot be repurposed. Each agent authenticates with a unique per-site token generated on registration.
+### 3. Performance
 
-### Support tickets
+Measures server response time, compression, and Core Web Vitals via headless Chromium.
 
-A built-in support ticket system lets users open tickets and receive replies from the support team. All messages trigger email notifications in both directions. Tickets support photo attachments and full threaded conversation history.
+| Check | Detail |
+|---|---|
+| TTFB | Time to First Byte — raw server response speed |
+| Compression | Detects Gzip, Deflate, or Brotli |
+| First Contentful Paint (FCP) | Desktop and mobile, via Lighthouse / Puppeteer |
+| Largest Contentful Paint (LCP) | Desktop and mobile |
+| Cumulative Layout Shift (CLS) | Desktop and mobile |
+| Render-blocking scripts | Count and list of blocking `<script>` tags |
+| Render-blocking stylesheets | Count and list of blocking `<link rel="stylesheet">` tags |
+| Page size | Total HTML size in KB |
+| Resource count | Total page resources |
+
+Tests up to 15 internal pages. Maximum budget: 2 minutes.
+
+**Score deductions:** TTFB > 1500 ms −10; TTFB 600–1500 ms −5; compression not enabled −5.
+
+---
+
+### 4. Broken Resources
+
+Crawls all internal links and images and verifies each one returns a working HTTP response.
+
+| Check | Detail |
+|---|---|
+| Internal links | HTTP response code for each link found on the page |
+| Images | HTTP response code for each image source |
+| Broken URL details | For each broken URL: the URL, HTTP status code or error, and the source page where it was found |
+| Summary stats | Total checked, broken count, broken percentage — separately for links and images |
+
+Crawls up to 60 pages with a 3.5-minute budget.
+
+**Score deductions:** > 10 broken links −10; 1–10 broken links −5 per link; any broken images −5 per image.
+
+---
+
+### 5. E-Commerce Catalog
+
+Detects product pages and validates pricing, stock status, and cart availability.
+
+| Check | Detail |
+|---|---|
+| Product page detection | Identifies product pages via common URL and DOM patterns |
+| Price validation | Checks for price presence and correct formatting |
+| Stock status consistency | Compares structured data stock status against visible page copy |
+| Add-to-cart availability | Detects disabled or missing add-to-cart buttons |
+| Broken products | Detects product pages returning errors |
+
+Audits up to 50 product pages. Per-product report includes URL, price found, schema stock status, cart status, and whether a mismatch was detected.
+
+**Score deductions:** > 50% broken products −20; 10–50% broken −10; 0–10% broken −5.
+
+---
+
+### 6. Marketing & Tracking
+
+Detects tracking and analytics scripts across crawled pages and reports active pixel IDs.
+
+| Tracker | What is captured |
+|---|---|
+| Google Analytics 4 | Detection + measurement IDs |
+| Google Tag Manager | Detection + container IDs |
+| Facebook Pixel | Detection + pixel IDs |
+| TikTok Pixel | Detection + pixel IDs |
+| Google Ads | Conversion tracking detection |
+| Hotjar | Detection + site IDs |
+
+Crawls up to 20 pages with a 120-second budget.
+
+**Score deductions:** no GA4 detected −5; no Facebook Pixel −3.
+
+---
+
+### 7. Accessibility (WCAG)
+
+Checks WCAG compliance covering forms, images, ARIA, heading structure, landmarks, and colour contrast.
+
+| Check | Detail |
+|---|---|
+| Form labels | All inputs must have associated `<label>` elements; counts unlabelled |
+| Image alt text | Counts images missing `alt`; lists affected URLs |
+| ARIA labels | Validates `aria-label` / `aria-labelledby` on buttons, links, form controls |
+| Heading hierarchy | H1 → H2 → H3 nesting without skips |
+| Link text | Detects vague link text ("click here", "read more") |
+| `<main>` landmark | Presence of main content landmark |
+| Skip navigation | Presence of skip-to-content link |
+| HTML `lang` attribute | Presence of language declaration |
+| Colour contrast | Calculates foreground/background contrast ratios; flags WCAG AA failures (4.5:1) |
+
+**Score deductions:** > 3 unlabelled inputs −8; > 5 images missing alt −5; > 2 ARIA violations −5; heading hierarchy issues −5; missing `lang` attribute −5; no `<main>` landmark −3; > 2 contrast violations −5.
+
+---
+
+## Health Score
+
+Every completed scan produces a score from 0 to 100. Each module starts the session with points; issues deduct from the total. The score is colour-coded: green ≥ 70, amber ≥ 40, red < 40. Every deduction is listed by name, point cost, and module so users know exactly what to fix first.
+
+---
+
+## Scheduled Scans
+
+Users can configure automatic scans on any monitored site — hourly, daily, weekly, or monthly. Each scheduled scan can have:
+
+- **Email notification** — sends the report summary and a full PDF when the scan completes
+- **Custom name** — for identifying the scan in history
+- **Frequency** — hourly / daily / weekly / monthly
+- **Run now** — trigger immediately from the dashboard
+
+The `scans:run` artisan command fires every minute, finds all scans whose `next_run_at` has passed, and dispatches them as queue jobs. `next_run_at` is updated before dispatch to prevent double-run.
+
+---
+
+## Scan History & Comparison
+
+Every audit is saved permanently. Users can:
+
+- Browse the full scan history for any URL
+- Filter by date range or score
+- Open any past report to see the full breakdown
+- Compare two or three scans side-by-side to track improvements
+- Export any report as a **PDF** (branded with agency logo and colours if configured)
+- Export any report as a **CSV** (full data including all 7 module results and deductions)
+
+---
+
+## Monitored Sites & Billing
+
+### Monitored Sites
+
+Users register the websites they want to track. Each monitored site:
+
+- Has a URL and optional label
+- One site is marked as `is_primary` (the base plan site)
+- Additional sites are "extra sites" — each one triggers a Stripe subscription add-on
+
+Sites are linked to scheduled scans, MCP agents, and audit history.
+
+### Subscription Plans
+
+| Plan | Price | Billing |
+|---|---|---|
+| Pro Monthly | €19.99/month | Monthly recurring |
+| Pro Yearly | €199.99/year | Yearly recurring (~40% saving) |
+
+### Extra Site Add-Ons
+
+| Add-On | Price | Per |
+|---|---|---|
+| Extra Site Monthly | €9.99/month | per additional site |
+| Extra Site Yearly | €99.99/year | per additional site |
+
+Each additional site beyond the first is billed as a separate Stripe subscription item. The billing page shows a live breakdown: base plan + each extra site.
+
+### Scan Limits
+
+- **30 scans/month** per registered site on a paid plan
+- Admins can grant `is_unlimited` (bypass all limits) or add a `crawl_quota_bonus` to any account
+
+### VAT
+
+- Handled automatically by **Stripe Tax** based on customer billing country
+- EU B2B customers with a valid VAT number get reverse charge (0% VAT)
+- Customers collect and manage their VAT number from their billing profile
+
+### Trial Codes
+
+Admins can generate one-time trial access codes in the format `XXXX-XXXX`. Each code:
+
+- Is single-use
+- Has an optional expiry date
+- Can optionally be linked to a specific site URL
+- Tracks who created it, who used it, and when
+
+### Subscription Management
+
+All subscription management happens through the **Stripe billing portal** — customers update their payment method, download invoices, manage extra site subscriptions, or cancel without contacting support. On cancel, access continues until the end of the current billing period.
+
+---
+
+## White-Label Sharing
+
+Any audit report can be shared publicly via a UUID link (`/shared/{uuid}`). The share link:
+
+- Requires no login
+- Shows no 4uTest branding
+- Displays the agency's logo, colours, and footer text if configured
+- Can also be accessed as a branded PDF at `/shared/{uuid}/pdf`
+- Is rate-limited to prevent abuse
+
+---
+
+## Agency Branding
+
+Users can customise all exported and shared content with their own identity:
+
+| Setting | Detail |
+|---|---|
+| Logo | Upload JPG / PNG / GIF / WebP (max 2 MB); stored in `storage/app/public/agency-logos/` |
+| Primary colour | Hex code (e.g. `#7c3aed`) |
+| Secondary colour | Hex code |
+| Footer text | Custom text (max 255 chars) displayed in PDFs and shared reports |
+
+When branding is configured, all shared report links and PDF exports display the agency's identity instead of 4uTest's.
+
+---
+
+## MCP Agent
+
+The MCP Agent is a lightweight Docker container users deploy on the same server as their website. It exposes tools to **Claude Code** (Anthropic's AI coding assistant) via the **Model Context Protocol (MCP)**, giving Claude direct, live access to the server — so it can read the audit results and fix issues directly on the files, without any copy-pasting.
+
+### What Claude Gets Access To
+
+| Tool | What it does |
+|---|---|
+| `get_system_metrics` | Live CPU %, RAM (total / used / available GB), disk (total / used / free GB), network (bytes sent/received MB) |
+| `run_speed_test` | Downloads 10 MB from Cloudflare, reports download speed in Mbps |
+| `list_directory(path)` | List files inside the mounted workspace |
+| `read_file(path)` | Read any file in the workspace (up to 5 MB) |
+| `write_file(path, content)` | Create or overwrite a file; optionally creates parent directories |
+| `get_file_info(path)` | File size, created, modified, permissions |
+| `search_files(pattern, path)` | Glob pattern search across the workspace |
+| `create_session_backup` | Immediately ZIP the entire workspace before making changes |
+| `list_backups` | List all available backup archives |
+| `get_audit_report` | Latest 4uTest scan results for the linked site (JSON) |
+
+### Heartbeat
+
+The agent calls `POST /api/agent/heartbeat` every 60 seconds (configurable). The payload includes CPU %, RAM %, and disk % metrics. The platform updates `last_ping_at` (used for the Online/Offline indicator) and can push the latest audit report JSON back in the response.
+
+### Backups
+
+- An immediate ZIP backup can be created on demand before Claude makes changes
+- A daily automated backup runs at a configurable time (default 02:00 UTC)
+- Only the most recent `MAX_BACKUPS` (default 10) archives are kept; older ones are deleted automatically
+- Backups are stored in `/backups` inside the container
+
+### Authentication
+
+Each agent has a unique 64-character token generated at registration. The token is passed in the `Authorization: Bearer …` header on every heartbeat. The API URL (`https://4utest.io`) is hardcoded inside the Docker image — agents can only communicate with 4utest.io and cannot be redirected to another backend.
+
+### Deployment — Auto Deploy (Recommended)
+
+From the Agent dashboard, fill in:
+- Server IP / hostname
+- SSH port and user
+- Password or SSH private key
+- Project path on the server (e.g. `/var/www/html`)
+
+Click **Deploy Agent**. The platform SSHes into the server using phpseclib and runs:
+
+1. `mkdir -p /opt/4utest-agent/backups`
+2. `docker pull 4utest/mcp-agent:latest`
+3. If a `4utest-agent` container already exists: stop and remove it only
+4. `docker run -d --name 4utest-agent --restart unless-stopped -p 8765:8765 -e AGENT_TOKEN=… -v /your/project:/workspace -v /opt/4utest-agent/backups:/backups 4utest/mcp-agent:latest`
+
+No other containers, files, or services on the server are touched.
+
+SSH credentials are transmitted over HTTPS, used for a single SSH session, and never written to the database or any log. See §9 of the Terms of Service for the full disclosure.
+
+### Deployment — Manual
+
+If you prefer not to provide SSH credentials, the dashboard shows a pre-filled `docker run` command. Enter your project path, copy the command, and run it on your server.
+
+### Connecting Claude Code
+
+After the container is running, on your **local machine**:
+
+```bash
+# Open a permanent SSH tunnel
+ssh -L 8765:localhost:8765 user@your-server-ip -N &
+```
+
+Add to `~/.claude/settings.json`:
+
+```json
+{
+  "mcpServers": {
+    "4utest-agent": {
+      "url": "http://localhost:8765/sse"
+    }
+  }
+}
+```
+
+Restart Claude Code. The agent appears in the MCP servers list. Tell Claude: *"Check my latest 4uTest audit and fix the top issues."*
+
+### Agent Configuration (env vars)
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AGENT_TOKEN` | — | **Required.** Authentication token from the dashboard |
+| `MCP_SERVER_PORT` | `8765` | Port the MCP server listens on |
+| `MAX_BACKUPS` | `10` | Maximum number of backup archives to keep |
+| `BACKUP_HOUR` | `2` | Hour (UTC) for the daily automated backup |
+| `BACKUP_MINUTE` | `0` | Minute for the daily automated backup |
+| `HEARTBEAT_INTERVAL` | `60` | Seconds between heartbeat calls |
+
+### Docker Image
+
+The image is published automatically to Docker Hub (`4utest/mcp-agent:latest`) via GitHub Actions whenever changes are pushed to the `4u-test-agent/` directory. See [§14 GitHub Actions setup](#14-set-up-github-actions-secrets-required-for-the-mcp-agent-image) in the deployment guide.
+
+---
+
+## Support Tickets
+
+Users open support tickets directly from the dashboard.
+
+| Feature | Detail |
+|---|---|
+| Subject | Max 200 characters |
+| Body | Max 5000 characters |
+| Image attachments | Up to 3 per message; JPG / PNG / GIF / WebP; max 5 MB each |
+| Thread | Full conversation history — user messages and admin replies in order |
+| Statuses | open → in_progress → resolved → closed |
+| Rate limiting | 10 ticket creations/minute; 20 replies/minute |
+
+**Notifications:** When a user opens a ticket, the admin receives an email. When the admin replies, the user receives an email. All ticket emails are queued.
+
+---
+
+## Blog
+
+A public blog at `/blog` with admin-managed posts.
+
+### Post Fields
+
+| Field | Detail |
+|---|---|
+| Title | Required, max 255 chars |
+| Slug | Auto-generated, unique |
+| Excerpt | Max 500 chars |
+| Meta description | For SEO |
+| Content | Rich HTML via TipTap editor |
+| Featured image | URL |
+| Locale | One of: en / el / de / fr / es / nl / cs |
+| Status | `draft` / `published` / `scheduled` |
+| Scheduled at | Optional future publish datetime |
+
+Scheduled posts are published automatically by the `blog:publish-scheduled` command, which runs every minute.
+
+### AI Draft Generation
+
+Admins can generate a full blog post draft from a keyword using the Mistral API (`mistral-large-latest`, temperature 0.7). The AI returns a title, slug, excerpt, content, meta description, featured image URL, and the optimal publish day and hour (UTC). The draft is created with status `draft` for review before publishing. Requires `MISTRAL_API_KEY` in `.env`.
+
+---
+
+## Multi-Language Support
+
+The full interface, all email notifications, and all PDF exports are available in **7 languages**:
+
+| Code | Language |
+|---|---|
+| `en` | English |
+| `el` | Greek |
+| `de` | German |
+| `fr` | French |
+| `es` | Spanish |
+| `nl` | Dutch |
+| `cs` | Czech |
+
+**Frontend:** i18next + react-i18next. Translation files at `resources/js/i18n/`. Browser language is auto-detected on first visit; the user can change it from their profile and the preference is saved to the database.
+
+**Backend / Email / PDF:** Laravel's localisation system. Locale is set per-request based on the authenticated user's `language` field.
+
+---
+
+## Admin Panel
+
+Accessible at `/admin` — requires `is_admin = true` on the user account.
+
+### Users
+
+| Capability | Detail |
+|---|---|
+| User list | All users, searchable by name or email |
+| Stats bar | Total users, subscribed, unlimited, month / total crawls, open tickets |
+| Per-user view | 6-month crawl activity chart; top 10 audited sites with URL, crawl count, avg score, last crawl date; Stripe subscription data (status, plan, next billing date) |
+| Actions | Grant / revoke `is_admin`; grant / revoke `is_unlimited`; add `crawl_quota_bonus`; send direct email |
+| Export | Full user list as CSV |
+
+### Support Tickets
+
+- All tickets across all users
+- Filter by status (open / in_progress / resolved / closed)
+- Read full threaded conversation
+- Reply with optional file attachments
+- Change status; close or reopen
 
 ### Blog
 
-A public blog with admin-managed posts. The admin panel can generate blog post drafts using AI (Mistral) with keyword-relevant images auto-attached.
+- Full CRUD for blog posts
+- AI draft generation from a keyword (requires Mistral API key)
+- Scheduled post management
 
-### Multi-language
+### Server Monitoring
 
-The full interface, all email notifications, and all PDF exports are available in English, Greek, German, French, Spanish, Dutch, and Czech. Each user picks their preferred language from their profile.
-
-### Subscription billing
-
-Two plans: €19.99/month or €199.99/year (both exclusive of VAT). VAT is calculated automatically by Stripe based on the customer's billing country and VAT number. B2B customers in the EU with a valid VAT number get reverse charge (0% VAT). Payments, invoices, and subscription management all happen through Stripe — customers can update their card, download past invoices, or cancel directly from the Stripe billing portal without contacting support.
-
----
-
-## Admin panel
-
-The admin panel at `/admin` is only accessible to accounts with admin rights.
-
-| Section | What it does |
+| Metric | Detail |
 |---|---|
-| **Users** | Full user list with scan counts, plan, last activity. Per-user detail with 6-month activity chart, top audited sites, Stripe subscription data. Grant/revoke admin or unlimited access, add bonus scans, send a direct email. Export full user list as CSV. |
-| **Tickets** | All support tickets across all users. Filter by status, read the full thread, reply, close or reopen. |
-| **Blog** | Create, edit, and delete blog posts. AI draft generation from a topic keyword. |
-| **Monitoring** | Live server health: RAM, CPU load, disk usage, uptime. Database and Redis ping times. Queue status (pending / failed jobs). Log viewer for the last 100 log entries, filterable by level. |
-| **Trial codes** | Generate one-time trial codes to give specific users extended trial access. |
+| CPU | Current load |
+| RAM | Used / total / percentage |
+| Disk | Used / free / percentage |
+| Uptime | Server uptime |
+| Database | MySQL ping time |
+| Redis | Redis ping time |
+| Queue | Pending jobs count; failed jobs count |
+| Logs | Last 100 log entries, filterable by level (debug / info / warning / error / critical) |
+
+### Trial Codes
+
+- Generate `XXXX-XXXX` format codes
+- View all codes: status, note, created by, used by, used at, expires at
+- Update note on any code
+- Delete unused codes
 
 ---
 
-## Production: step-by-step
+## Security Architecture
 
-Everything below is what you need to do, in order, to go from a blank server to a live production deployment.
+| Feature | Implementation |
+|---|---|
+| CSRF protection | Laravel built-in; Inertia-aware; exempt for API routes using token auth |
+| Authentication | Laravel Breeze (session-based) + Sanctum (token-based for API) |
+| Subscription gate | Custom `subscription` middleware — checks active Stripe sub or `is_unlimited` |
+| Admin gate | Custom `admin` middleware — checks `is_admin = true` |
+| Rate limiting | Per-route throttle middleware (see table below) |
+| Trusted proxies | `TrustProxies` middleware; configured for Nginx reverse proxy |
+| Session | Database-backed sessions; `SESSION_SECURE_COOKIE=true` in production |
+| SSL | Let's Encrypt via Certbot; Nginx terminates TLS; HTTP → HTTPS enforced |
+| Honeypot | Hidden `_hp` field on audit form; bot submissions are silently dropped |
+| Server disclosure | Security audit module flags `Server` and `X-Powered-By` header leaks |
+
+**Rate limits:**
+
+| Route | Limit |
+|---|---|
+| Audit creation | `audit-store` (configurable) |
+| Shared report view | Throttle per IP |
+| Shared PDF export | Throttle per IP |
+| Ticket creation | 10/minute |
+| Ticket replies | 20/minute |
+| Agent heartbeat | 120/minute |
+| General API | 60/minute |
+
+---
+
+## API Endpoints
+
+All routes in `routes/api.php`. Agent heartbeat uses Bearer token; all other authenticated routes use Sanctum session or token.
+
+| Endpoint | Method | Auth | Purpose |
+|---|---|---|---|
+| `/api/agent/heartbeat` | POST | Bearer token | Agent reports metrics; receives latest scan payload |
+| `/api/health` | GET | None | Health check — DB and Redis connectivity |
+| `/api/audit/full-report` | POST | Sanctum | Create a full 7-module audit |
+| `/api/audit/full-report/status/{id}` | GET | Sanctum | Poll audit progress |
+| `/api/audit/seo-schema` | POST/GET | Sanctum | Single SEO module audit or history |
+| `/api/audit/security-infrastructure` | POST/GET | Sanctum | Single Security module |
+| `/api/audit/performance` | POST/GET | Sanctum | Single Performance module |
+| `/api/audit/marketing-tracking` | POST/GET | Sanctum | Single Tracking module |
+| `/api/audit/broken-resources` | POST/GET | Sanctum | Single Broken Resources module |
+| `/api/audit/catalog-integrity` | POST/GET | Sanctum | Single Catalog module |
+| `/api/audit/accessibility` | POST/GET | Sanctum | Single Accessibility module |
+| `/api/user` | GET | Sanctum | Current authenticated user |
+
+---
+
+## Queue & Scheduler
+
+### Queue Jobs
+
+| Job | Timeout | Purpose |
+|---|---|---|
+| `RunAuditorJob` | 600 s | Runs one audit module, saves result, triggers report finalisation when all 7 are done |
+| `ProcessScheduledScan` | 60 s | Creates a report record and dispatches 7 `RunAuditorJob` jobs |
+
+**Report finalisation** (`tryFinalize()` in `RunAuditorJob`): When all 7 module results are present, computes the health score, sets status to `completed`, sends the scan-completed email (with PDF attachment) if notifications are enabled, and pushes the report JSON to any linked MCP agent.
+
+### Scheduled Commands
+
+| Command | Frequency | Purpose |
+|---|---|---|
+| `scans:run` | Every minute | Finds due scheduled scans and dispatches them |
+| `blog:publish-scheduled` | Every minute | Publishes scheduled blog posts whose `scheduled_at` has passed |
+
+**Queue backend:** Redis. **Queue monitor:** Laravel Horizon (runs as a separate Docker container).
+
+---
+
+## Email System
+
+All emails are queued (never sent inline) and respect the recipient's language setting.
+
+| Email | Trigger | Recipient | Attachments |
+|---|---|---|---|
+| Scan completed | Scheduled scan finishes with notifications enabled | Site owner | PDF audit report |
+| New ticket | User opens a support ticket | Admin (`ADMIN_SUPPORT_EMAIL`) | None |
+| Ticket reply | Admin replies to a ticket | Ticket author | None |
+| Admin direct email | Admin sends from user management panel | Any user | None |
+| Password reset | User clicks "Forgot password" | User | None |
+| Email verification | New account registration | New user | None |
+
+---
+
+## Production: Step-by-Step
+
+Everything below takes you from a blank server to a live production deployment.
 
 ---
 
@@ -172,7 +736,7 @@ APP_DEBUG=false                # NEVER true in production
 
 Generate the APP_KEY on your server:
 ```bash
-docker run --rm php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+docker run --rm php:8.3-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
 ```
 Paste the output as APP_KEY.
 
@@ -255,11 +819,11 @@ This is what keeps your local database in sync with Stripe — when a payment su
 
 Stripe dashboard → **Settings** → **Billing** → **Customer portal** → Enable it.
 
-This is the "Manage subscription" page where customers can update their card, download invoices, or cancel — without ever contacting you.
+This is the "Manage subscription" page where customers can update their card, download invoices, or cancel without contacting you.
 
 #### 5e. Enable VAT collection (recommended)
 
-If you have customers in the EU, you should enable Stripe Tax so VAT is calculated and collected automatically:
+If you have customers in the EU:
 
 1. Stripe dashboard → **Tax** → **Get started** → Enable Stripe Tax
 2. Add your tax registration for each country you sell in (at minimum Greece at 24%)
@@ -268,7 +832,7 @@ If you have customers in the EU, you should enable Stripe Tax so VAT is calculat
 STRIPE_TAX_ENABLED=true
 ```
 
-When enabled, Stripe automatically applies the correct VAT rate based on billing country, gives 0% reverse charge to EU businesses with a valid VAT number, and includes all of this on the invoice it generates.
+Stripe then automatically applies the correct VAT rate, gives 0% reverse charge to EU businesses with a valid VAT number, and includes everything on the invoice.
 
 ---
 
@@ -280,25 +844,22 @@ Go to [brevo.com](https://brevo.com) and create a free account (300 emails/day f
 
 #### 6b. Verify your sender email address
 
-In Brevo → **Senders & IPs** → **Senders** → Add a sender. Enter your from address (e.g. `noreply@yourdomain.com`) and verify it by clicking the link in the verification email.
-
-For best deliverability, also verify your domain by adding the DNS records Brevo provides (DKIM and SPF). Brevo shows you exactly which DNS records to add.
+Brevo → **Senders & IPs** → **Senders** → Add a sender. Enter your from address (e.g. `noreply@yourdomain.com`) and verify it. For best deliverability, also add the DKIM and SPF DNS records Brevo provides.
 
 #### 6c. Get your SMTP credentials
 
-Brevo → **SMTP & API** → **SMTP** tab. Note down:
+Brevo → **SMTP & API** → **SMTP** tab:
 - SMTP server: `smtp-relay.brevo.com`
 - Port: `587`
-- Login: shown on the page (format: `xxxxxxx@smtp-brevo.com`)
-- Password / Key: generate one on that page
+- Login: shown on the page
+- Password: generate one on that page
 
 #### 6d. Whitelist your server's IP
 
-Brevo → **Senders & IPs** → **Dedicated IPs** or the general IP whitelist. Add your server's public IP address. Without this, Brevo rejects SMTP connections from your server.
+Brevo → **Senders & IPs** → IP whitelist → Add your server's public IP. Without this, Brevo rejects SMTP connections.
 
-To find your server's outbound IP:
 ```bash
-curl -s https://api.ipify.org
+curl -s https://api.ipify.org   # find your server's outbound IP
 ```
 
 #### 6e. Fill in `.env`
@@ -325,13 +886,11 @@ Go to [console.mistral.ai](https://console.mistral.ai) → **API Keys** → crea
 MISTRAL_API_KEY=your-mistral-key
 ```
 
-This is only used for the AI blog post generation in the admin panel. The rest of the app works without it.
+This is only used for AI blog post generation in the admin panel. Leave it empty if you don't need that feature.
 
 ---
 
 ### 8. Obtain the SSL certificate (run once)
-
-From your server, with DNS already pointing to it:
 
 ```bash
 cd /var/www/4utest/app-deploy
@@ -359,13 +918,11 @@ chmod +x scripts/deploy.sh
 
 This script does everything: pulls the latest code, builds the Docker images, waits for MySQL to be healthy, runs database migrations, caches the Laravel config/routes/views, and starts all seven containers (Nginx, PHP-FPM, Horizon, Scheduler, MySQL, Redis, Certbot).
 
-At the end it prints the URL and shows container status.
-
 ---
 
 ### 10. Create the admin account
 
-After deploy, create your admin user through the normal registration page at `https://yourdomain.com/register`, then promote it to admin via the database:
+Register normally at `https://yourdomain.com/register`, then promote to admin:
 
 ```bash
 docker exec -it $(docker ps -qf "name=php-fpm") php artisan tinker
@@ -376,40 +933,38 @@ docker exec -it $(docker ps -qf "name=php-fpm") php artisan tinker
 exit
 ```
 
-`is_unlimited` means this account bypasses the subscription check — you can run audits without subscribing. `is_admin` gives access to the `/admin` panel.
+`is_unlimited` bypasses the subscription check — you can run audits without subscribing. `is_admin` gives access to the `/admin` panel.
 
 ---
 
 ### 11. Test everything
 
-Work through this checklist after first deploy:
-
 **App basics**
-- [ ] `https://yourdomain.com` loads (green padlock in browser)
+- [ ] `https://yourdomain.com` loads (green padlock)
 - [ ] Can register a new account
 - [ ] Can log in
 
 **Emails**
 - [ ] Trigger a password reset — email arrives within 1–2 minutes
-- [ ] Open a support ticket as a user — admin receives notification email
+- [ ] Open a support ticket — admin receives notification email
 - [ ] Reply to the ticket as admin — user receives notification email
 
 **Stripe**
-- [ ] Use a Stripe test card (`4242 4242 4242 4242`) to subscribe to the monthly plan
-- [ ] Stripe Checkout page opens correctly with VAT calculation
-- [ ] After payment, subscription is active in the app's billing page
-- [ ] "Manage subscription" button opens the Stripe billing portal
+- [ ] Use Stripe test card (`4242 4242 4242 4242`) to subscribe
+- [ ] Stripe Checkout opens with VAT calculation
+- [ ] After payment, subscription is active in the billing page
+- [ ] "Manage subscription" opens the Stripe billing portal
 
 **Audits**
-- [ ] Run a manual audit on any URL — completes within 60 seconds
+- [ ] Run a manual audit — completes within 60 seconds
 - [ ] Score and all 7 module results appear
 - [ ] Download the PDF export
-- [ ] Enable sharing on an audit — share link opens without login and shows no 4uTest branding
+- [ ] Enable sharing — share link opens without login, no 4uTest branding visible
 
 **Scheduled scans**
 - [ ] Create a scheduled scan with email notification enabled
-- [ ] Click "Run now" to trigger it immediately
-- [ ] Email with PDF attached arrives after scan completes (allow 1–2 minutes)
+- [ ] Click "Run now" to trigger immediately
+- [ ] Email with PDF arrives after scan completes (allow 1–2 minutes)
 
 **Admin panel**
 - [ ] `/admin/users` shows the user list
@@ -451,30 +1006,28 @@ Or use a managed backup service — DigitalOcean Spaces, AWS S3, or Backblaze B2
 
 ### 14. Set up GitHub Actions secrets (required for the MCP Agent image)
 
-The MCP Agent Docker image (`4utest/mcp-agent:latest`) is built and pushed to Docker Hub automatically whenever you push changes to the `4u-test-agent/` directory. This requires two secrets set in your GitHub repository:
+The MCP Agent Docker image (`4utest/mcp-agent:latest`) is built and pushed to Docker Hub automatically whenever you push changes to the `4u-test-agent/` directory. This requires two secrets in your GitHub repository:
 
-1. Go to your GitHub repository → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
+1. GitHub repo → **Settings** → **Secrets and variables** → **Actions** → **New repository secret**
 2. Add `DOCKERHUB_USERNAME` — your Docker Hub username (e.g. `4utest`)
 3. Add `DOCKERHUB_TOKEN` — a Docker Hub access token (Docker Hub → **Account Settings** → **Security** → **New Access Token**)
 
-Once these are set, pushing any change to `4u-test-agent/` will automatically rebuild and publish the image. To publish the initial image immediately, push any small change (e.g. a whitespace edit) to that directory, or trigger the workflow manually from the GitHub Actions tab.
+Once set, any push to `4u-test-agent/` rebuilds and publishes the image automatically. To publish the initial image, trigger the workflow manually from the GitHub Actions tab.
 
 ---
 
 ### Ongoing: how to deploy code updates
-
-Every time you push code changes:
 
 ```bash
 cd /var/www/4utest/app-deploy
 ./scripts/deploy.sh
 ```
 
-That's it. The script pulls the latest code, rebuilds the images, migrates the database, recaches everything, and restarts containers.
+The script pulls the latest code, rebuilds images, migrates the database, recaches everything, and restarts containers.
 
 ---
 
-### Useful commands
+## Useful Commands
 
 ```bash
 # View all running containers
@@ -486,7 +1039,7 @@ docker compose -f /var/www/4utest/app-deploy/docker-compose.yml logs -f php-fpm
 # View queue worker logs
 docker compose -f /var/www/4utest/app-deploy/docker-compose.yml logs -f horizon
 
-# View failed audit jobs
+# View failed queue jobs
 docker compose exec php-fpm php artisan queue:failed
 
 # Retry all failed jobs
@@ -499,6 +1052,9 @@ docker compose exec php-fpm php artisan tinker
 docker compose exec php-fpm php artisan cache:clear
 docker compose exec php-fpm php artisan view:clear
 docker compose exec php-fpm php artisan config:clear
+
+# Check Horizon queue status
+docker compose exec php-fpm php artisan horizon:status
 ```
 
 ---
