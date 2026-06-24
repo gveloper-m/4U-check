@@ -9,6 +9,8 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    # Nuitka compilation takes 10-20 min; allow up to 40 min
+    timeout-minutes: 40
 
     steps:
       - name: Checkout
@@ -31,5 +33,7 @@ jobs:
           tags: |
             4utest/mcp-agent:latest
             4utest/mcp-agent:${{ github.sha }}
+          # Layer cache keeps Nuitka + pip installs warm between pushes.
+          # The Nuitka compilation step itself is also cached via BuildKit.
           cache-from: type=gha
           cache-to: type=gha,mode=max
