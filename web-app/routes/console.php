@@ -10,3 +10,5 @@ Artisan::command('inspire', function () {
 
 Schedule::command('scans:run')->everyMinute();
 Schedule::command('blog:publish-scheduled')->everyMinute();
+Schedule::command('emails:monthly-report')->monthlyOn(15, '08:00');
+Schedule::command('emails:renewal-reminders')->dailyAt('09:00');

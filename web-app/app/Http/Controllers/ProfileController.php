@@ -18,9 +18,17 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): Response
     {
+        $user = $request->user();
+
         return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => session('status'),
+            'mustVerifyEmail'         => $user instanceof MustVerifyEmail,
+            'status'                  => session('status'),
+            'notificationPrefs'       => [
+                'notify_payment'          => (bool) $user->notify_payment,
+                'notify_monthly_report'   => (bool) $user->notify_monthly_report,
+                'notify_renewal_reminder' => (bool) $user->notify_renewal_reminder,
+            ],
+            'notifications_saved'     => session('notifications_saved', false),
         ]);
     }
 

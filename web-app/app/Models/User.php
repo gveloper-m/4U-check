@@ -30,6 +30,9 @@ class User extends Authenticatable
         'agency_primary_color',
         'agency_secondary_color',
         'agency_footer_text',
+        'notify_payment',
+        'notify_monthly_report',
+        'notify_renewal_reminder',
     ];
 
     protected $hidden = [
@@ -43,9 +46,12 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'trial_ends_at'     => 'datetime',
-            'is_unlimited'      => 'boolean',
-            'is_admin'          => 'boolean',
-            'is_agency'         => 'boolean',
+            'is_unlimited'             => 'boolean',
+            'is_admin'                 => 'boolean',
+            'is_agency'                => 'boolean',
+            'notify_payment'           => 'boolean',
+            'notify_monthly_report'    => 'boolean',
+            'notify_renewal_reminder'  => 'boolean',
         ];
     }
 

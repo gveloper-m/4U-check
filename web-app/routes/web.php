@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\TrialCodeController as AdminTrialCodeController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AgencyController;
+use App\Http\Controllers\NotificationPrefsController;
 use App\Http\Controllers\AuditController;
 use App\Http\Controllers\SharedReportController;
 use App\Http\Controllers\BillingController;
@@ -80,6 +81,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/language', [LanguageController::class, 'update'])->name('language.update');
     Route::post('/agency', [AgencyController::class, 'update'])->name('agency.update');
+    Route::post('/notification-prefs', [NotificationPrefsController::class, 'update'])->name('notification-prefs.update');
 
     Route::get('/billing', [BillingController::class, 'index'])->name('billing');
     Route::post('/billing/subscribe', [BillingController::class, 'subscribe'])->name('billing.subscribe');

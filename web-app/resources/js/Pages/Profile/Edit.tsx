@@ -9,6 +9,7 @@ import {
   Trash2,
   BookOpen,
   Building2,
+  Bell,
   CheckCircle2,
   XCircle,
   ChevronDown,
@@ -18,9 +19,17 @@ import {
   X,
 } from 'lucide-react';
 
+interface NotificationPrefs {
+  notify_payment: boolean;
+  notify_monthly_report: boolean;
+  notify_renewal_reminder: boolean;
+}
+
 interface EditProps extends PageProps {
   mustVerifyEmail: boolean;
   status?: string;
+  notificationPrefs: NotificationPrefs;
+  notifications_saved?: boolean;
 }
 
 /* ─────────────── Shared input style ─────────────── */
@@ -559,8 +568,91 @@ function InstructionsSection() {
   );
 }
 
+/* ─────────────── Notification preferences ─────────────── */
+function NotificationsCard({ prefs, saved }: { prefs: NotificationPrefs; saved?: boolean }) {
+  const { data, setData, post, processing, recentlySuccessful } = useForm({
+    notify_payment:          prefs.notify_payment,
+    notify_monthly_report:   prefs.notify_monthly_report,
+    notify_renewal_reminder: prefs.notify_renewal_reminder,
+  });
+
+  const submit: FormEventHandler = (e) => {
+    e.preventDefault();
+    post(route('notification-prefs.update'));
+  };
+
+  const toggles: { key: keyof typeof data; label: string; description: string }[] = [
+    {
+      key:         'notify_payment',
+      label:       'Payment receipts',
+      description: 'Email confirmation every time your card is charged.',
+    },
+    {
+      key:         'notify_monthly_report',
+      label:       'Monthly audit summary',
+      description: 'Mid-month recap of your sites' health scores and top issues.',
+    },
+    {
+      key:         'notify_renewal_reminder',
+      label:       'Renewal reminders',
+      description: 'Heads-up 7 days before your subscription renews.',
+    },
+  ];
+
+  return (
+    <Card>
+      <CardHeader
+        icon={Bell}
+        color="text-sky-400"
+        bg="bg-sky-500/10"
+        border="border-sky-500/20"
+        title="Email notifications"
+        sub="Choose which emails you receive from 4uTest."
+      />
+
+      <form onSubmit={submit} className="space-y-4">
+        {toggles.map(({ key, label, description }) => (
+          <label key={key} className="flex cursor-pointer items-start gap-3 rounded-lg border border-gray-200 dark:border-gray-800 p-4 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+            <div className="relative mt-0.5 flex-shrink-0">
+              <input
+                type="checkbox"
+                className="sr-only"
+                checked={data[key]}
+                onChange={(e) => setData(key, e.target.checked)}
+              />
+              <div className={`h-6 w-11 rounded-full transition-colors ${data[key] ? 'bg-sky-600' : 'bg-gray-200 dark:bg-gray-700'}`} />
+              <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${data[key] ? 'translate-x-5' : 'translate-x-0'}`} />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{label}</p>
+              <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400">{description}</p>
+            </div>
+          </label>
+        ))}
+
+        <div className="flex items-center gap-4 pt-1">
+          <button
+            type="submit"
+            disabled={processing}
+            className="flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500 disabled:opacity-60 transition-colors"
+          >
+            {processing && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+            Save preferences
+          </button>
+          {(recentlySuccessful || saved) && (
+            <span className="flex items-center gap-1 text-sm text-emerald-400">
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Saved
+            </span>
+          )}
+        </div>
+      </form>
+    </Card>
+  );
+}
+
 /* ─────────────── Page ─────────────── */
-export default function ProfileEdit({ mustVerifyEmail, status }: EditProps) {
+export default function ProfileEdit({ mustVerifyEmail, status, notificationPrefs, notifications_saved }: EditProps) {
   const { t } = useTranslation();
 
   return (
@@ -575,6 +667,7 @@ export default function ProfileEdit({ mustVerifyEmail, status }: EditProps) {
 
         <ProfileInfoForm mustVerifyEmail={mustVerifyEmail} status={status} />
         <AgencyCard />
+        <NotificationsCard prefs={notificationPrefs} saved={notifications_saved} />
         <PasswordForm />
         <InstructionsSection />
         <DeleteAccountForm />

@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\PaymentReceiptMail;
 use App\Models\User;
 use App\Services\ElorusService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Laravel\Cashier\Http\Controllers\WebhookController as CashierWebhookController;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -41,6 +43,22 @@ class StripeWebhookController extends CashierWebhookController
         }
 
         (new ElorusService())->createDocumentFromInvoice($user, $invoice);
+
+        if ($user->notify_payment) {
+            $lines       = $invoice['lines']['data'] ?? [];
+            $description = $lines[0]['description'] ?? '4uTest subscription';
+            $pdfUrl      = $invoice['invoice_pdf'] ?? null;
+
+            Mail::to($user->email)->queue(new PaymentReceiptMail(
+                user:          $user,
+                amountPaid:    (int) ($invoice['amount_paid'] ?? 0),
+                currency:      $invoice['currency'] ?? 'eur',
+                invoiceDate:   date('d M Y', $invoice['created'] ?? time()),
+                invoiceNumber: $invoice['number'] ?? '',
+                invoicePdfUrl: $pdfUrl,
+                description:   $description,
+            ));
+        }
 
         return $response;
     }
