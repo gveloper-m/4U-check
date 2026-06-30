@@ -84,8 +84,8 @@ docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan stor
 
 # ── Install daily DB backup cron ────────────────────────────────────────────
 info "Installing daily DB backup..."
-cp "$SCRIPT_DIR/backup-db.sh" /etc/cron.daily/4utest-backup
-chmod +x /etc/cron.daily/4utest-backup
+sudo cp "$SCRIPT_DIR/backup-db.sh" /etc/cron.daily/4utest-backup
+sudo chmod +x /etc/cron.daily/4utest-backup
 
 # ── Start remaining services ─────────────────────────────────────────────────
 info "Starting nginx, horizon, scheduler and certbot..."
