@@ -590,7 +590,7 @@ function NotificationsCard({ prefs, saved }: { prefs: NotificationPrefs; saved?:
     {
       key:         'notify_monthly_report',
       label:       'Monthly audit summary',
-      description: 'Mid-month recap of your sites' health scores and top issues.',
+      description: "Mid-month recap of your sites' health scores and top issues.",
     },
     {
       key:         'notify_renewal_reminder',
