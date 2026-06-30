@@ -4,8 +4,7 @@ import { PageProps } from '@/types';
 import { useState } from 'react';
 import {
   Bot, Plus, Trash2, RefreshCw, UploadCloud, Copy, Check,
-  CheckCircle2, XCircle, Clock, Cpu, HardDrive, MemoryStick,
-  ChevronDown, ChevronUp, Terminal, Info, X, AlertTriangle,
+  CheckCircle2, Clock, Terminal, AlertTriangle,
 } from 'lucide-react';
 
 interface Site { id: number; url: string; is_primary: boolean; has_agent: boolean; }
@@ -178,29 +177,17 @@ function ClaudeCodeStep({ serverIp }: { serverIp: string }) {
   );
 }
 
-function SetupInstructions({ agentId, token }: { agentId?: number; token?: string }) {
-  const [tab, setTab]             = useState<'auto' | 'manual'>('auto');
-  const [host, setHost]           = useState('');
-  const [port, setPort]           = useState('22');
-  const [sshUser, setSshUser]     = useState('root');
+function SetupInstructions({ agentId }: { agentId?: number }) {
+  const [host, setHost]             = useState('');
+  const [port, setPort]             = useState('22');
+  const [sshUser, setSshUser]       = useState('root');
   const [authMethod, setAuthMethod] = useState<'password' | 'key'>('password');
-  const [password, setPassword]   = useState('');
+  const [password, setPassword]     = useState('');
   const [privateKey, setPrivateKey] = useState('');
   const [projectPath, setProjectPath] = useState('/var/www/html');
-  const [status, setStatus]       = useState<'idle' | 'running' | 'success' | 'error'>('idle');
-  const [output, setOutput]       = useState('');
-  const [errMsg, setErrMsg]       = useState('');
-
-  const manualCmd = [
-    'docker run -d \\',
-    '  --name 4utest-agent \\',
-    '  --restart unless-stopped \\',
-    '  -p 8765:8765 \\',
-    `  -e AGENT_TOKEN=${token ?? 'your-token-here'} \\`,
-    `  -v ${projectPath}:/workspace \\`,
-    '  -v /opt/4utest-agent/backups:/backups \\',
-    '  4utest/mcp-agent:latest',
-  ].join('\n');
+  const [status, setStatus]         = useState<'idle' | 'running' | 'success' | 'error'>('idle');
+  const [output, setOutput]         = useState('');
+  const [errMsg, setErrMsg]         = useState('');
 
   async function handleDeploy(e: React.FormEvent) {
     e.preventDefault();
@@ -216,8 +203,8 @@ function SetupInstructions({ agentId, token }: { agentId?: number; token?: strin
         body: JSON.stringify({
           host, port: parseInt(port) || 22, ssh_user: sshUser,
           auth_method: authMethod,
-          password:    authMethod === 'password' ? password    : undefined,
-          private_key: authMethod === 'key'      ? privateKey  : undefined,
+          password:    authMethod === 'password' ? password   : undefined,
+          private_key: authMethod === 'key'      ? privateKey : undefined,
           project_path: projectPath,
         }),
       });
@@ -235,148 +222,94 @@ function SetupInstructions({ agentId, token }: { agentId?: number; token?: strin
 
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden">
-      {/* Tab bar */}
-      <div className="flex border-b border-gray-200 dark:border-gray-800">
-        {(['auto', 'manual'] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-5 py-3 text-xs font-semibold transition-colors ${
-              tab === t
-                ? 'border-b-2 border-violet-500 text-violet-400'
-                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-            }`}
-          >
-            {t === 'auto' ? 'Auto Deploy (Recommended)' : 'Manual'}
-          </button>
-        ))}
+      <div className="px-5 pt-4 pb-1">
+        <p className="text-sm font-semibold text-gray-900 dark:text-white">Deploy Agent</p>
+        <p className="mt-0.5 text-xs text-gray-500">
+          Enter your server details and we'll SSH in, build and start the agent automatically.{' '}
+          <span className="text-gray-400">Credentials are used once and never stored.</span>
+        </p>
       </div>
 
       <div className="px-5 py-5 space-y-5 text-sm">
-        {tab === 'auto' ? (
-          <>
-            <p className="text-xs text-gray-500">
-              Enter your server details and we'll SSH in and deploy the agent for you.{' '}
-              <span className="text-gray-400">Your credentials are used once and never stored.</span>
-            </p>
-
-            {status === 'success' ? (
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/30 px-4 py-3">
-                  <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" />
-                  <p className="text-sm font-medium text-green-300">Agent deployed successfully!</p>
+        {status === 'success' ? (
+          <div className="space-y-4">
+            <div className="flex items-center gap-2 rounded-lg bg-green-500/10 border border-green-500/30 px-4 py-3">
+              <CheckCircle2 className="h-5 w-5 text-green-400 shrink-0" />
+              <p className="text-sm font-medium text-green-300">Agent deployed successfully!</p>
+            </div>
+            {output && (
+              <pre className="rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">{output}</pre>
+            )}
+            <ClaudeCodeStep serverIp={host} />
+          </div>
+        ) : (
+          <form onSubmit={handleDeploy} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 sm:col-span-1">
+                <label className={labelCls}>Server IP / Hostname</label>
+                <input className={inputCls} value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.1 or example.com" required />
+              </div>
+              <div className="grid grid-cols-2 gap-3 col-span-2 sm:col-span-1">
+                <div>
+                  <label className={labelCls}>SSH Port</label>
+                  <input className={inputCls} value={port} onChange={e => setPort(e.target.value)} placeholder="22" />
                 </div>
-                {output && (
-                  <pre className="rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs text-gray-300 overflow-x-auto whitespace-pre-wrap">{output}</pre>
-                )}
-                <ClaudeCodeStep serverIp={host} />
+                <div>
+                  <label className={labelCls}>SSH User</label>
+                  <input className={inputCls} value={sshUser} onChange={e => setSshUser(e.target.value)} placeholder="root" required />
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label className={labelCls}>Project path on server</label>
+              <input className={inputCls} value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="/var/www/html" required />
+              <p className="mt-1 text-xs text-gray-500">The folder mounted as /workspace inside the agent container.</p>
+            </div>
+
+            <div>
+              <label className={labelCls}>Authentication</label>
+              <div className="flex gap-4 mt-1">
+                {(['password', 'key'] as const).map(m => (
+                  <label key={m} className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
+                    <input type="radio" checked={authMethod === m} onChange={() => setAuthMethod(m)} className="accent-violet-500" />
+                    {m === 'password' ? 'Password' : 'SSH Private Key'}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {authMethod === 'password' ? (
+              <div>
+                <label className={labelCls}>Password</label>
+                <input type="password" className={inputCls} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
               </div>
             ) : (
-              <form onSubmit={handleDeploy} className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="col-span-2 sm:col-span-1">
-                    <label className={labelCls}>Server IP / Hostname</label>
-                    <input className={inputCls} value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.1 or example.com" required />
-                  </div>
-                  <div className="grid grid-cols-2 gap-3 col-span-2 sm:col-span-1">
-                    <div>
-                      <label className={labelCls}>SSH Port</label>
-                      <input className={inputCls} value={port} onChange={e => setPort(e.target.value)} placeholder="22" />
-                    </div>
-                    <div>
-                      <label className={labelCls}>SSH User</label>
-                      <input className={inputCls} value={sshUser} onChange={e => setSshUser(e.target.value)} placeholder="root" required />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <label className={labelCls}>Project path on server</label>
-                  <input className={inputCls} value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="/var/www/html" required />
-                  <p className="mt-1 text-xs text-gray-500">The folder the agent should have access to (mounted as /workspace inside the container).</p>
-                </div>
-
-                <div>
-                  <label className={labelCls}>Authentication</label>
-                  <div className="flex gap-4 mt-1">
-                    {(['password', 'key'] as const).map(m => (
-                      <label key={m} className="flex items-center gap-2 text-xs text-gray-500 cursor-pointer">
-                        <input type="radio" checked={authMethod === m} onChange={() => setAuthMethod(m)} className="accent-violet-500" />
-                        {m === 'password' ? 'Password' : 'SSH Private Key'}
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {authMethod === 'password' ? (
-                  <div>
-                    <label className={labelCls}>Password</label>
-                    <input type="password" className={inputCls} value={password} onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
-                  </div>
-                ) : (
-                  <div>
-                    <label className={labelCls}>Private Key (PEM / OpenSSH)</label>
-                    <textarea rows={5} className={inputCls + ' font-mono resize-none'} value={privateKey} onChange={e => setPrivateKey(e.target.value)} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" required />
-                  </div>
-                )}
-
-                {status === 'error' && (
-                  <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-3">
-                    <p className="text-xs font-medium text-red-400 mb-1">{errMsg}</p>
-                    {output && <pre className="text-xs text-gray-400 whitespace-pre-wrap overflow-x-auto">{output}</pre>}
-                  </div>
-                )}
-
-                <div className="flex items-start gap-3">
-                  <button type="submit" disabled={status === 'running' || !agentId}
-                    className="flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50 transition-colors shrink-0"
-                  >
-                    {status === 'running' ? <><RefreshCw className="h-4 w-4 animate-spin" /> Deploying…</> : <><Terminal className="h-4 w-4" /> Deploy Agent</>}
-                  </button>
-                  <p className="text-xs text-gray-500 leading-relaxed pt-0.5">
-                    Your SSH credentials are transmitted over HTTPS, used once to run the setup, and are never stored.{' '}
-                    <a href="/terms" target="_blank" className="text-violet-400 hover:underline">See §9 of our Terms</a> for full details.
-                  </p>
-                </div>
-              </form>
+              <div>
+                <label className={labelCls}>Private Key (PEM / OpenSSH)</label>
+                <textarea rows={5} className={inputCls + ' font-mono resize-none'} value={privateKey} onChange={e => setPrivateKey(e.target.value)} placeholder="-----BEGIN OPENSSH PRIVATE KEY-----" required />
+              </div>
             )}
-          </>
-        ) : (
-          <>
-            <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2.5">
-              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-              <p className="text-xs text-amber-300">
-                The agent image is <strong>not on Docker Hub</strong> — it must be built on your server first.{' '}
-                Use the <button onClick={() => setTab('auto')} className="underline hover:no-underline">Auto Deploy tab</button> to build and run it automatically,
-                or build from source: <code className="bg-gray-800 px-1 rounded">git clone https://github.com/gveloper-m/4U-check &amp;&amp; cd 4U-check/4u-test-agent &amp;&amp; docker build -t 4utest/mcp-agent:latest .</code>
+
+            {status === 'error' && (
+              <div className="rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-3">
+                <p className="text-xs font-medium text-red-400 mb-1">{errMsg}</p>
+                {output && <pre className="text-xs text-gray-400 whitespace-pre-wrap overflow-x-auto">{output}</pre>}
+              </div>
+            )}
+
+            <div className="flex items-start gap-3">
+              <button type="submit" disabled={status === 'running' || !agentId}
+                className="flex items-center gap-2 rounded-lg bg-violet-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50 transition-colors shrink-0"
+              >
+                {status === 'running' ? <><RefreshCw className="h-4 w-4 animate-spin" /> Deploying…</> : <><Terminal className="h-4 w-4" /> Deploy Agent</>}
+              </button>
+              <p className="text-xs text-gray-500 leading-relaxed pt-0.5">
+                SSH credentials are transmitted over HTTPS and never stored.{' '}
+                <a href="/terms" target="_blank" className="text-violet-400 hover:underline">See §9 of our Terms.</a>
               </p>
             </div>
-            <p className="text-xs text-gray-500">Once the image is built on the server, you can manage the container manually:</p>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className={labelCls}>Server IP / hostname</label>
-                <input className={inputCls} value={host} onChange={e => setHost(e.target.value)} placeholder="192.168.1.1" />
-              </div>
-              <div>
-                <label className={labelCls}>Project path on server</label>
-                <input className={inputCls} value={projectPath} onChange={e => setProjectPath(e.target.value)} placeholder="/var/www/html" />
-              </div>
-            </div>
-            <div>
-              <p className={labelCls}>1. Run the agent</p>
-              <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
-                {manualCmd}
-                <div className="absolute top-2 right-2"><CopyButton text={manualCmd} /></div>
-              </div>
-            </div>
-            <div>
-              <p className={labelCls}>2. Open port 8765 on the firewall</p>
-              <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300">
-                {'ufw allow 8765/tcp'}
-                <div className="absolute top-2 right-2"><CopyButton text="ufw allow 8765/tcp" /></div>
-              </div>
-              <p className="mt-1 text-xs text-gray-500">If using a cloud provider (AWS, DigitalOcean, Hetzner…) also open port 8765 in the server's security group / firewall settings.</p>
-            </div>
-            <ClaudeCodeStep serverIp={host} />
-          </>
+          </form>
         )}
       </div>
     </div>
@@ -507,7 +440,7 @@ export default function AgentIndex({ agents, sites, auth }: Props) {
         ))}
 
         {/* Setup instructions */}
-        <SetupInstructions agentId={firstAgent?.id} token={firstToken} />
+        <SetupInstructions agentId={firstAgent?.id} />
       </div>
     </AppLayout>
   );
