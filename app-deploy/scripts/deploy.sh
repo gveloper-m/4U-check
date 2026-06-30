@@ -49,7 +49,7 @@ docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d mysql redis
 
 info "Waiting for MySQL to be healthy (up to 60 s)..."
 timeout 60 bash -c \
-  'until docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec mysql mysqladmin ping -h localhost -u root -p"${DB_ROOT_PASSWORD}" --silent 2>/dev/null; do sleep 2; done' \
+  "until docker compose -f \"$DEPLOY_DIR/docker-compose.yml\" exec mysql mysqladmin ping -h localhost -u root -p\"${DB_ROOT_PASSWORD}\" --silent 2>/dev/null; do sleep 2; done" \
   || error "MySQL did not become healthy in time"
 
 # ── Start PHP-FPM ───────────────────────────────────────────────────────────
@@ -58,7 +58,7 @@ docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d php-fpm
 
 info "Waiting for php-fpm to be healthy (up to 60 s)..."
 timeout 60 bash -c \
-  'until docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps php-fpm | grep -q "healthy"; do sleep 3; done' \
+  "until docker compose -f \"$DEPLOY_DIR/docker-compose.yml\" ps php-fpm | grep -q 'healthy'; do sleep 3; done" \
   || warning "php-fpm health check not yet passing (continuing anyway)"
 
 # ── Database migrations ──────────────────────────────────────────────────────
