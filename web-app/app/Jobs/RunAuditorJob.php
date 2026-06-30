@@ -113,35 +113,35 @@ class RunAuditorJob implements ShouldQueue
                     ->queue((new ScanCompletedMail($scan, $score, $reportUrl, $record, $deductions))->locale($locale));
             }
 
-            // Auto-push scan data to any agent linked to this site URL
-            $reportRecord = DB::table('full_audit_reports')->find($this->reportId);
-            if ($reportRecord) {
-                $agent = McpAgent::whereHas('monitoredSite', fn ($q) => $q->where('url', $reportRecord->url))
-                    ->first();
-
-                if ($agent) {
-                    $agent->update([
-                        'latest_report_json' => json_encode([
-                            'report_id'    => $this->reportId,
-                            'url'          => $reportRecord->url,
-                            'health_score' => $score,
-                            'status'       => 'completed',
-                            'scanned_at'   => now()->toIso8601String(),
-                            'deductions'   => $deductions,
-                            'modules'      => [
-                                'seo_schema'         => json_decode($record->seo_schema_result         ?? 'null', true),
-                                'security'           => json_decode($record->security_result           ?? 'null', true),
-                                'performance'        => json_decode($record->performance_result        ?? 'null', true),
-                                'broken_resources'   => json_decode($record->broken_resources_result   ?? 'null', true),
-                                'catalog_integrity'  => json_decode($record->catalog_result            ?? 'null', true),
-                                'marketing_tracking' => json_decode($record->tracking_result           ?? 'null', true),
-                                'accessibility'      => json_decode($record->accessibility_result      ?? 'null', true),
-                            ],
-                        ], JSON_UNESCAPED_UNICODE),
-                    ]);
-                }
-            }
         });
+
+        // MCP agent push is outside the transaction — a failure here must not roll back the score.
+        $reportRecord = DB::table('full_audit_reports')->find($this->reportId);
+        if ($reportRecord && $reportRecord->status === 'completed') {
+            $agent = McpAgent::whereHas('monitoredSite', fn ($q) => $q->where('url', $reportRecord->site_url))
+                ->first();
+
+            if ($agent) {
+                $agent->update([
+                    'latest_report_json' => json_encode([
+                        'report_id'    => $this->reportId,
+                        'url'          => $reportRecord->site_url,
+                        'health_score' => $reportRecord->health_score,
+                        'status'       => 'completed',
+                        'scanned_at'   => now()->toIso8601String(),
+                        'modules'      => [
+                            'seo_schema'         => json_decode($reportRecord->seo_schema_result         ?? 'null', true),
+                            'security'           => json_decode($reportRecord->security_result           ?? 'null', true),
+                            'performance'        => json_decode($reportRecord->performance_result        ?? 'null', true),
+                            'broken_resources'   => json_decode($reportRecord->broken_resources_result   ?? 'null', true),
+                            'catalog_integrity'  => json_decode($reportRecord->catalog_result            ?? 'null', true),
+                            'marketing_tracking' => json_decode($reportRecord->tracking_result           ?? 'null', true),
+                            'accessibility'      => json_decode($reportRecord->accessibility_result      ?? 'null', true),
+                        ],
+                    ], JSON_UNESCAPED_UNICODE),
+                ]);
+            }
+        }
     }
 
     private function computeHealthScore(object $record): array
