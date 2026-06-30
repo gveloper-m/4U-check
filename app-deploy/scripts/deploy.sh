@@ -67,11 +67,9 @@ timeout 60 bash -c \
 info "Running database migrations..."
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan migrate --force
 
-# ── Seed default admin (only on first deploy) ────────────────────────────────
-if docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan tinker --execute="echo \App\Models\User::where('is_admin', true)->count();" 2>/dev/null | grep -q "^0$"; then
-  info "No admin users found – running database seeder..."
-  docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan db:seed --force 2>/dev/null || true
-fi
+# ── Ensure admin account exists (upsert – safe on every deploy) ─────────────
+info "Ensuring admin account..."
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T php-fpm php artisan app:ensure-admin
 
 # ── Cache Laravel config / routes / views ───────────────────────────────────
 info "Caching Laravel application..."

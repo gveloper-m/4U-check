@@ -341,7 +341,15 @@ function SetupInstructions({ agentId, token }: { agentId?: number; token?: strin
           </>
         ) : (
           <>
-            <p className="text-xs text-gray-500">SSH into your server manually and run the commands below. Docker must already be installed.</p>
+            <div className="flex items-start gap-2 rounded-lg bg-amber-500/10 border border-amber-500/30 px-3 py-2.5">
+              <AlertTriangle className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-xs text-amber-300">
+                The agent image is <strong>not on Docker Hub</strong> — it must be built on your server first.{' '}
+                Use the <button onClick={() => setTab('auto')} className="underline hover:no-underline">Auto Deploy tab</button> to build and run it automatically,
+                or build from source: <code className="bg-gray-800 px-1 rounded">git clone https://github.com/gveloper-m/4U-check &amp;&amp; cd 4U-check/4u-test-agent &amp;&amp; docker build -t 4utest/mcp-agent:latest .</code>
+              </p>
+            </div>
+            <p className="text-xs text-gray-500">Once the image is built on the server, you can manage the container manually:</p>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={labelCls}>Server IP / hostname</label>
