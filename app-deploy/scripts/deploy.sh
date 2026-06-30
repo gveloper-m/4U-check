@@ -43,6 +43,10 @@ cd "$DEPLOY_DIR"
 info "Building Docker images (backend + frontend)..."
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" build --no-cache php-fpm nginx
 
+info "Pruning unused Docker images and build cache..."
+docker image prune -af 2>/dev/null || true
+docker builder prune -af 2>/dev/null || true
+
 # ── Start infrastructure (DB + Redis) first ─────────────────────────────────
 info "Starting MySQL and Redis..."
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d mysql redis
