@@ -33,6 +33,7 @@ services:
     volumes:
       - certbot_certs:/etc/letsencrypt:ro
       - certbot_webroot:/var/www/certbot
+      - app_storage:/var/www/html/storage:ro
     environment:
       DOMAIN: ${DOMAIN}
       # Only substitute ${DOMAIN} – leave nginx $variables untouched

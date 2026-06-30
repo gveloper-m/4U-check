@@ -37,4 +37,7 @@ COPY app-deploy/frontend/nginx/templates/ /etc/nginx/templates/
 # Nginx serves these directly; PHP requests are proxied to php-fpm
 COPY --from=node-builder /app/public /var/www/html/public
 
+# Symlink so nginx can serve uploaded files from the app_storage volume
+RUN ln -sfn /var/www/html/storage/app/public /var/www/html/public/storage
+
 EXPOSE 80 443
