@@ -51,7 +51,7 @@ info "Waiting for MySQL to be healthy (up to 60 s)..."
 COMPOSE_FILE="$DEPLOY_DIR/docker-compose.yml"
 export COMPOSE_FILE
 timeout 60 bash -c \
-  'until docker compose -f "$COMPOSE_FILE" exec -T mysql mysqladmin ping --silent 2>/dev/null; do sleep 2; done' \
+  'until docker compose -f "$COMPOSE_FILE" ps mysql 2>/dev/null | grep -q "(healthy)"; do sleep 2; done' \
   || error "MySQL did not become healthy in time"
 
 # ── Start PHP-FPM ───────────────────────────────────────────────────────────
