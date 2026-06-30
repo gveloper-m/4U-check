@@ -715,10 +715,36 @@ Everything below takes you from a blank server to a live production deployment.
 
 ---
 
+### This Deployment (4utest.com — June 2026)
+
+Actual production setup for reference:
+
+| Item | Value |
+|---|---|
+| Provider | Hetzner CX22 (Falkenstein, DE) |
+| Server IP | 167.233.137.77 |
+| OS | Ubuntu 26.04 LTS |
+| Resources | 2 vCPU, 4 GB RAM, 40 GB NVMe |
+| Deploy user | `deploy` |
+| App path | `/home/deploy/4uTest/app-deploy` |
+| Domain | 4utest.com (registered via Papaki.gr) |
+| Email provider | Brevo SMTP (free tier — 300 emails/day) |
+| AI (blog drafts) | Mistral AI (`mistral-large-latest`) |
+| Payments | Stripe — currently in **test mode** (see [Switch to live mode](#12-switch-to-stripe-live-mode)) |
+| Invoicing | Elorus — **not yet configured** |
+
+**APP_KEY** was generated via:
+```bash
+docker compose -f docker-compose.yml run --rm php-fpm php artisan key:generate --show
+```
+(the app is fully Dockerised — there is no local PHP runtime to run artisan directly)
+
+---
+
 ### Prerequisites
 
 - A VPS with at least **2 GB RAM** and **20 GB disk** (4 GB RAM recommended if you expect concurrent audits)
-- **Ubuntu 22.04** or 24.04 (the scripts assume Debian-based Linux)
+- **Ubuntu 22.04, 24.04, or 26.04** (the scripts assume Debian-based Linux)
 - A **domain name** with access to its DNS settings
 - A **Stripe account** (stripe.com)
 - A **Brevo account** (brevo.com) for transactional email — the free plan sends up to 300 emails/day
@@ -738,6 +764,12 @@ TTL:   300
 ```
 
 Do this first. Let's Encrypt needs DNS to resolve before it can issue the SSL certificate. DNS propagation can take a few minutes to an hour.
+
+> **Papaki.gr gotcha:** Papaki's DNS panel stores `@` as `@.yourdomain.com` internally, but their nameserver does **not** serve it. If `dig A yourdomain.com` returns `ANSWER: 0`, delete the `@` record and add a new A record with **the full domain name** (e.g. `4utest.com`) as the Name instead of `@`. Verify with:
+> ```bash
+> dig A yourdomain.com @8.8.8.8
+> # must show ANSWER: 1 with your IP before proceeding to SSL
+> ```
 
 ---
 
@@ -760,6 +792,12 @@ docker compose version   # verify Compose v2 is installed
 git clone git@github.com:gveloper-m/4U-check.git /var/www/4utest
 cd /var/www/4utest
 ```
+
+> **Private repo over HTTPS:** If you use HTTPS instead of SSH (e.g. on a server without an SSH key configured in GitHub), use a Personal Access Token:
+> ```bash
+> git clone https://YOUR_USERNAME:YOUR_PAT@github.com/gveloper-m/4U-check.git /var/www/4utest
+> ```
+> Generate a PAT at GitHub → Settings → Developer settings → Personal access tokens → Fine-grained → Contents: read.
 
 ---
 
@@ -786,11 +824,17 @@ APP_URL=https://yourdomain.com
 APP_DEBUG=false                # NEVER true in production
 ```
 
-Generate the APP_KEY on your server:
+Generate the APP_KEY using the project's own PHP container (recommended — avoids version mismatches):
 ```bash
-docker run --rm php:8.3-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+cd /var/www/4utest/app-deploy
+docker compose -f docker-compose.yml run --rm php-fpm php artisan key:generate --show
 ```
-Paste the output as APP_KEY.
+Paste the `base64:...` output as `APP_KEY`.
+
+Or use a plain PHP image if the containers haven't started yet:
+```bash
+docker run --rm php:8.4-cli php -r "echo 'base64:'.base64_encode(random_bytes(32)).PHP_EOL;"
+```
 
 **Database**
 ```env
@@ -918,7 +962,7 @@ curl -s https://api.ipify.org   # find your server's outbound IP
 
 ```env
 MAIL_MAILER=smtp
-MAIL_SCHEME=null             # important: null for port 587 STARTTLS, NOT tls
+MAIL_SCHEME=null             # CRITICAL: must be null for port 587 STARTTLS (Brevo). "tls" breaks the connection.
 MAIL_HOST=smtp-relay.brevo.com
 MAIL_PORT=587
 MAIL_USERNAME=xxxxxxx@smtp-brevo.com
@@ -1018,9 +1062,11 @@ This script:
 
 The certificate auto-renews every 12 hours via the Certbot container — you never need to touch it again.
 
+> **Two compose files gotcha:** The repo contains `web-app/compose.yaml` (Laravel Sail, for local dev) and `app-deploy/docker-compose.yml` (production). Both `init-letsencrypt.sh` and `deploy.sh` explicitly pass `-f docker-compose.yml` to every `docker compose` call to avoid accidentally running the Sail file. If you ever run `docker compose` by hand in the `app-deploy/` directory, always include `-f docker-compose.yml`.
+
 ---
 
-### 9. Deploy the application
+### 10. Deploy the application
 
 ```bash
 cd /var/www/4utest/app-deploy
@@ -1032,9 +1078,9 @@ This script does everything: pulls the latest code, builds the Docker images, wa
 
 ---
 
-### 10. Create the admin account
+### 11. Create the admin account
 
-Register normally at `https://yourdomain.com/register`, then promote to admin:
+Register at `https://yourdomain.com/register`, then promote to admin:
 
 ```bash
 docker exec -it $(docker ps -qf "name=php-fpm") php artisan tinker
@@ -1049,7 +1095,7 @@ exit
 
 ---
 
-### 11. Test everything
+### 12. Test everything
 
 **App basics**
 - [ ] `https://yourdomain.com` loads (green padlock)
@@ -1084,7 +1130,7 @@ exit
 
 ---
 
-### 12. Switch to Stripe live mode
+### 13. Switch to Stripe live mode
 
 The steps above used test keys. Once you have tested everything:
 
@@ -1101,7 +1147,7 @@ cd /var/www/4utest/app-deploy
 
 ---
 
-### 13. Set up database backups
+### 14. Set up database backups
 
 The deploy has no automatic backup — set one up before you have real users.
 
@@ -1116,7 +1162,7 @@ Or use a managed backup service — DigitalOcean Spaces, AWS S3, or Backblaze B2
 
 ---
 
-### 14. Set up GitHub Actions secrets (required for the MCP Agent image)
+### 15. Set up GitHub Actions secrets (required for the MCP Agent image)
 
 The MCP Agent Docker image (`4utest/mcp-agent:latest`) is built and pushed to Docker Hub automatically whenever you push changes to the `4u-test-agent/` directory. This requires two secrets in your GitHub repository:
 
