@@ -82,6 +82,7 @@ class BillingController extends Controller
             'cancel_url'                 => route('billing') . '?cancelled=1',
             'billing_address_collection' => 'required',
             'tax_id_collection'          => ['enabled' => true],
+            'customer_update'            => ['address' => 'auto'],
         ];
 
         if (config('services.stripe.tax_enabled')) {
