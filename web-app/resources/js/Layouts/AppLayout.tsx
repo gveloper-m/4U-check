@@ -61,6 +61,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
         { label: t('nav.scheduled'),  href: '/scheduled-scans',  icon: Clock,           routeName: 'scheduled-scans.index' },
         { label: t('nav.billing'),    href: '/billing',          icon: CreditCard,      routeName: 'billing' },
         { label: t('nav.agent'),      href: '/agent',            icon: Bot,             routeName: 'agent.index' },
+        { label: 'Support',           href: '/tickets',          icon: Ticket,          routeName: 'tickets.index' },
         ...(auth.user.is_admin ? [
             { label: 'Blog',         href: '/admin/blog',         icon: FileText, routeName: 'admin.blog.index' },
             { label: 'Tickets',      href: '/admin/tickets',      icon: Ticket,   routeName: 'admin.tickets.index' },
