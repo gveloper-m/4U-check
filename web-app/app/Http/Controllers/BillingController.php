@@ -6,6 +6,7 @@ use App\Models\MonitoredSite;
 use App\Rules\PublicUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
 
@@ -56,7 +57,7 @@ class BillingController extends Controller
         ]);
     }
 
-    public function subscribe(Request $request): RedirectResponse
+    public function subscribe(Request $request): Response
     {
         $validated = $request->validate([
             'plan'         => 'required|in:monthly,yearly',
@@ -93,7 +94,7 @@ class BillingController extends Controller
             ->newSubscription('default', $priceId)
             ->checkout($options);
 
-        return redirect($checkout->url);
+        return Inertia::location($checkout->url);
     }
 
     public function portal(Request $request): RedirectResponse
