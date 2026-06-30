@@ -82,6 +82,11 @@ docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan rout
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan view:cache
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan storage:link 2>/dev/null || true
 
+# ── Install daily DB backup cron ────────────────────────────────────────────
+info "Installing daily DB backup..."
+cp "$SCRIPT_DIR/backup-db.sh" /etc/cron.daily/4utest-backup
+chmod +x /etc/cron.daily/4utest-backup
+
 # ── Start remaining services ─────────────────────────────────────────────────
 info "Starting nginx, horizon, scheduler and certbot..."
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d
