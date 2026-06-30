@@ -23,7 +23,7 @@ error()   { echo -e "${RED}[ERROR]${NC} $*" >&2; exit 1; }
 
 # ── Preflight checks ────────────────────────────────────────────────────────
 command -v docker >/dev/null 2>&1 || error "docker is not installed"
-docker compose version >/dev/null 2>&1 || error "docker compose v2 plugin is not installed"
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" version >/dev/null 2>&1 || error "docker compose -f "$DEPLOY_DIR/docker-compose.yml" v2 plugin is not installed"
 
 [[ -f "$DEPLOY_DIR/.env" ]] || error ".env not found in deploy/ – copy .env.example to .env and fill it in"
 
@@ -41,49 +41,49 @@ cd "$DEPLOY_DIR"
 
 # ── Build Docker images ─────────────────────────────────────────────────────
 info "Building Docker images (backend + frontend)..."
-docker compose build --no-cache php-fpm nginx
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" build --no-cache php-fpm nginx
 
 # ── Start infrastructure (DB + Redis) first ─────────────────────────────────
 info "Starting MySQL and Redis..."
-docker compose up -d mysql redis
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d mysql redis
 
 info "Waiting for MySQL to be healthy (up to 60 s)..."
 timeout 60 bash -c \
-  'until docker compose exec mysql mysqladmin ping -h localhost -u root -p"${DB_ROOT_PASSWORD}" --silent 2>/dev/null; do sleep 2; done' \
+  'until docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec mysql mysqladmin ping -h localhost -u root -p"${DB_ROOT_PASSWORD}" --silent 2>/dev/null; do sleep 2; done' \
   || error "MySQL did not become healthy in time"
 
 # ── Start PHP-FPM ───────────────────────────────────────────────────────────
 info "Starting php-fpm..."
-docker compose up -d php-fpm
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d php-fpm
 
 info "Waiting for php-fpm to be healthy (up to 60 s)..."
 timeout 60 bash -c \
-  'until docker compose ps php-fpm | grep -q "healthy"; do sleep 3; done' \
+  'until docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps php-fpm | grep -q "healthy"; do sleep 3; done' \
   || warning "php-fpm health check not yet passing (continuing anyway)"
 
 # ── Database migrations ──────────────────────────────────────────────────────
 info "Running database migrations..."
-docker compose exec php-fpm php artisan migrate --force
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan migrate --force
 
 # ── Seed default admin (only on first deploy) ────────────────────────────────
-if docker compose exec php-fpm php artisan tinker --execute="echo \App\Models\User::where('is_admin', true)->count();" 2>/dev/null | grep -q "^0$"; then
+if docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan tinker --execute="echo \App\Models\User::where('is_admin', true)->count();" 2>/dev/null | grep -q "^0$"; then
   info "No admin users found – running database seeder..."
-  docker compose exec php-fpm php artisan db:seed --force 2>/dev/null || true
+  docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan db:seed --force 2>/dev/null || true
 fi
 
 # ── Cache Laravel config / routes / views ───────────────────────────────────
 info "Caching Laravel application..."
-docker compose exec php-fpm php artisan config:cache
-docker compose exec php-fpm php artisan route:cache
-docker compose exec php-fpm php artisan view:cache
-docker compose exec php-fpm php artisan storage:link 2>/dev/null || true
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan config:cache
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan route:cache
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan view:cache
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan storage:link 2>/dev/null || true
 
 # ── Start remaining services ─────────────────────────────────────────────────
 info "Starting nginx, horizon, scheduler and certbot..."
-docker compose up -d
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d
 
 info "Reloading nginx config..."
-docker compose exec nginx nginx -s reload 2>/dev/null || true
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec nginx nginx -s reload 2>/dev/null || true
 
 # ── Done ────────────────────────────────────────────────────────────────────
 echo ""
@@ -95,4 +95,4 @@ echo -e "${GREEN}║   Horizon: https://${DOMAIN}/horizon ${NC}"
 echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
 echo ""
 info "Service status:"
-docker compose ps
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" ps

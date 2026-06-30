@@ -28,7 +28,7 @@ step()    { echo -e "\n${CYAN}══ $* ══${NC}"; }
 
 # ── Preflight ───────────────────────────────────────────────────────────────
 command -v docker >/dev/null 2>&1    || error "docker is not installed"
-docker compose version >/dev/null 2>&1 || error "docker compose v2 plugin is not installed"
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" version >/dev/null 2>&1 || error "docker compose -f "$DEPLOY_DIR/docker-compose.yml" v2 plugin is not installed"
 [[ -f "$DEPLOY_DIR/.env" ]]          || error ".env not found – copy .env.example to .env first"
 
 info "Loading environment..."
@@ -46,7 +46,7 @@ info "Email  : $EMAIL"
 [[ "$STAGING" == "1" ]] && warning "STAGING=1 – using Let's Encrypt staging server (no browser trust)"
 
 # ── Check existing cert ──────────────────────────────────────────────────────
-if docker compose run --rm --entrypoint "" certbot \
+if docker compose -f "$DEPLOY_DIR/docker-compose.yml" run --rm --entrypoint "" certbot \
        test -f "${CERT_PATH}/fullchain.pem" 2>/dev/null; then
   read -rp "A certificate already exists for $DOMAIN. Replace it? [y/N] " ANSWER
   [[ "$ANSWER" =~ ^[Yy]$ ]] || { info "Aborted."; exit 0; }
@@ -54,7 +54,7 @@ fi
 
 # ── Ensure recommended TLS files exist in the volume ────────────────────────
 step "Downloading recommended TLS parameters"
-docker compose run --rm --entrypoint "/bin/sh -c '\
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" run --rm --entrypoint "/bin/sh -c '\
   if [ ! -f /etc/letsencrypt/options-ssl-nginx.conf ]; then \
     wget -q -O /etc/letsencrypt/options-ssl-nginx.conf \
       https://raw.githubusercontent.com/certbot/certbot/master/certbot-nginx/certbot_nginx/_internal/tls_configs/options-ssl-nginx.conf; \
@@ -65,7 +65,7 @@ docker compose run --rm --entrypoint "/bin/sh -c '\
 
 # ── Create dummy self-signed certificate so Nginx can start ─────────────────
 step "Creating temporary self-signed certificate"
-docker compose run --rm --entrypoint "/bin/sh -c '\
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" run --rm --entrypoint "/bin/sh -c '\
   mkdir -p ${CERT_PATH} && \
   openssl req -x509 -nodes -newkey rsa:2048 -days 1 \
     -keyout ${CERT_PATH}/privkey.pem \
@@ -74,14 +74,14 @@ docker compose run --rm --entrypoint "/bin/sh -c '\
 
 # ── Start Nginx (uses the dummy cert) ───────────────────────────────────────
 step "Starting Nginx with temporary certificate"
-docker compose up -d nginx mysql redis
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d nginx mysql redis
 
 info "Waiting 5 s for Nginx to be ready..."
 sleep 5
 
 # ── Remove dummy cert and obtain real one ───────────────────────────────────
 step "Deleting temporary certificate"
-docker compose run --rm --entrypoint "/bin/sh -c '\
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" run --rm --entrypoint "/bin/sh -c '\
   rm -rf ${CERT_PATH} \
          /etc/letsencrypt/archive/${DOMAIN} \
          /etc/letsencrypt/renewal/${DOMAIN}.conf'" certbot
@@ -90,7 +90,7 @@ step "Requesting certificate from Let's Encrypt"
 STAGING_ARG=""
 [[ "$STAGING" == "1" ]] && STAGING_ARG="--staging"
 
-docker compose run --rm --entrypoint "/bin/sh -c '\
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" run --rm --entrypoint "/bin/sh -c '\
   certbot certonly --webroot -w /var/www/certbot \
     ${STAGING_ARG} \
     -d ${DOMAIN} \
@@ -102,7 +102,7 @@ docker compose run --rm --entrypoint "/bin/sh -c '\
 
 # ── Reload Nginx with the real certificate ───────────────────────────────────
 step "Reloading Nginx"
-docker compose exec nginx nginx -s reload
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec nginx nginx -s reload
 
 echo ""
 echo -e "${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
