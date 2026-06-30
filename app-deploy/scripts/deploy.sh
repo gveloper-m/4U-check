@@ -48,8 +48,10 @@ info "Starting MySQL and Redis..."
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" up -d mysql redis
 
 info "Waiting for MySQL to be healthy (up to 60 s)..."
+COMPOSE_FILE="$DEPLOY_DIR/docker-compose.yml"
+export COMPOSE_FILE
 timeout 60 bash -c \
-  "until docker compose -f \"$DEPLOY_DIR/docker-compose.yml\" exec mysql mysqladmin ping -h localhost -u root -p\"${DB_ROOT_PASSWORD}\" --silent 2>/dev/null; do sleep 2; done" \
+  'until docker compose -f "$COMPOSE_FILE" exec mysql mysqladmin ping --silent 2>/dev/null; do sleep 2; done' \
   || error "MySQL did not become healthy in time"
 
 # ── Start PHP-FPM ───────────────────────────────────────────────────────────
