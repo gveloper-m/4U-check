@@ -47,6 +47,8 @@
             <script type="application/ld+json">{!! json_encode($seo['schema'], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>
         @endif
 
+        <meta name="google-site-verification" content="nzLbZMrr69bBvhqO1hKLh4LAjdMR17Kf6BJU6Nh4pg0" />
+
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
         <link rel="alternate icon" href="/favicon.ico">
 
