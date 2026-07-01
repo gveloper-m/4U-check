@@ -1,4 +1,10 @@
 User-agent: *
+Allow: /
+Allow: /blog/
+Allow: /shared/
+Allow: /terms
+Allow: /register
+Allow: /login
 Disallow: /dashboard
 Disallow: /admin
 Disallow: /profile

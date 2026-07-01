@@ -61,6 +61,25 @@
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
+        {{-- Pre-rendered baseline for search crawlers (Inertia SPA has no SSR).
+             This block is shown when JS is unavailable and is always present
+             in the raw HTML response, giving Google a real headline and
+             description to index without needing to execute JavaScript. --}}
+        <noscript>
+            <main style="font-family:sans-serif;max-width:900px;margin:64px auto;padding:0 24px">
+                <h1 style="font-size:2rem;font-weight:800;color:#111827">{{ config('app.name') }} — Website Audit Platform</h1>
+                <p style="font-size:1.1rem;color:#4b5563;margin:16px 0 24px">
+                    4utest runs 7 deep audits in parallel — SEO, security, performance, broken links,
+                    e-commerce, marketing tracking, and accessibility — giving you a complete website
+                    health score in minutes. Sign up and audit your first site for free.
+                </p>
+                <p>
+                    <a href="/register" style="color:#7c3aed;font-weight:600">Get Started Free</a>
+                    &nbsp;&mdash;&nbsp;
+                    <a href="/login"    style="color:#7c3aed">Sign In</a>
+                </p>
+            </main>
+        </noscript>
         @inertia
     </body>
 </html>
