@@ -22,7 +22,24 @@ class ScheduledScanController extends Controller
         $sites = $user->monitoredSites()->orderBy('is_primary', 'desc')->orderBy('created_at')->get();
 
         return Inertia::render('ScheduledScans/Index', [
-            'scans' => $scans,
+            'scans' => $scans->map(fn($s) => [
+                'id'             => $s->id,
+                'name'           => $s->name,
+                'site_url'       => $s->site_url,
+                'interval'       => $s->interval,
+                'is_active'      => $s->is_active,
+                'notify_email'   => $s->notify_email,
+                'last_run_at'    => $s->last_run_at?->toIso8601String(),
+                'next_run_at'    => $s->next_run_at?->toIso8601String(),
+                'last_report_id' => $s->last_report_id,
+                'last_report'    => $s->lastReport ? [
+                    'id'           => $s->lastReport->id,
+                    'health_score' => $s->lastReport->health_score,
+                    'status'       => $s->lastReport->status,
+                ] : null,
+                'created_at'     => $s->created_at->toIso8601String(),
+                'updated_at'     => $s->updated_at->toIso8601String(),
+            ])->values(),
             'sites' => $sites->map(fn($s) => [
                 'id'         => $s->id,
                 'url'        => $s->url,

@@ -51,6 +51,11 @@ export interface ScheduledScan {
     last_run_at?: string;
     next_run_at: string;
     last_report_id?: number;
+    last_report?: {
+        id: number;
+        health_score: number | null;
+        status: string;
+    } | null;
     created_at: string;
     updated_at: string;
 }

@@ -3,10 +3,25 @@ import { Head, router, useForm } from '@inertiajs/react';
 import { PageProps, ScheduledScan } from '@/types';
 import { FormEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
+import { Link } from '@inertiajs/react';
 import {
   Clock, Play, Pause, Trash2, Plus, Loader2,
-  CheckCircle2, XCircle, Mail, Globe,
+  CheckCircle2, XCircle, Mail, Globe, ExternalLink,
 } from 'lucide-react';
+
+function healthColor(score?: number | null): string {
+  if (score == null) return 'text-gray-400';
+  if (score >= 80) return 'text-emerald-400';
+  if (score >= 50) return 'text-amber-400';
+  return 'text-red-400';
+}
+
+function healthRingColor(score?: number | null): string {
+  if (score == null) return 'border-gray-600';
+  if (score >= 80) return 'border-emerald-500';
+  if (score >= 50) return 'border-amber-500';
+  return 'border-red-500';
+}
 
 interface SiteData {
   id: number;
@@ -230,6 +245,9 @@ export default function ScheduledScansIndex({ scans, flash, sites }: ScheduledSc
                       {t('scheduled.lastRun')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Last Result
+                    </th>
+                    <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('scheduled.nextRun')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -274,6 +292,24 @@ export default function ScheduledScansIndex({ scans, flash, sites }: ScheduledSc
                       </td>
                       <td className="px-5 py-3.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                         {formatDate(scan.last_run_at, t('scheduled.never'))}
+                      </td>
+                      <td className="px-5 py-3.5">
+                        {scan.last_report ? (
+                          <div className="flex items-center gap-2">
+                            <span className={`inline-flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs font-bold ${healthRingColor(scan.last_report.health_score)} ${healthColor(scan.last_report.health_score)}`}>
+                              {scan.last_report.health_score ?? '—'}
+                            </span>
+                            <Link
+                              href={`/audits/${scan.last_report.id}`}
+                              className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
+                            >
+                              View
+                              <ExternalLink className="h-3 w-3" />
+                            </Link>
+                          </div>
+                        ) : (
+                          <span className="text-gray-600 text-xs">—</span>
+                        )}
                       </td>
                       <td className="px-5 py-3.5 text-xs text-gray-600 dark:text-gray-400 whitespace-nowrap">
                         {formatDate(scan.next_run_at, t('scheduled.never'))}
