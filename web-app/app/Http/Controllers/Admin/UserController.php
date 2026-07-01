@@ -9,7 +9,7 @@ use App\Models\Ticket;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response as HttpResponse;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Inertia\Inertia;
@@ -206,7 +206,7 @@ class UserController extends Controller
         return back()->with('success', "Email sent to {$user->email}.");
     }
 
-    public function export(): HttpResponse
+    public function export(): StreamedResponse
     {
         $users = DB::table('users')
             ->leftJoin('full_audit_reports as far', 'far.user_id', '=', 'users.id')
