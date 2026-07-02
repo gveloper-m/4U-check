@@ -488,7 +488,7 @@ const nl = {
     s4Title: '4. Cookies',
     s4Body: 'Wij gebruiken noodzakelijke cookies om u ingelogd te houden. Met uw toestemming gebruiken we ook analytische cookies.',
     s5Title: '5. Abonnementen & facturering',
-    s5Body: 'Betaalde abonnementen worden maandelijks gefactureerd via Stripe. U kunt op elk moment opzeggen.',
+    s5Body: 'Betaalde abonnementen worden maandelijks gefactureerd via Lemon Squeezy. U kunt op elk moment opzeggen.',
     s6Title: '6. Intellectueel eigendom',
     s6Body: 'Alle software, design en inhoud van 4uTest is eigendom van zijn operators. Auditrapportages behoren toe aan u.',
     s7Title: '7. Beperking van aansprakelijkheid',

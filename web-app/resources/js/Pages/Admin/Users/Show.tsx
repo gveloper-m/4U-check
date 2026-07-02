@@ -31,19 +31,11 @@ interface AdminUser {
 }
 
 interface Subscription {
-    stripe_status: string;
+    status: string;
     ends_at: string | null;
     trial_ends_at: string | null;
-}
-
-interface StripeData {
-    current_period_end?: number;
-    interval?: string;
-    amount?: number;
-    currency?: string;
-    last_invoice_date?: number;
-    last_invoice_amount?: number;
-    last_invoice_status?: string;
+    renews_at: string | null;
+    plan: 'monthly' | 'yearly';
 }
 
 interface MonthlyCrawl {
@@ -70,7 +62,6 @@ interface RecentReport {
 interface Props extends PageProps {
     adminUser: AdminUser;
     subscription: Subscription | null;
-    stripeData: StripeData | null;
     monthlyCrawls: MonthlyCrawl[];
     topSites: TopSite[];
     recentReports: RecentReport[];
@@ -100,15 +91,17 @@ function SubscriptionBadge({ sub, unlimited }: { sub: Subscription | null; unlim
         <span className="rounded-full bg-gray-200 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400">Free</span>
     );
     const map: Record<string, string> = {
-        active: 'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
-        trialing: 'bg-violet-500/15 border-violet-500/30 text-violet-400',
-        past_due: 'bg-amber-500/15 border-amber-500/30 text-amber-400',
-        canceled: 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
+        active:    'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
+        on_trial:  'bg-violet-500/15 border-violet-500/30 text-violet-400',
+        past_due:  'bg-amber-500/15 border-amber-500/30 text-amber-400',
+        cancelled: 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
+        paused:    'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
+        expired:   'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
     };
-    const cls = map[sub.stripe_status] ?? 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400';
+    const cls = map[sub.status] ?? 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400';
     return (
         <span className={`rounded-full border px-3 py-1 text-sm font-medium capitalize ${cls}`}>
-            {sub.stripe_status}
+            {sub.status.replace('_', ' ')}
         </span>
     );
 }
@@ -128,7 +121,7 @@ function BarChart({ data }: { data: MonthlyCrawl[] }) {
     );
 }
 
-export default function AdminUsersShow({ adminUser: u, subscription, stripeData, monthlyCrawls, topSites, recentReports }: Props) {
+export default function AdminUsersShow({ adminUser: u, subscription, monthlyCrawls, topSites, recentReports }: Props) {
     const [togglingAdmin, setTogglingAdmin] = useState(false);
     const [togglingUnlimited, setTogglingUnlimited] = useState(false);
 
@@ -149,12 +142,6 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
             preserveScroll: true,
             onFinish: () => setTogglingUnlimited(false),
         });
-    };
-
-    const formatCurrency = (amount?: number, currency = 'eur') => {
-        if (!amount) return '—';
-        return new Intl.NumberFormat('en-EU', { style: 'currency', currency: currency.toUpperCase() })
-            .format(amount / 100);
     };
 
     const formatDate = (ts?: number | string | null) => {
@@ -334,30 +321,31 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                 <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Subscription</h2>
                                 <SubscriptionBadge sub={subscription} unlimited={u.is_unlimited} />
                             </div>
-                            {stripeData ? (
+                            {subscription ? (
                                 <dl className="space-y-3 text-sm">
-                                    {stripeData.interval && (
+                                    <div>
+                                        <dt className="text-xs text-gray-500">Billing cycle</dt>
+                                        <dd className="capitalize text-gray-700 dark:text-gray-300">{subscription.plan}</dd>
+                                    </div>
+                                    {subscription.renews_at && (
                                         <div>
-                                            <dt className="text-xs text-gray-500">Billing cycle</dt>
-                                            <dd className="capitalize text-gray-700 dark:text-gray-300">{stripeData.interval}ly</dd>
-                                        </div>
-                                    )}
-                                    {stripeData.amount !== undefined && (
-                                        <div>
-                                            <dt className="text-xs text-gray-500">Plan amount</dt>
-                                            <dd className="text-gray-700 dark:text-gray-300">{formatCurrency(stripeData.amount, stripeData.currency)}</dd>
-                                        </div>
-                                    )}
-                                    {stripeData.current_period_end && (
-                                        <div>
-                                            <dt className="text-xs text-gray-500">Next payment</dt>
+                                            <dt className="text-xs text-gray-500">Renews on</dt>
                                             <dd className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
                                                 <Calendar className="h-3 w-3 text-gray-500" />
-                                                {formatDate(stripeData.current_period_end)}
+                                                {formatDate(subscription.renews_at)}
                                             </dd>
                                         </div>
                                     )}
-                                    {subscription?.ends_at && (
+                                    {subscription.trial_ends_at && (
+                                        <div>
+                                            <dt className="text-xs text-gray-500">Trial ends</dt>
+                                            <dd className="flex items-center gap-1 text-violet-400">
+                                                <Clock className="h-3 w-3" />
+                                                {formatDate(subscription.trial_ends_at)}
+                                            </dd>
+                                        </div>
+                                    )}
+                                    {subscription.ends_at && (
                                         <div>
                                             <dt className="text-xs text-gray-500">Cancels on</dt>
                                             <dd className="flex items-center gap-1 text-amber-400">
@@ -366,34 +354,9 @@ export default function AdminUsersShow({ adminUser: u, subscription, stripeData,
                                             </dd>
                                         </div>
                                     )}
-                                    {stripeData.last_invoice_date && (
-                                        <div className="border-t border-gray-200 dark:border-gray-800 pt-3">
-                                            <dt className="text-xs text-gray-500">Last payment</dt>
-                                            <dd className="text-gray-700 dark:text-gray-300">
-                                                {formatCurrency(stripeData.last_invoice_amount, stripeData.currency)}
-                                                <span className="ml-2 text-xs text-gray-500">{formatDate(stripeData.last_invoice_date)}</span>
-                                            </dd>
-                                            {stripeData.last_invoice_status && (
-                                                <dd className="mt-0.5">
-                                                    <span className={`rounded-full px-2 py-0.5 text-xs ${
-                                                        stripeData.last_invoice_status === 'paid'
-                                                            ? 'bg-emerald-500/15 text-emerald-400'
-                                                            : 'bg-amber-500/15 text-amber-400'
-                                                    }`}>
-                                                        {stripeData.last_invoice_status}
-                                                    </span>
-                                                </dd>
-                                            )}
-                                        </div>
-                                    )}
                                 </dl>
                             ) : (
-                                <p className="text-xs text-gray-600">
-                                    {subscription
-                                        ? 'Stripe data unavailable'
-                                        : 'No active subscription'
-                                    }
-                                </p>
+                                <p className="text-xs text-gray-600">No active subscription</p>
                             )}
                         </div>
 

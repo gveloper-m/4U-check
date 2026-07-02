@@ -23,9 +23,9 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin'        => \App\Http\Middleware\EnsureUserIsAdmin::class,
         ]);
 
-        // Stripe sends real POST requests without CSRF tokens
+        // Lemon Squeezy sends real POST requests without CSRF tokens
         $middleware->preventRequestForgery(except: [
-            'stripe/webhook',
+            'lemon-squeezy/webhook',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

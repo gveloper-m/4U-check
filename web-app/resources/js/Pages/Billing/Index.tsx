@@ -16,9 +16,10 @@ interface SiteData {
 }
 
 interface SubscriptionData {
-  stripe_status?: string;
+  status?: string;
   ends_at?: string | null;
   trial_ends_at?: string | null;
+  renews_at?: string | null;
   [key: string]: unknown;
 }
 
@@ -177,7 +178,7 @@ export default function BillingIndex({
                     <p className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">
                       {t('billing.activeStatus')}:{' '}
                       <span className="text-gray-700 dark:text-gray-300 capitalize">
-                        {subscription.stripe_status ?? t('billing.active')}
+                        {subscription.status ?? t('billing.active')}
                       </span>
                     </p>
                     {subscription.ends_at && (
@@ -381,7 +382,7 @@ export default function BillingIndex({
               <div className="mt-4 flex items-start gap-2 rounded-lg border border-gray-300 dark:border-gray-700/50 bg-gray-100/50 dark:bg-gray-800/50 px-3 py-3">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
                 <p className="text-xs text-gray-500">
-                  Payments are securely processed by Stripe. Your card details are never stored on our servers.
+                  Payments are securely processed by Lemon Squeezy. Your card details are never stored on our servers.
                 </p>
               </div>
             </div>

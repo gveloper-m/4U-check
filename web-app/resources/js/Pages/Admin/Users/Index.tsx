@@ -16,7 +16,7 @@ interface UserRow {
     is_admin: boolean;
     is_unlimited: boolean;
     is_agency: boolean;
-    stripe_status: string | null;
+    status: string | null;
     total_crawls: number;
     month_crawls: number;
     distinct_sites: number;
@@ -66,11 +66,12 @@ function StatCard({ icon: Icon, label, value, sub, color = 'violet' }: {
     );
 }
 
-function statusBadge(stripe_status: string | null, is_unlimited: boolean) {
+function statusBadge(status: string | null, is_unlimited: boolean) {
     if (is_unlimited) return <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400"><Infinity className="h-3 w-3" />Unlimited</span>;
-    if (stripe_status === 'active')   return <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">Active</span>;
-    if (stripe_status === 'trialing') return <span className="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-400">Trial</span>;
-    if (stripe_status === 'past_due') return <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-400">Past due</span>;
+    if (status === 'active')   return <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">Active</span>;
+    if (status === 'on_trial') return <span className="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-400">Trial</span>;
+    if (status === 'past_due') return <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-400">Past due</span>;
+    if (status === 'cancelled' || status === 'paused') return <span className="rounded-full bg-gray-200 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 capitalize">{status}</span>;
     return <span className="rounded-full bg-gray-200 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">Free</span>;
 }
 
@@ -157,7 +158,7 @@ export default function AdminUsersIndex({ users, stats, search: initSearch }: Pr
                                                 Joined {new Date(u.created_at).toLocaleDateString()}
                                             </div>
                                         </td>
-                                        <td className="px-4 py-3.5">{statusBadge(u.stripe_status, u.is_unlimited)}</td>
+                                        <td className="px-4 py-3.5">{statusBadge(u.status, u.is_unlimited)}</td>
                                         <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">{u.distinct_sites ?? 0}</td>
                                         <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">{u.total_crawls ?? 0}</td>
                                         <td className="px-4 py-3.5 text-right text-gray-700 dark:text-gray-300">{u.month_crawls ?? 0}</td>

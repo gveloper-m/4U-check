@@ -488,7 +488,7 @@ const de = {
     s4Title: '4. Cookies',
     s4Body: 'Wir verwenden notwendige Cookies, um Sie angemeldet zu halten. Mit Ihrer Zustimmung verwenden wir auch Analyse-Cookies.',
     s5Title: '5. Abonnements & Abrechnung',
-    s5Body: 'Kostenpflichtige Abonnements werden monatlich über Stripe abgerechnet. Sie können jederzeit kündigen.',
+    s5Body: 'Kostenpflichtige Abonnements werden monatlich über Lemon Squeezy abgerechnet. Sie können jederzeit kündigen.',
     s6Title: '6. Geistiges Eigentum',
     s6Body: 'Alle Software, Design und Inhalte von 4uTest sind Eigentum seiner Betreiber. Audit-Berichte gehören Ihnen.',
     s7Title: '7. Haftungsbeschränkung',

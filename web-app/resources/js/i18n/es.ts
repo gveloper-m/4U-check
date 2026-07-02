@@ -488,7 +488,7 @@ const es = {
     s4Title: '4. Cookies',
     s4Body: 'Usamos cookies necesarias para mantenerlo conectado. Con su consentimiento, también usamos cookies analíticas.',
     s5Title: '5. Suscripciones y facturación',
-    s5Body: 'Las suscripciones de pago se facturan mensualmente a través de Stripe. Puede cancelar en cualquier momento.',
+    s5Body: 'Las suscripciones de pago se facturan mensualmente a través de Lemon Squeezy. Puede cancelar en cualquier momento.',
     s6Title: '6. Propiedad intelectual',
     s6Body: 'Todo el software, diseño y contenido de 4uTest es propiedad de sus operadores. Los informes de auditoría le pertenecen a usted.',
     s7Title: '7. Limitación de responsabilidad',

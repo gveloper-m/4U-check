@@ -13,6 +13,6 @@ Disallow: /audits
 Disallow: /agent
 Disallow: /tickets
 Disallow: /scheduled-scans
-Disallow: /stripe/
+Disallow: /lemon-squeezy/
 
 Sitemap: {{ url('/sitemap.xml') }}

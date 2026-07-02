@@ -152,6 +152,5 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('/trial-codes/{trialCode}', [AdminTrialCodeController::class, 'destroy'])->name('trial-codes.destroy');
 });
 
-// Stripe webhook — CSRF-exempt (see bootstrap/app.php), signature verified by Cashier internals
-// Uses our extended controller to trigger Elorus document creation on invoice.paid
-Route::post('/stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handleWebhook'])->name('cashier.webhook');
+// Lemon Squeezy webhook — CSRF-exempt (see bootstrap/app.php), signature verified by LS package
+\LemonSqueezy\Laravel\LemonSqueezy::routes();

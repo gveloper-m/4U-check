@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Cashier\Billable;
+use LemonSqueezy\Laravel\Billable;
 
 class User extends Authenticatable
 {
@@ -103,11 +103,7 @@ class User extends Authenticatable
             return true;
         }
 
-        if ($this->onGenericTrial()) {
-            return true;
-        }
-
-        return $this->subscribed('default');
+        return $this->subscribed();
     }
 
     public function primarySite(): ?MonitoredSite

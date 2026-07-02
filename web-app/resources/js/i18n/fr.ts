@@ -488,7 +488,7 @@ const fr = {
     s4Title: '4. Cookies',
     s4Body: 'Nous utilisons des cookies nécessaires pour vous maintenir connecté. Avec votre consentement, nous utilisons également des cookies analytiques.',
     s5Title: '5. Abonnements & facturation',
-    s5Body: 'Les abonnements payants sont facturés mensuellement via Stripe. Vous pouvez annuler à tout moment.',
+    s5Body: 'Les abonnements payants sont facturés mensuellement via Lemon Squeezy. Vous pouvez annuler à tout moment.',
     s6Title: '6. Propriété intellectuelle',
     s6Body: 'Tous les logiciels, designs et contenus de 4uTest appartiennent à ses opérateurs. Les rapports d\'audit vous appartiennent.',
     s7Title: '7. Limitation de responsabilité',

@@ -22,7 +22,7 @@ class SendMonthlyReports extends Command
         User::where('notify_monthly_report', true)
             ->where(function ($q) {
                 $q->where('is_unlimited', true)
-                  ->orWhereHas('subscriptions', fn ($s) => $s->where('stripe_status', 'active'));
+                  ->orWhereHas('subscriptions', fn ($s) => $s->where('status', 'active'));
             })
             ->each(function (User $user) use ($monthLabel, $start, $end) {
                 $reports = FullAuditReport::where('user_id', $user->id)

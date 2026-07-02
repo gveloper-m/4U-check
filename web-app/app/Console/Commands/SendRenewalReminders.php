@@ -6,7 +6,7 @@ use App\Mail\RenewalReminderMail;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use Laravel\Cashier\Subscription;
+use LemonSqueezy\Laravel\Subscription;
 
 class SendRenewalReminders extends Command
 {
@@ -15,30 +15,24 @@ class SendRenewalReminders extends Command
 
     public function handle(): void
     {
-        $targetDay   = now()->addDays(7)->day;
-        $targetMonth = now()->addDays(7)->month;
         $targetDate  = now()->addDays(7)->format('d M Y');
+        $windowStart = now()->addDays(7)->startOfDay();
+        $windowEnd   = now()->addDays(7)->endOfDay();
 
-        Subscription::where('stripe_status', 'active')
-            ->where('type', 'default')
-            ->whereRaw('DAY(created_at) = ?', [$targetDay])
-            ->with('owner')
+        Subscription::where('status', 'active')
+            ->whereBetween('renews_at', [$windowStart, $windowEnd])
+            ->with('billable')
             ->get()
-            ->each(function (Subscription $sub) use ($targetDate, $targetMonth) {
+            ->each(function (Subscription $sub) use ($targetDate) {
                 /** @var User|null $user */
-                $user = $sub->owner;
+                $user = $sub->billable;
 
-                if (! $user || ! $user->notify_renewal_reminder) {
+                if (! $user instanceof User || ! $user->notify_renewal_reminder) {
                     return;
                 }
 
-                $yearlyPriceId = config('services.stripe.yearly_price_id');
-                $isYearly      = $yearlyPriceId && $sub->hasPrice($yearlyPriceId);
-
-                // Yearly: only send when anniversary month matches
-                if ($isYearly && now()->addDays(7)->month !== $sub->created_at->month) {
-                    return;
-                }
+                $yearlyVariantId = config('lemon-squeezy.yearly_variant_id');
+                $isYearly        = $yearlyVariantId && $sub->variant_id === (string) $yearlyVariantId;
 
                 $plan   = $isYearly ? 'Pro Yearly — €199.99/year' : 'Pro Monthly — €19.99/month';
                 $amount = $isYearly ? '€199.99' : '€19.99';

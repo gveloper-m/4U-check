@@ -8,9 +8,6 @@ export interface User {
     phone?: string | null;
     company_name?: string | null;
     company_site?: string | null;
-    stripe_id?: string;
-    pm_type?: string;
-    pm_last_four?: string;
     language?: string;
     is_agency?: boolean;
     agency_logo?: string | null;

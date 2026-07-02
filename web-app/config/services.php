@@ -44,12 +44,5 @@ return [
         'doctype_receipt_id' => env('ELORUS_DOCTYPE_RECEIPT_ID'),
     ],
 
-    'stripe' => [
-        'monthly_price_id'            => env('STRIPE_MONTHLY_PRICE_ID', env('STRIPE_PRICE_ID')),
-        'yearly_price_id'             => env('STRIPE_YEARLY_PRICE_ID'),
-        'monthly_extra_site_price_id' => env('STRIPE_MONTHLY_EXTRA_SITE_PRICE_ID'),
-        'yearly_extra_site_price_id'  => env('STRIPE_YEARLY_EXTRA_SITE_PRICE_ID'),
-        'tax_enabled'                 => env('STRIPE_TAX_ENABLED', false),
-    ],
 
 ];

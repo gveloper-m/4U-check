@@ -488,7 +488,7 @@ const cs = {
     s4Title: '4. Cookies',
     s4Body: 'Používáme nezbytné cookies pro udržení přihlášení. S vaším souhlasem používáme také analytické cookies.',
     s5Title: '5. Předplatné & fakturace',
-    s5Body: 'Placená předplatná jsou fakturována měsíčně přes Stripe. Kdykoli můžete zrušit.',
+    s5Body: 'Placená předplatná jsou fakturována měsíčně přes Lemon Squeezy. Kdykoli můžete zrušit.',
     s6Title: '6. Duševní vlastnictví',
     s6Body: 'Veškerý software, design a obsah 4uTest je majetkem provozovatelů. Auditní zprávy patří vám.',
     s7Title: '7. Omezení odpovědnosti',

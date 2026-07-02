@@ -2,12 +2,15 @@
 
 namespace App\Providers;
 
+use App\Listeners\HandleLSPaymentSuccess;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Inertia;
+use LemonSqueezy\Laravel\Events\SubscriptionPaymentSuccess;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,6 +19,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);
+
+        Event::listen(SubscriptionPaymentSuccess::class, HandleLSPaymentSuccess::class);
 
         Inertia::share([
             'flash' => fn () => [

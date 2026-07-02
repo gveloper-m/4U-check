@@ -23,13 +23,15 @@ class UserController extends Controller
 
         $users = DB::table('users')
             ->leftJoin('full_audit_reports as far', 'far.user_id', '=', 'users.id')
-            ->leftJoin('subscriptions as sub', function ($j) {
-                $j->on('sub.user_id', '=', 'users.id')->whereRaw("sub.type = 'default'");
+            ->leftJoin('lemon_squeezy_subscriptions as sub', function ($j) {
+                $j->on('sub.billable_id', '=', 'users.id')
+                  ->where('sub.billable_type', '=', 'App\\Models\\User')
+                  ->whereRaw("sub.type = 'default'");
             })
             ->select([
                 'users.id', 'users.name', 'users.email', 'users.created_at',
                 'users.is_admin', 'users.is_unlimited', 'users.is_agency',
-                'sub.stripe_status',
+                'sub.status',
                 DB::raw('COUNT(far.id) as total_crawls'),
                 DB::raw('SUM(CASE WHEN YEAR(far.created_at) = YEAR(NOW()) AND MONTH(far.created_at) = MONTH(NOW()) THEN 1 ELSE 0 END) as month_crawls'),
                 DB::raw('COUNT(DISTINCT far.site_url) as distinct_sites'),
@@ -43,7 +45,7 @@ class UserController extends Controller
             ->groupBy(
                 'users.id', 'users.name', 'users.email', 'users.created_at',
                 'users.is_admin', 'users.is_unlimited', 'users.is_agency',
-                'sub.stripe_status'
+                'sub.status'
             )
             ->orderByDesc('users.created_at')
             ->paginate(30)
@@ -51,10 +53,11 @@ class UserController extends Controller
 
         $stats = [
             'total_users'    => User::count(),
-            'subscribed'     => DB::table('subscriptions')
-                ->whereIn('stripe_status', ['active', 'trialing'])
+            'subscribed'     => DB::table('lemon_squeezy_subscriptions')
+                ->whereIn('status', ['active', 'on_trial'])
                 ->where('type', 'default')
-                ->distinct('user_id')->count('user_id'),
+                ->where('billable_type', 'App\\Models\\User')
+                ->distinct('billable_id')->count('billable_id'),
             'unlimited'      => User::where('is_unlimited', true)->count(),
             'month_crawls'   => FullAuditReport::whereYear('created_at', now()->year)
                 ->whereMonth('created_at', now()->month)->count(),
@@ -118,31 +121,9 @@ class UserController extends Controller
         $openTickets   = Ticket::where('user_id', $user->id)->whereIn('status', ['open', 'in_progress'])->count();
 
         // Subscription
-        $subscription = $user->subscription('default');
+        $subscription = $user->subscription();
 
-        // Stripe live data
-        $stripeData = null;
-        try {
-            if ($subscription && in_array($subscription->stripe_status, ['active', 'trialing'])) {
-                $stripeSub  = $subscription->asStripeSubscription();
-                $item       = $stripeSub->items->data[0] ?? null;
-                $stripeData = [
-                    'current_period_end' => $stripeSub->current_period_end,
-                    'interval'           => $item?->plan->interval ?? null,
-                    'amount'             => $item?->plan->amount ?? null,
-                    'currency'           => $item?->plan->currency ?? 'eur',
-                ];
-            }
-            $invoices = $user->invoices();
-            if (! $invoices->isEmpty()) {
-                $last = $invoices->first();
-                $stripeData['last_invoice_date']   = $last->date()->timestamp;
-                $stripeData['last_invoice_amount'] = $last->rawTotal();
-                $stripeData['last_invoice_status'] = $last->status;
-            }
-        } catch (\Throwable) {
-            // Stripe not configured or unavailable
-        }
+        $yearlyVariantId = config('lemon-squeezy.yearly_variant_id');
 
         return Inertia::render('Admin/Users/Show', [
             'adminUser' => array_merge($user->only([
@@ -158,11 +139,13 @@ class UserController extends Controller
                 ],
             ]),
             'subscription'  => $subscription ? [
-                'stripe_status' => $subscription->stripe_status,
+                'status'        => $subscription->status,
                 'ends_at'       => $subscription->ends_at,
                 'trial_ends_at' => $subscription->trial_ends_at,
+                'renews_at'     => $subscription->renews_at,
+                'plan'          => ($yearlyVariantId && $subscription->variant_id === (string) $yearlyVariantId)
+                                   ? 'yearly' : 'monthly',
             ] : null,
-            'stripeData'    => $stripeData,
             'monthlyCrawls' => $monthlyCrawls,
             'topSites'      => $topSites,
             'recentReports' => $recentReports,
@@ -210,8 +193,10 @@ class UserController extends Controller
     {
         $users = DB::table('users')
             ->leftJoin('full_audit_reports as far', 'far.user_id', '=', 'users.id')
-            ->leftJoin('subscriptions as sub', function ($j) {
-                $j->on('sub.user_id', '=', 'users.id')->whereRaw("sub.type = 'default'");
+            ->leftJoin('lemon_squeezy_subscriptions as sub', function ($j) {
+                $j->on('sub.billable_id', '=', 'users.id')
+                  ->where('sub.billable_type', '=', 'App\\Models\\User')
+                  ->whereRaw("sub.type = 'default'");
             })
             ->select([
                 'users.id',
@@ -226,7 +211,7 @@ class UserController extends Controller
                 'users.is_unlimited',
                 'users.crawl_quota_bonus',
                 'users.created_at',
-                'sub.stripe_status',
+                'sub.status',
                 DB::raw('COUNT(far.id) as total_crawls'),
                 DB::raw('SUM(CASE WHEN YEAR(far.created_at) = YEAR(NOW()) AND MONTH(far.created_at) = MONTH(NOW()) THEN 1 ELSE 0 END) as month_crawls'),
                 DB::raw('COUNT(DISTINCT far.site_url) as distinct_sites'),
@@ -237,7 +222,7 @@ class UserController extends Controller
                 'users.id', 'users.name', 'users.email', 'users.phone',
                 'users.company_name', 'users.company_site', 'users.vat_number',
                 'users.is_agency', 'users.is_admin', 'users.is_unlimited',
-                'users.crawl_quota_bonus', 'users.created_at', 'sub.stripe_status'
+                'users.crawl_quota_bonus', 'users.created_at', 'sub.status'
             )
             ->orderByDesc('users.created_at')
             ->get();
@@ -271,7 +256,7 @@ class UserController extends Controller
                     $u->is_admin ? 'Yes' : 'No',
                     $u->is_unlimited ? 'Yes' : 'No',
                     $u->crawl_quota_bonus ?? 0,
-                    $u->stripe_status ?? 'free',
+                    $u->status ?? 'free',
                     $u->total_crawls ?? 0,
                     $u->month_crawls ?? 0,
                     $u->distinct_sites ?? 0,
