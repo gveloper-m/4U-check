@@ -196,11 +196,21 @@ class BillingController extends Controller
         $subscription  = $user->subscription();
         $yearlyPriceId = config('services.paddle.yearly_price_id');
 
-        if ($subscription && $yearlyPriceId) {
+        if (! $subscription) {
+            return 'monthly';
+        }
+
+        // Primary check: match price_id on subscription items
+        if ($yearlyPriceId) {
             $item = $subscription->items()->first();
             if ($item && $item->price_id === $yearlyPriceId) {
                 return 'yearly';
             }
+        }
+
+        // Fallback: if next billing date is >300 days away the cycle must be yearly
+        if ($subscription->next_billed_at && now()->diffInDays($subscription->next_billed_at) > 300) {
+            return 'yearly';
         }
 
         return 'monthly';
