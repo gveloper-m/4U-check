@@ -345,12 +345,12 @@ export default function AdminUsersShow({ adminUser: u, subscription, monthlyCraw
                                             </dd>
                                         </div>
                                     )}
-                                    {subscription.ends_at && (
+                                    {subscription.canceled_at && (
                                         <div>
                                             <dt className="text-xs text-gray-500">Cancels on</dt>
                                             <dd className="flex items-center gap-1 text-amber-400">
                                                 <AlertTriangle className="h-3 w-3" />
-                                                {formatDate(subscription.ends_at)}
+                                                {formatDate(subscription.canceled_at)}
                                             </dd>
                                         </div>
                                     )}
