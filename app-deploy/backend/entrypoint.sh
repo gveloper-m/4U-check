@@ -22,4 +22,7 @@ chmod -R 775 \
     /var/www/html/storage \
     /var/www/html/bootstrap/cache
 
+# Regenerate package discovery cache so a stale volume never loads wrong providers
+su -s /bin/sh www-data -c "php /var/www/html/artisan package:discover --ansi 2>&1 || true"
+
 exec "$@"
