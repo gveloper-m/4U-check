@@ -54,8 +54,8 @@ class BillingController extends Controller
             'paddle' => [
                 'token'            => config('cashier.client_side_token'),
                 'environment'      => config('cashier.sandbox') ? 'sandbox' : 'production',
-                'monthly_price_id' => env('PADDLE_MONTHLY_PRICE_ID'),
-                'yearly_price_id'  => env('PADDLE_YEARLY_PRICE_ID'),
+                'monthly_price_id' => config('services.paddle.monthly_price_id'),
+                'yearly_price_id'  => config('services.paddle.yearly_price_id'),
             ],
         ]);
     }
@@ -97,8 +97,8 @@ class BillingController extends Controller
         }
 
         $priceId = $validated['plan'] === 'yearly'
-            ? env('PADDLE_YEARLY_PRICE_ID')
-            : env('PADDLE_MONTHLY_PRICE_ID');
+            ? config('services.paddle.yearly_price_id')
+            : config('services.paddle.monthly_price_id');
 
         abort_if(empty($priceId), 500, 'Paddle price not configured for this plan.');
 
@@ -173,8 +173,8 @@ class BillingController extends Controller
         abort_unless($user->subscribed(), 403, 'Active subscription required to add extra sites.');
 
         $priceId = $validated['plan'] === 'yearly'
-            ? env('PADDLE_EXTRA_YEARLY_PRICE_ID')
-            : env('PADDLE_EXTRA_MONTHLY_PRICE_ID');
+            ? config('services.paddle.extra_yearly_price_id')
+            : config('services.paddle.extra_monthly_price_id');
 
         abort_if(empty($priceId), 500, 'Extra site price not configured. Contact support.');
 
@@ -194,7 +194,7 @@ class BillingController extends Controller
     private function currentPlan($user): string
     {
         $subscription  = $user->subscription();
-        $yearlyPriceId = env('PADDLE_YEARLY_PRICE_ID');
+        $yearlyPriceId = config('services.paddle.yearly_price_id');
 
         if ($subscription && $yearlyPriceId) {
             $item = $subscription->items()->first();

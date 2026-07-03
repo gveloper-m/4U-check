@@ -33,5 +33,12 @@ return [
         'api_key' => env('MISTRAL_API_KEY'),
     ],
 
+    'paddle' => [
+        'monthly_price_id'       => env('PADDLE_MONTHLY_PRICE_ID'),
+        'yearly_price_id'        => env('PADDLE_YEARLY_PRICE_ID'),
+        'extra_monthly_price_id' => env('PADDLE_EXTRA_MONTHLY_PRICE_ID'),
+        'extra_yearly_price_id'  => env('PADDLE_EXTRA_YEARLY_PRICE_ID'),
+    ],
+
 ];
 
