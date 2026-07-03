@@ -188,7 +188,12 @@ export default function AppLayout({ children }: PropsWithChildren) {
                 </div>
 
                 <main className="p-4 lg:p-6">{children}</main>
-                <div className="px-4 py-2 lg:px-6 flex justify-end">
+                <div className="px-4 py-2 lg:px-6 flex items-center justify-between">
+                    <nav className="flex items-center gap-4 text-[11px] text-gray-400">
+                        <Link href="/terms"   className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Terms</Link>
+                        <Link href="/privacy" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Privacy</Link>
+                        <Link href="/refund"  className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Refunds</Link>
+                    </nav>
                     <Link href="/tickets" className="flex items-center gap-1 text-xs text-gray-800 hover:text-gray-600 transition-colors">
                         <HelpCircle className="h-3 w-3" />
                         Need help?

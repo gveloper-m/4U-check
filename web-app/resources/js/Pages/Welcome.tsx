@@ -377,7 +377,12 @@ export default function Welcome({ auth }: PageProps) {
               </div>
               <span className="text-sm font-semibold text-gray-900 dark:text-white">4utest</span>
             </div>
-            <p className="text-xs text-gray-600">&copy; {new Date().getFullYear()} 4utest. All rights reserved.</p>
+            <nav className="flex items-center gap-5 text-xs text-gray-400">
+              <Link href="/terms"   className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Terms</Link>
+              <Link href="/privacy" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Privacy</Link>
+              <Link href="/refund"  className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Refunds</Link>
+            </nav>
+            <p className="text-xs text-gray-500">&copy; {new Date().getFullYear()} 4utest. All rights reserved.</p>
           </div>
         </footer>
       </div>

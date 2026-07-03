@@ -12,9 +12,24 @@
         <priority>0.8</priority>
     </url>
     <url>
+        <loc>{{ url('/pricing') }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
         <loc>{{ url('/terms') }}</loc>
         <changefreq>monthly</changefreq>
         <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>{{ url('/privacy') }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>{{ url('/refund') }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.4</priority>
     </url>
 
     {{-- Blog posts --}}

@@ -3,6 +3,9 @@ Allow: /
 Allow: /blog/
 Allow: /shared/
 Allow: /terms
+Allow: /privacy
+Allow: /refund
+Allow: /pricing
 Allow: /register
 Allow: /login
 Disallow: /dashboard
