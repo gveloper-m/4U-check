@@ -7,7 +7,7 @@ import { initializePaddle, type Paddle } from '@paddle/paddle-js';
 import axios from 'axios';
 import {
   CreditCard, CheckCircle2, XCircle, Infinity, ArrowRight, Loader2,
-  ShieldCheck, Globe, Lock, Plus, Trash2, AlertTriangle, X,
+  ShieldCheck, Globe, Lock, Plus, Trash2, AlertTriangle, X, Ban,
 } from 'lucide-react';
 
 interface SiteData {
@@ -121,7 +121,8 @@ export default function BillingIndex({
 
   const [subscribing, setSubscribing] = useState(false);
 
-  const cancelForm  = useForm({});
+  const cancelForm     = useForm({});
+  const [showCancel, setShowCancel] = useState(false);
   const addSiteForm = useForm({ url: '', label: '', plan: current_plan as 'monthly' | 'yearly' });
 
   const [showAddSite, setShowAddSite]       = useState(false);
@@ -151,9 +152,10 @@ export default function BillingIndex({
     }
   };
 
-  const handlePortal: FormEventHandler = (e) => {
-    e.preventDefault();
-    cancelForm.post('/billing/portal');
+  const handleCancelSubscription = () => {
+    cancelForm.post('/billing/cancel', {
+      onSuccess: () => setShowCancel(false),
+    });
   };
 
   const handleAddSite: FormEventHandler = async (e) => {
@@ -297,16 +299,22 @@ export default function BillingIndex({
                   </div>
                 </div>
 
-                <form onSubmit={handlePortal}>
+                {subscription.canceled_at || subscription.paused_at ? (
+                  <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-400">
+                    {t('billing.cancelScheduled')}
+                    {' · '}
+                    <a href="/refund" className="underline hover:text-amber-300">{t('billing.refundLink')}</a>
+                  </div>
+                ) : (
                   <button
-                    type="submit"
-                    disabled={cancelForm.processing}
-                    className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                    type="button"
+                    onClick={() => setShowCancel(true)}
+                    className="flex items-center gap-2 rounded-lg border border-red-500/20 px-4 py-2.5 text-sm font-medium text-red-400 hover:border-red-500/40 hover:text-red-300 transition-colors"
                   >
-                    {cancelForm.processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
-                    {t('billing.manageBtn')}
+                    <Ban className="h-4 w-4" />
+                    {t('billing.cancelBtn')}
                   </button>
-                </form>
+                )}
               </div>
             ) : (
               /* ── No subscription ── */
@@ -605,6 +613,42 @@ export default function BillingIndex({
                 <p className="text-center text-xs text-gray-500">{t('billing.vatNote')}</p>
               )}
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Cancel Subscription Confirm ── */}
+      {showCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCancel(false)} />
+          <div className="relative w-full max-w-sm rounded-2xl border border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-2xl">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20">
+              <Ban className="h-5 w-5 text-red-400" />
+            </div>
+            <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{t('billing.cancelTitle')}</h3>
+            <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">{t('billing.cancelBody')}</p>
+            <p className="mb-5 text-xs text-gray-500">
+              {t('billing.cancelRefundNote')}{' '}
+              <a href="/refund" className="text-violet-400 hover:text-violet-300 underline">{t('billing.cancelRefundLink')}</a>.
+            </p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCancel(false)}
+                className="flex-1 rounded-xl border border-gray-700 py-2.5 text-sm text-gray-300 hover:border-gray-500 transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelSubscription}
+                disabled={cancelForm.processing}
+                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60 transition-colors"
+              >
+                {cancelForm.processing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                {t('billing.cancelConfirm')}
+              </button>
+            </div>
           </div>
         </div>
       )}

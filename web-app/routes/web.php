@@ -89,7 +89,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/billing', [BillingController::class, 'index'])->name('billing');
     Route::post('/billing/subscribe', [BillingController::class, 'subscribe'])->name('billing.subscribe');
-    Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
+    Route::post('/billing/cancel', [BillingController::class, 'cancelSubscription'])->name('billing.cancel');
     Route::post('/billing/sites', [BillingController::class, 'addSite'])->name('billing.sites.add');
     Route::post('/billing/extra-site', [BillingController::class, 'extraSite'])->name('billing.extra-site');
     Route::delete('/billing/sites/{site}', [BillingController::class, 'removeSite'])->name('billing.sites.remove');

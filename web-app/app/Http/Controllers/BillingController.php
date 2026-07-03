@@ -106,39 +106,34 @@ class BillingController extends Controller
         return response()->json(['price_id' => $priceId]);
     }
 
-    public function portal(Request $request): Response|RedirectResponse
+    public function cancelSubscription(Request $request): RedirectResponse
     {
-        $user     = $request->user();
-        $customer = $user->customer;
+        $user         = $request->user();
+        $subscription = $user->subscription();
 
-        abort_unless($customer, 422, 'No billing account found.');
+        abort_unless($subscription && $subscription->valid(), 422, 'No active subscription found.');
+        abort_if($subscription->ends_at, 422, 'Subscription is already scheduled for cancellation.');
 
         try {
-            $response = Cashier::api('POST', "customers/{$customer->paddle_id}/auth-token");
+            $effectiveAt = now()->addHours(24)->toIso8601String();
+            $data = Cashier::api('POST', "subscriptions/{$subscription->paddle_id}/cancel", [
+                'effective_from' => $effectiveAt,
+            ])->json('data');
+
+            $endsAt = $data['scheduled_change']['effective_at'] ?? $effectiveAt;
+            $subscription->forceFill([
+                'status'  => $data['status'] ?? $subscription->status,
+                'ends_at' => \Carbon\Carbon::parse($endsAt, 'UTC'),
+            ])->save();
         } catch (\Exception $e) {
-            Log::error('[Paddle] Customer auth-token API error', [
-                'user_id'   => $user->id,
-                'paddle_id' => $customer->paddle_id,
-                'error'     => $e->getMessage(),
+            Log::error('[Paddle] Cancel subscription error', [
+                'user_id' => $user->id,
+                'error'   => $e->getMessage(),
             ]);
-            return back()->with('error', 'Unable to open billing portal. Please try again or contact support.');
+            return back()->with('error', 'Could not cancel subscription. Please try again or contact support.');
         }
 
-        $data      = $response->json('data') ?? [];
-        $isSandbox = (bool) config('cashier.sandbox');
-
-        $portalUrl = $data['customer_portal_urls']['general']['overview']
-            ?? ($data['customer_auth_token']
-                ? ($isSandbox ? 'https://sandbox-customer.paddle.com' : 'https://customer.paddle.com')
-                  . '/?token=' . $data['customer_auth_token']
-                : null);
-
-        if (! $portalUrl) {
-            Log::error('[Paddle] Could not derive portal URL', ['user_id' => $user->id, 'response' => $data]);
-            return back()->with('error', 'Unable to open billing portal. Please try again or contact support.');
-        }
-
-        return Inertia::location($portalUrl);
+        return back()->with('success', 'Subscription cancelled. You have 24 hours of access remaining.');
     }
 
     public function addSite(Request $request): RedirectResponse
