@@ -180,8 +180,9 @@ export default function BillingIndex({
         items:      [{ priceId, quantity: 1 }],
         customer:   { email: auth.user.email },
         customData: {
-          site_url:   addSiteForm.data.url,
-          site_label: addSiteForm.data.label || null,
+          site_url:          addSiteForm.data.url,
+          site_label:        addSiteForm.data.label || null,
+          subscription_type: 'extra_site',
         },
       });
       setShowAddSite(false);

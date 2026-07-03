@@ -8,6 +8,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Laravel\Paddle\Cashier;
 use Symfony\Component\HttpFoundation\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -112,38 +113,28 @@ class BillingController extends Controller
 
         abort_unless($customer, 422, 'No billing account found.');
 
-        $isSandbox = (bool) config('cashier.sandbox');
-        $apiBase   = $isSandbox ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
-
-        $response = Http::withToken(config('cashier.api_key'))
-            ->post("{$apiBase}/customers/{$customer->paddle_id}/auth-token");
-
-        if (! $response->successful()) {
+        try {
+            $response = Cashier::api('POST', "customers/{$customer->paddle_id}/auth-token");
+        } catch (\Exception $e) {
             Log::error('[Paddle] Customer auth-token API error', [
                 'user_id'   => $user->id,
                 'paddle_id' => $customer->paddle_id,
-                'status'    => $response->status(),
-                'body'      => $response->body(),
-                'sandbox'   => $isSandbox,
+                'error'     => $e->getMessage(),
             ]);
             return back()->with('error', 'Unable to open billing portal. Please try again or contact support.');
         }
 
-        $data = $response->json('data');
+        $data      = $response->json('data') ?? [];
+        $isSandbox = (bool) config('cashier.sandbox');
 
-        // Use the pre-built URL if Paddle returns it, otherwise build it from the token
         $portalUrl = $data['customer_portal_urls']['general']['overview']
             ?? ($data['customer_auth_token']
-                ? ($isSandbox
-                    ? 'https://sandbox-customer.paddle.com/?token=' . $data['customer_auth_token']
-                    : 'https://customer.paddle.com/?token=' . $data['customer_auth_token'])
+                ? ($isSandbox ? 'https://sandbox-customer.paddle.com' : 'https://customer.paddle.com')
+                  . '/?token=' . $data['customer_auth_token']
                 : null);
 
         if (! $portalUrl) {
-            Log::error('[Paddle] Could not derive portal URL from auth-token response', [
-                'user_id'  => $user->id,
-                'response' => $data,
-            ]);
+            Log::error('[Paddle] Could not derive portal URL', ['user_id' => $user->id, 'response' => $data]);
             return back()->with('error', 'Unable to open billing portal. Please try again or contact support.');
         }
 
@@ -201,26 +192,22 @@ class BillingController extends Controller
 
     private function currentPlan($user): string
     {
-        $subscription  = $user->subscription();
         $yearlyPriceId = config('services.paddle.yearly_price_id');
 
-        if (! $subscription) {
+        if (! $yearlyPriceId) {
             return 'monthly';
         }
 
-        // Primary check: match price_id on subscription items
-        if ($yearlyPriceId) {
-            $item = $subscription->items()->first();
-            if ($item && $item->price_id === $yearlyPriceId) {
-                return 'yearly';
-            }
-        }
+        // Check ALL subscription items across all user subscriptions for the main yearly price.
+        // We cannot rely on subscription() alone because subscriptions() is ordered by
+        // created_at DESC, so an extra-site subscription created later would be returned first.
+        $hasYearly = \Laravel\Paddle\SubscriptionItem::query()
+            ->join('subscriptions', 'subscription_items.subscription_id', '=', 'subscriptions.id')
+            ->where('subscriptions.billable_id', $user->id)
+            ->where('subscriptions.billable_type', get_class($user))
+            ->where('subscription_items.price_id', $yearlyPriceId)
+            ->exists();
 
-        // Fallback: if next billing date is >300 days away the cycle must be yearly
-        if ($subscription->next_billed_at && now()->diffInDays($subscription->next_billed_at) > 300) {
-            return 'yearly';
-        }
-
-        return 'monthly';
+        return $hasYearly ? 'yearly' : 'monthly';
     }
 }
