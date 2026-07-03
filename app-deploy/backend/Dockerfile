@@ -81,6 +81,9 @@ RUN composer install \
 # Copy full application source (respects .dockerignore)
 COPY --chown=www-data:www-data web-app/. .
 
+# Remove any stale generated cache files that may have been copied in
+RUN rm -f bootstrap/cache/packages.php bootstrap/cache/services.php
+
 # Overwrite public/build with assets compiled in node-builder stage
 COPY --from=node-builder --chown=www-data:www-data /app/public/build public/build/
 
