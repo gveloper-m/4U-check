@@ -74,13 +74,20 @@ class BillingController extends Controller
             'vat_number'   => $validated['vat_number']   ?? null,
         ])->save();
 
+        // Ensure this user has a Paddle customer record in our DB so that
+        // subscription webhooks can be linked back to them after checkout.
+        $customer = $user->customer ?? $user->createAsCustomer();
+
         $priceId = $validated['plan'] === 'yearly'
             ? env('PADDLE_YEARLY_PRICE_ID')
             : env('PADDLE_MONTHLY_PRICE_ID');
 
         abort_if(empty($priceId), 500, 'Paddle price not configured for this plan.');
 
-        return response()->json(['price_id' => $priceId]);
+        return response()->json([
+            'price_id'    => $priceId,
+            'customer_id' => $customer->paddle_id,
+        ]);
     }
 
     public function portal(Request $request): Response

@@ -138,9 +138,10 @@ export default function BillingIndex({
         vat_number: subscribeForm.data.vat_number || null,
       });
       const priceId: string = response.data.price_id;
+      const customerId: string = response.data.customer_id;
       paddleRef.current?.Checkout.open({
         items: [{ priceId, quantity: 1 }],
-        customer: { email: auth.user.email },
+        customer: { id: customerId },
       });
     } catch {
       subscribeForm.setError('plan', 'Something went wrong. Please try again.');
