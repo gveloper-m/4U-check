@@ -62,6 +62,7 @@ Route::get('/', function () {
     ]);
 })->name('home');
 Route::get('/terms', fn () => Inertia::render('Terms'))->name('terms');
+Route::get('/pricing', fn () => Inertia::render('Pricing'))->name('pricing');
 Route::post('/cookie-consent', [CookieConsentController::class, 'store'])->name('cookie-consent.store');
 
 // Blog (public)
@@ -152,5 +153,5 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::delete('/trial-codes/{trialCode}', [AdminTrialCodeController::class, 'destroy'])->name('trial-codes.destroy');
 });
 
-// Lemon Squeezy webhook — CSRF-exempt (see bootstrap/app.php), signature verified by LS package
-\LemonSqueezy\Laravel\LemonSqueezy::routes();
+// Paddle webhook — CSRF-exempt (see bootstrap/app.php), signature verified by Cashier Paddle
+\Laravel\Paddle\Paddle::routes();

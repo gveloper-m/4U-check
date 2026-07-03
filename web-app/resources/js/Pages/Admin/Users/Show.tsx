@@ -32,9 +32,9 @@ interface AdminUser {
 
 interface Subscription {
     status: string;
-    ends_at: string | null;
     trial_ends_at: string | null;
-    renews_at: string | null;
+    next_billed_at: string | null;
+    canceled_at: string | null;
     plan: 'monthly' | 'yearly';
 }
 
@@ -92,9 +92,9 @@ function SubscriptionBadge({ sub, unlimited }: { sub: Subscription | null; unlim
     );
     const map: Record<string, string> = {
         active:    'bg-emerald-500/15 border-emerald-500/30 text-emerald-400',
-        on_trial:  'bg-violet-500/15 border-violet-500/30 text-violet-400',
+        trialing:  'bg-violet-500/15 border-violet-500/30 text-violet-400',
         past_due:  'bg-amber-500/15 border-amber-500/30 text-amber-400',
-        cancelled: 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
+        canceled: 'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
         paused:    'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
         expired:   'bg-gray-200 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400',
     };
@@ -327,12 +327,12 @@ export default function AdminUsersShow({ adminUser: u, subscription, monthlyCraw
                                         <dt className="text-xs text-gray-500">Billing cycle</dt>
                                         <dd className="capitalize text-gray-700 dark:text-gray-300">{subscription.plan}</dd>
                                     </div>
-                                    {subscription.renews_at && (
+                                    {subscription.next_billed_at && (
                                         <div>
                                             <dt className="text-xs text-gray-500">Renews on</dt>
                                             <dd className="flex items-center gap-1 text-gray-700 dark:text-gray-300">
                                                 <Calendar className="h-3 w-3 text-gray-500" />
-                                                {formatDate(subscription.renews_at)}
+                                                {formatDate(subscription.next_billed_at)}
                                             </dd>
                                         </div>
                                     )}

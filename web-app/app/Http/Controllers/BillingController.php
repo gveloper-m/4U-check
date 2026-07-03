@@ -6,6 +6,7 @@ use App\Models\MonitoredSite;
 use App\Rules\PublicUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -29,18 +30,14 @@ class BillingController extends Controller
         return Inertia::render('Billing/Index', [
             'subscribed'   => $user->subscribed(),
             'subscription' => $subscription ? [
-                'status'       => $subscription->status,
-                'ends_at'      => $subscription->ends_at,
-                'trial_ends_at'=> $subscription->trial_ends_at,
-                'renews_at'    => $subscription->renews_at,
+                'status'         => $subscription->status,
+                'paused_at'      => $subscription->paused_at,
+                'canceled_at'    => $subscription->canceled_at,
+                'trial_ends_at'  => $subscription->trial_ends_at,
+                'next_billed_at' => $subscription->next_billed_at,
             ] : null,
-            'is_unlimited'   => $user->is_unlimited,
-            'payment_method' => $subscription?->card_brand ? [
-                'card' => [
-                    'brand' => $subscription->card_brand,
-                    'last4' => $subscription->card_last_four,
-                ],
-            ] : null,
+            'is_unlimited'        => $user->is_unlimited,
+            'payment_method'      => null,
             'company_name'        => $user->company_name,
             'vat_number'          => $user->vat_number,
             'sites'               => $sites->map(fn($s) => [
@@ -71,25 +68,37 @@ class BillingController extends Controller
             'vat_number'   => $validated['vat_number']   ?? null,
         ])->save();
 
-        $variantId = $validated['plan'] === 'yearly'
-            ? config('lemon-squeezy.yearly_variant_id')
-            : config('lemon-squeezy.monthly_variant_id');
+        $priceId = $validated['plan'] === 'yearly'
+            ? env('PADDLE_YEARLY_PRICE_ID')
+            : env('PADDLE_MONTHLY_PRICE_ID');
 
-        abort_if(empty($variantId), 500, 'Lemon Squeezy variant not configured for this plan.');
+        abort_if(empty($priceId), 500, 'Paddle price not configured for this plan.');
 
-        $checkout = $user
-            ->subscribe($variantId)
-            ->withEmail($user->email)
-            ->withName($user->name)
-            ->withTaxNumber($user->vat_number ?? '')
-            ->redirectTo(route('billing') . '?success=1');
+        $checkout = $user->newSubscription('default', $priceId)
+            ->returnTo(route('billing') . '?success=1')
+            ->checkout();
 
         return Inertia::location($checkout->url);
     }
 
     public function portal(Request $request): Response
     {
-        return Inertia::location($request->user()->customerPortalUrl());
+        $user     = $request->user();
+        $customer = $user->customer;
+
+        abort_unless($customer, 422, 'No billing account found.');
+
+        $isSandbox = (bool) env('PADDLE_SANDBOX', false);
+        $baseUrl   = $isSandbox ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
+
+        $response = Http::withToken(env('PADDLE_API_KEY'))
+            ->post("{$baseUrl}/customers/{$customer->paddle_id}/auth-token");
+
+        $portalUrl = $response->json('data.customer_portal_urls.general.overview');
+
+        abort_unless($portalUrl, 500, 'Unable to generate billing portal URL.');
+
+        return Inertia::location($portalUrl);
     }
 
     public function addSite(Request $request): RedirectResponse
@@ -126,11 +135,14 @@ class BillingController extends Controller
 
     private function currentPlan($user): string
     {
-        $subscription    = $user->subscription();
-        $yearlyVariantId = config('lemon-squeezy.yearly_variant_id');
+        $subscription  = $user->subscription();
+        $yearlyPriceId = env('PADDLE_YEARLY_PRICE_ID');
 
-        if ($subscription && $yearlyVariantId && $subscription->variant_id === (string) $yearlyVariantId) {
-            return 'yearly';
+        if ($subscription && $yearlyPriceId) {
+            $item = $subscription->items()->first();
+            if ($item && $item->price_id === $yearlyPriceId) {
+                return 'yearly';
+            }
         }
 
         return 'monthly';

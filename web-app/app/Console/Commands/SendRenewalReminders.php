@@ -6,7 +6,7 @@ use App\Mail\RenewalReminderMail;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use LemonSqueezy\Laravel\Subscription;
+use Laravel\Paddle\Subscription;
 
 class SendRenewalReminders extends Command
 {
@@ -20,7 +20,8 @@ class SendRenewalReminders extends Command
         $windowEnd   = now()->addDays(7)->endOfDay();
 
         Subscription::where('status', 'active')
-            ->whereBetween('renews_at', [$windowStart, $windowEnd])
+            ->whereNotNull('next_billed_at')
+            ->whereBetween('next_billed_at', [$windowStart, $windowEnd])
             ->with('billable')
             ->get()
             ->each(function (Subscription $sub) use ($targetDate) {
@@ -31,8 +32,9 @@ class SendRenewalReminders extends Command
                     return;
                 }
 
-                $yearlyVariantId = config('lemon-squeezy.yearly_variant_id');
-                $isYearly        = $yearlyVariantId && $sub->variant_id === (string) $yearlyVariantId;
+                $yearlyPriceId = env('PADDLE_YEARLY_PRICE_ID');
+                $item          = $sub->items()->first();
+                $isYearly      = $yearlyPriceId && $item?->price_id === $yearlyPriceId;
 
                 $plan   = $isYearly ? 'Pro Yearly — €199.99/year' : 'Pro Monthly — €19.99/month';
                 $amount = $isYearly ? '€199.99' : '€19.99';

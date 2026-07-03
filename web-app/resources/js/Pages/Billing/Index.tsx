@@ -17,9 +17,10 @@ interface SiteData {
 
 interface SubscriptionData {
   status?: string;
-  ends_at?: string | null;
+  canceled_at?: string | null;
+  paused_at?: string | null;
+  next_billed_at?: string | null;
   trial_ends_at?: string | null;
-  renews_at?: string | null;
   [key: string]: unknown;
 }
 
@@ -181,9 +182,9 @@ export default function BillingIndex({
                         {subscription.status ?? t('billing.active')}
                       </span>
                     </p>
-                    {subscription.ends_at && (
+                    {subscription.canceled_at && (
                       <p className="text-xs text-amber-400 mt-0.5">
-                        Cancels on: {new Date(subscription.ends_at).toLocaleDateString()}
+                        Cancels on: {new Date(subscription.canceled_at).toLocaleDateString()}
                       </p>
                     )}
                   </div>
@@ -382,7 +383,7 @@ export default function BillingIndex({
               <div className="mt-4 flex items-start gap-2 rounded-lg border border-gray-300 dark:border-gray-700/50 bg-gray-100/50 dark:bg-gray-800/50 px-3 py-3">
                 <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-gray-500" />
                 <p className="text-xs text-gray-500">
-                  Payments are securely processed by Lemon Squeezy. Your card details are never stored on our servers.
+                  Payments are securely processed by Paddle. Your card details are never stored on our servers.
                 </p>
               </div>
             </div>

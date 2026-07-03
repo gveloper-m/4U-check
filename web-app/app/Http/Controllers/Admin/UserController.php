@@ -23,7 +23,7 @@ class UserController extends Controller
 
         $users = DB::table('users')
             ->leftJoin('full_audit_reports as far', 'far.user_id', '=', 'users.id')
-            ->leftJoin('lemon_squeezy_subscriptions as sub', function ($j) {
+            ->leftJoin('subscriptions as sub', function ($j) {
                 $j->on('sub.billable_id', '=', 'users.id')
                   ->where('sub.billable_type', '=', 'App\\Models\\User')
                   ->whereRaw("sub.type = 'default'");
@@ -53,8 +53,8 @@ class UserController extends Controller
 
         $stats = [
             'total_users'    => User::count(),
-            'subscribed'     => DB::table('lemon_squeezy_subscriptions')
-                ->whereIn('status', ['active', 'on_trial'])
+            'subscribed'     => DB::table('subscriptions')
+                ->whereIn('status', ['active', 'trialing'])
                 ->where('type', 'default')
                 ->where('billable_type', 'App\\Models\\User')
                 ->distinct('billable_id')->count('billable_id'),
@@ -123,7 +123,7 @@ class UserController extends Controller
         // Subscription
         $subscription = $user->subscription();
 
-        $yearlyVariantId = config('lemon-squeezy.yearly_variant_id');
+        $yearlyPriceId = env('PADDLE_YEARLY_PRICE_ID');
 
         return Inertia::render('Admin/Users/Show', [
             'adminUser' => array_merge($user->only([
@@ -139,12 +139,12 @@ class UserController extends Controller
                 ],
             ]),
             'subscription'  => $subscription ? [
-                'status'        => $subscription->status,
-                'ends_at'       => $subscription->ends_at,
-                'trial_ends_at' => $subscription->trial_ends_at,
-                'renews_at'     => $subscription->renews_at,
-                'plan'          => ($yearlyVariantId && $subscription->variant_id === (string) $yearlyVariantId)
-                                   ? 'yearly' : 'monthly',
+                'status'         => $subscription->status,
+                'trial_ends_at'  => $subscription->trial_ends_at,
+                'next_billed_at' => $subscription->next_billed_at,
+                'canceled_at'    => $subscription->canceled_at,
+                'plan'           => ($yearlyPriceId && $subscription->items()->first()?->price_id === $yearlyPriceId)
+                                    ? 'yearly' : 'monthly',
             ] : null,
             'monthlyCrawls' => $monthlyCrawls,
             'topSites'      => $topSites,
@@ -193,7 +193,7 @@ class UserController extends Controller
     {
         $users = DB::table('users')
             ->leftJoin('full_audit_reports as far', 'far.user_id', '=', 'users.id')
-            ->leftJoin('lemon_squeezy_subscriptions as sub', function ($j) {
+            ->leftJoin('subscriptions as sub', function ($j) {
                 $j->on('sub.billable_id', '=', 'users.id')
                   ->where('sub.billable_type', '=', 'App\\Models\\User')
                   ->whereRaw("sub.type = 'default'");

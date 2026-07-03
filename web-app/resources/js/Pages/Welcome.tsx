@@ -50,6 +50,12 @@ export default function Welcome({ auth }: PageProps) {
               </span>
             </div>
             <nav className="flex items-center gap-3">
+              <Link
+                href="/pricing"
+                className="rounded-lg px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"
+              >
+                {t('welcome.pricingNav')}
+              </Link>
               {auth.user ? (
                 <Link
                   href="/dashboard"

@@ -10,7 +10,7 @@
         "barryvdh/laravel-dompdf": "^3.1",
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/breeze": "^2.4",
-        "lemonsqueezy/laravel": "^1.0",
+        "laravel/cashier-paddle": "^2.0",
         "laravel/framework": "^13.8",
         "laravel/horizon": "^5.47",
         "laravel/sanctum": "^4.0",

@@ -27,6 +27,7 @@ const es = {
     cta: 'Comenzar gratis',
     signin: 'Iniciar sesión',
     getStarted: 'Empezar',
+    pricingNav: 'Pricing',
     featuresTitle: '7 módulos de auditoría en cada escaneo',
     featuresSub: 'Ejecutados simultáneamente. Resultados en minutos.',
     pricingTitle: 'Precios simples',

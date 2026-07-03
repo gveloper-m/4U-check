@@ -69,9 +69,9 @@ function StatCard({ icon: Icon, label, value, sub, color = 'violet' }: {
 function statusBadge(status: string | null, is_unlimited: boolean) {
     if (is_unlimited) return <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400"><Infinity className="h-3 w-3" />Unlimited</span>;
     if (status === 'active')   return <span className="rounded-full bg-emerald-500/15 px-2.5 py-0.5 text-xs font-medium text-emerald-400">Active</span>;
-    if (status === 'on_trial') return <span className="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-400">Trial</span>;
+    if (status === 'trialing') return <span className="rounded-full bg-violet-500/15 px-2.5 py-0.5 text-xs font-medium text-violet-400">Trial</span>;
     if (status === 'past_due') return <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-amber-400">Past due</span>;
-    if (status === 'cancelled' || status === 'paused') return <span className="rounded-full bg-gray-200 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 capitalize">{status}</span>;
+    if (status === 'canceled' || status === 'paused') return <span className="rounded-full bg-gray-200 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 capitalize">{status}</span>;
     return <span className="rounded-full bg-gray-200 dark:bg-gray-700 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">Free</span>;
 }
 
