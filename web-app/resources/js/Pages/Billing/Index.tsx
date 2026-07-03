@@ -259,7 +259,7 @@ export default function BillingIndex({
                     <span className="text-sm font-semibold text-gray-900 dark:text-white">{t('billing.total')}</span>
                     <div className="text-right">
                       <span className="text-2xl font-bold text-gray-900 dark:text-white">€{monthly_total.toFixed(2)}</span>
-                      <span className="text-sm text-gray-500">{current_plan === 'yearly' ? t('billing.perYear') : t('billing.perMonth')} + {t('billing.exclVat')}</span>
+                      <span className="text-sm text-gray-500">{current_plan === 'yearly' ? t('billing.perYear') : t('billing.perMonth')} · {t('billing.exclVat')}</span>
                     </div>
                   </div>
                 </div>
@@ -294,14 +294,14 @@ export default function BillingIndex({
                       label: t('billing.monthly'),
                       price: '€19.99',
                       period: t('billing.perMonth'),
-                      note: `+ ${t('billing.exclVat')} · ${t('billing.billedMonthly')}`,
+                      note: `${t('billing.exclVat')} · ${t('billing.billedMonthly')}`,
                     },
                     {
                       key: 'yearly' as const,
                       label: t('billing.yearly'),
                       price: '€199.99',
                       period: t('billing.perYear'),
-                      note: `+ ${t('billing.exclVat')} · ${t('billing.twoMonthsFree')}`,
+                      note: `${t('billing.exclVat')} · ${t('billing.twoMonthsFree')}`,
                     },
                   ]).map(p => (
                     <button
@@ -380,7 +380,7 @@ export default function BillingIndex({
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-violet-500/25"
                   >
                     {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
-                    {t('billing.subscribeBtn')} — €{previewBase.toFixed(2)} + {t('billing.exclVat')}
+                    {t('billing.subscribeBtn')} — €{previewBase.toFixed(2)} · {t('billing.exclVat')}
                   </button>
                   <p className="text-center text-xs text-gray-600">{t('billing.vatNote')}</p>
                   <p className="text-center text-xs text-gray-500">{t('billing.nofees')}</p>

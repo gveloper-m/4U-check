@@ -211,7 +211,7 @@ export default function Pricing({ auth }: PageProps) {
                     <span className="text-5xl font-extrabold text-gray-900 dark:text-white">€{price.toFixed(2)}</span>
                     <span className="mb-1.5 text-gray-500">{period}</span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">+ excl. VAT · 1 site included</p>
+                  <p className="mt-1 text-xs text-gray-500">VAT incl. · 1 site included</p>
                   {billing === 'yearly' && (
                     <p className="mt-1 text-xs text-emerald-400 font-medium">≈ €16.67/month · 2 months free</p>
                   )}
@@ -254,7 +254,7 @@ export default function Pricing({ auth }: PageProps) {
                     <span className="text-5xl font-extrabold text-gray-900 dark:text-white">€199.99</span>
                     <span className="mb-1.5 text-gray-500">/year</span>
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">+ excl. VAT · 1 site included</p>
+                  <p className="mt-1 text-xs text-gray-500">VAT incl. · 1 site included</p>
                   <p className="mt-1 text-xs text-emerald-400 font-medium">≈ €16.67/month · save ~€40 vs monthly</p>
 
                   <div className="mt-6 rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3">
