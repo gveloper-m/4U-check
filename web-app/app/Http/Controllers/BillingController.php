@@ -74,9 +74,26 @@ class BillingController extends Controller
             'vat_number'   => $validated['vat_number']   ?? null,
         ])->save();
 
-        // Ensure this user has a Paddle customer record in our DB so that
-        // subscription webhooks can be linked back to them after checkout.
-        $customer = $user->customer ?? $user->createAsCustomer();
+        // Ensure a Paddle customer record exists in our DB before checkout opens,
+        // so that subscription.created webhooks can be linked back to this user.
+        if (! $user->customer) {
+            $isSandbox = (bool) config('cashier.sandbox');
+            $apiBase   = $isSandbox ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
+
+            // Reuse existing Paddle customer by email rather than creating a duplicate.
+            $existing = Http::withToken(config('cashier.api_key'))
+                ->get("{$apiBase}/customers", ['email' => $user->email, 'per_page' => 1])
+                ->json('data.0');
+
+            if (! empty($existing['id'])) {
+                $user->customer()->create([
+                    'paddle_id'     => $existing['id'],
+                    'trial_ends_at' => null,
+                ]);
+            } else {
+                $user->createAsCustomer();
+            }
+        }
 
         $priceId = $validated['plan'] === 'yearly'
             ? env('PADDLE_YEARLY_PRICE_ID')
@@ -84,10 +101,7 @@ class BillingController extends Controller
 
         abort_if(empty($priceId), 500, 'Paddle price not configured for this plan.');
 
-        return response()->json([
-            'price_id'    => $priceId,
-            'customer_id' => $customer->paddle_id,
-        ]);
+        return response()->json(['price_id' => $priceId]);
     }
 
     public function portal(Request $request): Response
