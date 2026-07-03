@@ -7,6 +7,7 @@ use App\Rules\PublicUrl;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -104,22 +105,39 @@ class BillingController extends Controller
         return response()->json(['price_id' => $priceId]);
     }
 
-    public function portal(Request $request): Response
+    public function portal(Request $request): Response|RedirectResponse
     {
         $user     = $request->user();
         $customer = $user->customer;
 
         abort_unless($customer, 422, 'No billing account found.');
 
-        $isSandbox = (bool) env('PADDLE_SANDBOX', false);
+        $isSandbox = (bool) config('cashier.sandbox');
         $baseUrl   = $isSandbox ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
 
-        $response = Http::withToken(env('PADDLE_API_KEY'))
+        $response = Http::withToken(config('cashier.api_key'))
             ->post("{$baseUrl}/customers/{$customer->paddle_id}/auth-token");
+
+        if (! $response->successful()) {
+            Log::error('[Paddle] Customer auth-token API error', [
+                'user_id'     => $user->id,
+                'paddle_id'   => $customer->paddle_id,
+                'status'      => $response->status(),
+                'body'        => $response->body(),
+                'sandbox'     => $isSandbox,
+            ]);
+            return back()->with('error', 'Unable to open billing portal. Please try again or contact support.');
+        }
 
         $portalUrl = $response->json('data.customer_portal_urls.general.overview');
 
-        abort_unless($portalUrl, 500, 'Unable to generate billing portal URL.');
+        if (! $portalUrl) {
+            Log::error('[Paddle] No portal URL in auth-token response', [
+                'user_id'  => $user->id,
+                'response' => $response->json(),
+            ]);
+            return back()->with('error', 'Unable to open billing portal. Please try again or contact support.');
+        }
 
         return Inertia::location($portalUrl);
     }
