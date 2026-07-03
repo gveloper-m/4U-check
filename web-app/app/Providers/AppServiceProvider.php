@@ -23,9 +23,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Vite::prefetch(concurrency: 3);
 
-        // Paddle uses its own migrations; we create the tables in our own migration
-        Cashier::ignoreMigrations();
-
         Event::listen(TransactionCompleted::class, HandlePaddlePaymentSuccess::class);
         Event::listen(SubscriptionUpdated::class, HandlePaddleSubscriptionUpdated::class);
 
