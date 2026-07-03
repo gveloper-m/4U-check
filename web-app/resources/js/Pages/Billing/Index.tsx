@@ -1,8 +1,10 @@
 import AppLayout from '@/Layouts/AppLayout';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, useForm, router, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { FormEventHandler, useState } from 'react';
+import { FormEventHandler, useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { initializePaddle, type Paddle } from '@paddle/paddle-js';
+import axios from 'axios';
 import {
   CreditCard, CheckCircle2, XCircle, Infinity, ArrowRight, Loader2,
   ShieldCheck, Globe, Lock, Plus, Trash2, AlertTriangle, X,
@@ -29,6 +31,13 @@ interface PaymentMethodData {
   [key: string]: unknown;
 }
 
+interface PaddleConfig {
+  token: string;
+  environment: 'production' | 'sandbox';
+  monthly_price_id: string;
+  yearly_price_id: string;
+}
+
 interface BillingProps extends PageProps {
   subscribed: boolean;
   subscription: SubscriptionData | null;
@@ -41,6 +50,7 @@ interface BillingProps extends PageProps {
   current_plan: 'monthly' | 'yearly';
   monthly_total: number;
   extra_sites_enabled: boolean;
+  paddle: PaddleConfig;
 }
 
 function SiteRow({ site, canRemove, onRemove, removing }: {
@@ -80,15 +90,36 @@ export default function BillingIndex({
   subscribed, subscription, is_unlimited, payment_method,
   company_name, vat_number, flash,
   sites, site_count, current_plan, monthly_total, extra_sites_enabled,
+  paddle: paddleConfig,
 }: BillingProps) {
   const { t } = useTranslation();
+  const { auth } = usePage<PageProps>().props;
   const planFeatures = t('billing.features', { returnObjects: true }) as string[];
+
+  const paddleRef = useRef<Paddle | null>(null);
+
+  useEffect(() => {
+    if (!paddleConfig?.token) return;
+    initializePaddle({
+      environment: paddleConfig.environment,
+      token: paddleConfig.token,
+      eventCallback(data) {
+        if (data.name === 'checkout.completed') {
+          router.visit('/billing?success=1', { replace: true });
+        }
+      },
+    }).then((instance) => {
+      if (instance) paddleRef.current = instance;
+    });
+  }, [paddleConfig?.token]);
 
   const subscribeForm = useForm<{ plan: 'monthly' | 'yearly'; company_name: string; vat_number: string }>({
     plan: 'monthly',
     company_name: company_name ?? '',
     vat_number: vat_number ?? '',
   });
+
+  const [subscribing, setSubscribing] = useState(false);
 
   const cancelForm  = useForm({});
   const addSiteForm = useForm({ url: '', label: '' });
@@ -97,9 +128,25 @@ export default function BillingIndex({
   const [removingId, setRemovingId]         = useState<number | null>(null);
   const [confirmRemove, setConfirmRemove]   = useState<SiteData | null>(null);
 
-  const handleSubscribe: FormEventHandler = (e) => {
+  const handleSubscribe: FormEventHandler = async (e) => {
     e.preventDefault();
-    subscribeForm.post('/billing/subscribe');
+    setSubscribing(true);
+    try {
+      const response = await axios.post('/billing/subscribe', {
+        plan: subscribeForm.data.plan,
+        company_name: subscribeForm.data.company_name || null,
+        vat_number: subscribeForm.data.vat_number || null,
+      });
+      const priceId: string = response.data.price_id;
+      paddleRef.current?.Checkout.open({
+        items: [{ priceId, quantity: 1 }],
+        customer: { email: auth.user.email },
+      });
+    } catch {
+      subscribeForm.setError('plan', 'Something went wrong. Please try again.');
+    } finally {
+      setSubscribing(false);
+    }
   };
 
   const handlePortal: FormEventHandler = (e) => {
@@ -329,10 +376,10 @@ export default function BillingIndex({
 
                   <button
                     type="submit"
-                    disabled={subscribeForm.processing}
+                    disabled={subscribing}
                     className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-violet-500/25"
                   >
-                    {subscribeForm.processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                    {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                     {t('billing.subscribeBtn')} — €{previewBase.toFixed(2)} + {t('billing.exclVat')}
                   </button>
                   <p className="text-center text-xs text-gray-600">{t('billing.vatNote')}</p>

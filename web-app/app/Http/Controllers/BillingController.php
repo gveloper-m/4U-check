@@ -50,10 +50,16 @@ class BillingController extends Controller
             'current_plan'        => $plan,
             'monthly_total'       => $monthlyTotal,
             'extra_sites_enabled' => $user->is_unlimited || $user->subscribed(),
+            'paddle' => [
+                'token'            => config('cashier.client_side_token'),
+                'environment'      => config('cashier.sandbox') ? 'sandbox' : 'production',
+                'monthly_price_id' => env('PADDLE_MONTHLY_PRICE_ID'),
+                'yearly_price_id'  => env('PADDLE_YEARLY_PRICE_ID'),
+            ],
         ]);
     }
 
-    public function subscribe(Request $request): Response
+    public function subscribe(Request $request): \Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
             'plan'         => 'required|in:monthly,yearly',
@@ -74,11 +80,7 @@ class BillingController extends Controller
 
         abort_if(empty($priceId), 500, 'Paddle price not configured for this plan.');
 
-        $checkout = $user->newSubscription('default', $priceId)
-            ->returnTo(route('billing') . '?success=1')
-            ->checkout();
-
-        return Inertia::location($checkout->url);
+        return response()->json(['price_id' => $priceId]);
     }
 
     public function portal(Request $request): Response
