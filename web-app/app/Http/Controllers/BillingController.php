@@ -113,28 +113,36 @@ class BillingController extends Controller
         abort_unless($customer, 422, 'No billing account found.');
 
         $isSandbox = (bool) config('cashier.sandbox');
-        $baseUrl   = $isSandbox ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
+        $apiBase   = $isSandbox ? 'https://sandbox-api.paddle.com' : 'https://api.paddle.com';
 
         $response = Http::withToken(config('cashier.api_key'))
-            ->post("{$baseUrl}/customers/{$customer->paddle_id}/auth-token");
+            ->post("{$apiBase}/customers/{$customer->paddle_id}/auth-token");
 
         if (! $response->successful()) {
             Log::error('[Paddle] Customer auth-token API error', [
-                'user_id'     => $user->id,
-                'paddle_id'   => $customer->paddle_id,
-                'status'      => $response->status(),
-                'body'        => $response->body(),
-                'sandbox'     => $isSandbox,
+                'user_id'   => $user->id,
+                'paddle_id' => $customer->paddle_id,
+                'status'    => $response->status(),
+                'body'      => $response->body(),
+                'sandbox'   => $isSandbox,
             ]);
             return back()->with('error', 'Unable to open billing portal. Please try again or contact support.');
         }
 
-        $portalUrl = $response->json('data.customer_portal_urls.general.overview');
+        $data = $response->json('data');
+
+        // Use the pre-built URL if Paddle returns it, otherwise build it from the token
+        $portalUrl = $data['customer_portal_urls']['general']['overview']
+            ?? ($data['customer_auth_token']
+                ? ($isSandbox
+                    ? 'https://sandbox-customer.paddle.com/?token=' . $data['customer_auth_token']
+                    : 'https://customer.paddle.com/?token=' . $data['customer_auth_token'])
+                : null);
 
         if (! $portalUrl) {
-            Log::error('[Paddle] No portal URL in auth-token response', [
+            Log::error('[Paddle] Could not derive portal URL from auth-token response', [
                 'user_id'  => $user->id,
-                'response' => $response->json(),
+                'response' => $data,
             ]);
             return back()->with('error', 'Unable to open billing portal. Please try again or contact support.');
         }
