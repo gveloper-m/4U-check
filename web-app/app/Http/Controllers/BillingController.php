@@ -173,8 +173,8 @@ class BillingController extends Controller
         abort_unless($user->subscribed(), 403, 'Active subscription required to add extra sites.');
 
         $priceId = $validated['plan'] === 'yearly'
-            ? env('PADDLE_EXTRA_SITE_YEARLY_PRICE_ID')
-            : env('PADDLE_EXTRA_SITE_MONTHLY_PRICE_ID');
+            ? env('PADDLE_EXTRA_YEARLY_PRICE_ID')
+            : env('PADDLE_EXTRA_MONTHLY_PRICE_ID');
 
         abort_if(empty($priceId), 500, 'Extra site price not configured. Contact support.');
 
