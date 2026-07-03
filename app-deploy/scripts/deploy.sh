@@ -67,6 +67,10 @@ timeout 60 bash -c \
   "until docker compose -f \"$DEPLOY_DIR/docker-compose.yml\" ps php-fpm 2>/dev/null | grep -q 'healthy'; do sleep 3; done" \
   || warning "php-fpm health check not yet passing (continuing anyway)"
 
+# ── Regenerate package discovery (clears any stale bootstrap/cache volume) ───
+info "Regenerating package discovery cache..."
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan package:discover --ansi
+
 # ── Database migrations ──────────────────────────────────────────────────────
 info "Running database migrations..."
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan migrate --force
