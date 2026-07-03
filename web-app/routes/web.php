@@ -91,6 +91,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/billing/subscribe', [BillingController::class, 'subscribe'])->name('billing.subscribe');
     Route::post('/billing/portal', [BillingController::class, 'portal'])->name('billing.portal');
     Route::post('/billing/sites', [BillingController::class, 'addSite'])->name('billing.sites.add');
+    Route::post('/billing/extra-site', [BillingController::class, 'extraSite'])->name('billing.extra-site');
     Route::delete('/billing/sites/{site}', [BillingController::class, 'removeSite'])->name('billing.sites.remove');
 
     // Subscription required for audits

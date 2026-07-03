@@ -3,6 +3,7 @@
 namespace App\Listeners;
 
 use App\Mail\PaymentReceiptMail;
+use App\Models\MonitoredSite;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -25,6 +26,26 @@ class HandlePaddlePaymentSuccess
         // Skip $0 transactions (trials, fully-discounted, etc.)
         if ((int) $transaction->total === 0) {
             return;
+        }
+
+        // Create extra site if this was an extra-site purchase
+        $customData = $event->payload['data']['custom_data'] ?? [];
+        if (! empty($customData['site_url'])) {
+            $alreadyExists = $user->monitoredSites()
+                ->where('url', $customData['site_url'])
+                ->exists();
+
+            if (! $alreadyExists) {
+                $user->monitoredSites()->create([
+                    'url'        => $customData['site_url'],
+                    'label'      => $customData['site_label'] ?? null,
+                    'is_primary' => false,
+                ]);
+                Log::info('[Paddle] Extra site created via webhook', [
+                    'user_id' => $user->id,
+                    'url'     => $customData['site_url'],
+                ]);
+            }
         }
 
         if (! $user->notify_payment) {

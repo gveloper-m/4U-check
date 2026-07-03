@@ -132,10 +132,7 @@ class BillingController extends Controller
         ]);
 
         $user = $request->user();
-
-        if (! $user->is_unlimited) {
-            abort_unless($user->subscribed(), 422, 'Active subscription required to add extra sites.');
-        }
+        abort_unless($user->is_unlimited, 403, 'Payment required to add extra sites.');
 
         $user->monitoredSites()->create([
             'url'        => $validated['url'],
@@ -144,6 +141,26 @@ class BillingController extends Controller
         ]);
 
         return back()->with('success', 'Site added.');
+    }
+
+    public function extraSite(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validated = $request->validate([
+            'plan'  => 'required|in:monthly,yearly',
+            'url'   => ['required', 'url', 'max:255', new PublicUrl],
+            'label' => 'nullable|string|max:255',
+        ]);
+
+        $user = $request->user();
+        abort_unless($user->subscribed(), 403, 'Active subscription required to add extra sites.');
+
+        $priceId = $validated['plan'] === 'yearly'
+            ? env('PADDLE_EXTRA_SITE_YEARLY_PRICE_ID')
+            : env('PADDLE_EXTRA_SITE_MONTHLY_PRICE_ID');
+
+        abort_if(empty($priceId), 500, 'Extra site price not configured. Contact support.');
+
+        return response()->json(['price_id' => $priceId]);
     }
 
     public function removeSite(Request $request, MonitoredSite $site): RedirectResponse

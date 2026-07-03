@@ -122,9 +122,11 @@ export default function BillingIndex({
   const [subscribing, setSubscribing] = useState(false);
 
   const cancelForm  = useForm({});
-  const addSiteForm = useForm({ url: '', label: '' });
+  const addSiteForm = useForm({ url: '', label: '', plan: current_plan as 'monthly' | 'yearly' });
 
   const [showAddSite, setShowAddSite]       = useState(false);
+  const [addingSite, setAddingSite]         = useState(false);
+  const [addSiteError, setAddSiteError]     = useState<string | null>(null);
   const [removingId, setRemovingId]         = useState<number | null>(null);
   const [confirmRemove, setConfirmRemove]   = useState<SiteData | null>(null);
 
@@ -154,11 +156,41 @@ export default function BillingIndex({
     cancelForm.post('/billing/portal');
   };
 
-  const handleAddSite: FormEventHandler = (e) => {
+  const handleAddSite: FormEventHandler = async (e) => {
     e.preventDefault();
-    addSiteForm.post(route('billing.sites.add'), {
-      onSuccess: () => { setShowAddSite(false); addSiteForm.reset(); },
-    });
+    setAddSiteError(null);
+
+    if (is_unlimited) {
+      addSiteForm.post(route('billing.sites.add'), {
+        onSuccess: () => { setShowAddSite(false); addSiteForm.reset(); },
+      });
+      return;
+    }
+
+    // Subscribed users — open Paddle overlay for extra site purchase
+    setAddingSite(true);
+    try {
+      const response = await axios.post('/billing/extra-site', {
+        plan:  addSiteForm.data.plan,
+        url:   addSiteForm.data.url,
+        label: addSiteForm.data.label || null,
+      });
+      const priceId: string = response.data.price_id;
+      paddleRef.current?.Checkout.open({
+        items:      [{ priceId, quantity: 1 }],
+        customer:   { email: auth.user.email },
+        customData: {
+          site_url:   addSiteForm.data.url,
+          site_label: addSiteForm.data.label || null,
+        },
+      });
+      setShowAddSite(false);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message ?? 'Something went wrong. Please try again.';
+      setAddSiteError(msg);
+    } finally {
+      setAddingSite(false);
+    }
   };
 
   const handleRemoveSite = (id: number) => {
@@ -491,13 +523,43 @@ export default function BillingIndex({
               <X className="h-5 w-5" />
             </button>
             <h3 className="mb-1 text-lg font-bold text-gray-900 dark:text-white">{t('billing.addSiteTitle')}</h3>
-            <p className="mb-4 text-sm text-gray-500">
-              {current_plan === 'yearly'
-                ? t('billing.addSiteNote', { price: '€99.99', period: t('billing.perYear') })
-                : t('billing.addSiteNote', { price: '€9.99', period: t('billing.perMonth') })}
-            </p>
+
+            {!is_unlimited && (
+              <p className="mb-4 text-sm text-gray-500">{t('billing.addSiteNotePay')}</p>
+            )}
 
             <form onSubmit={handleAddSite} className="space-y-3">
+              {/* Plan selector — only for paying subscribers */}
+              {!is_unlimited && (
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { key: 'monthly' as const, label: t('billing.monthly'), price: '€9.99', period: t('billing.perMonth') },
+                    { key: 'yearly'  as const, label: t('billing.yearly'),  price: '€99.99', period: t('billing.perYear'), badge: t('billing.bestValue') },
+                  ]).map(p => (
+                    <button
+                      key={p.key}
+                      type="button"
+                      onClick={() => addSiteForm.setData('plan', p.key)}
+                      className={`rounded-xl border p-3 text-left transition-colors ${
+                        addSiteForm.data.plan === p.key
+                          ? 'border-violet-500/60 bg-violet-600/15'
+                          : 'border-gray-300 dark:border-gray-700 hover:border-gray-500'
+                      }`}
+                    >
+                      <div className="text-xs font-medium text-gray-500 mb-0.5">{p.label}</div>
+                      <div className="text-base font-bold text-gray-900 dark:text-white">
+                        {p.price}<span className="text-xs font-normal text-gray-500">{p.period}</span>
+                      </div>
+                      {p.badge && (
+                        <div className="mt-1 inline-block rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-xs font-medium text-emerald-400">
+                          {p.badge}
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div>
                 <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
                   {t('billing.siteUrl')} <span className="text-red-400">*</span>
@@ -524,14 +586,23 @@ export default function BillingIndex({
                   className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-gray-100 dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-500 focus:border-violet-500 focus:outline-none"
                 />
               </div>
+
+              {addSiteError && (
+                <p className="text-xs text-red-400">{addSiteError}</p>
+              )}
+
               <button
                 type="submit"
-                disabled={addSiteForm.processing}
+                disabled={addSiteForm.processing || addingSite}
                 className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 transition-colors"
               >
-                {addSiteForm.processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                {t('billing.addSiteConfirm')}
+                {(addSiteForm.processing || addingSite) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                {is_unlimited ? t('billing.addSiteConfirm') : t('billing.addSitePayConfirm')}
               </button>
+
+              {!is_unlimited && (
+                <p className="text-center text-xs text-gray-500">{t('billing.vatNote')}</p>
+              )}
             </form>
           </div>
         </div>
