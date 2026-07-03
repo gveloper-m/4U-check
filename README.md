@@ -29,8 +29,6 @@ Built for digital agencies, e-commerce businesses, and anyone who needs to monit
 19. [Production: Step-by-Step](#production-step-by-step)
 20. [Useful Commands](#useful-commands)
 
-> **Elorus / myDATA:** See [Monitored Sites & Billing → VAT & Invoicing](#vat--invoicing-elorus--mydata) for the full breakdown and production setup in step 8.
-
 ---
 
 ## Tech Stack
@@ -39,17 +37,16 @@ Built for digital agencies, e-commerce businesses, and anyone who needs to monit
 | Component | Version | Purpose |
 |---|---|---|
 | **Laravel** | 13.x | Full-stack PHP framework — routing, ORM, queues, mail, auth |
-| **PHP** | 8.3 | Runtime |
+| **PHP** | 8.4 | Runtime |
 | **MySQL** | 8.4 | Primary relational database |
 | **Redis** | 7 (Alpine) | Cache store and queue backend |
 | **Laravel Horizon** | 5.47 | Queue worker management and monitoring dashboard |
-| **Laravel Cashier** | 16.5 | Stripe subscription and billing integration |
+| **laravel/cashier-paddle** | ^2.0 | Paddle subscription and billing integration |
 | **Laravel Sanctum** | 4.0 | Token-based API authentication |
 | **Laravel Breeze** | 2.4 | Authentication scaffolding (login, register, password reset, email verify) |
 | **DomPDF** | 3.1 | PDF generation from Blade templates |
 | **Browsershot / Puppeteer** | 5.4 | Headless Chromium control for Core Web Vitals measurement |
 | **phpseclib** | 3.0 | Pure-PHP SSH client (used for MCP Agent auto-deploy) |
-| **Elorus API** | v1.0 | Greek invoicing platform — issues Τιμολόγια / Αποδείξεις and submits to myDATA (ΑΑΔΕ) |
 | **Symfony DomCrawler** | 8.1 | HTML/DOM parsing during audits |
 | **Ziggy** | 2.0 | Exposes Laravel named routes to JavaScript |
 
@@ -94,14 +91,15 @@ Built for digital agencies, e-commerce businesses, and anyone who needs to monit
 - Seven-module parallel website audits with a scored health report
 - Scheduled scans (hourly / daily / weekly / monthly) with email + PDF delivery
 - Full scan history, side-by-side comparison of up to 3 scans, PDF and CSV export
-- Per-site monitored site registry with billing integration for extra sites
+- Per-site monitored site registry with extra-site add-on billing
 - White-label public share links — no 4uTest branding, no login required
 - Agency branding — custom logo, colours, footer text on all exports and shared reports
 - MCP Agent — deploy a Docker container on your server; Claude Code gets live file access, server metrics, and audit results
 - Built-in support ticket system with threaded messages and file attachments
 - Public blog with AI-powered draft generation (Mistral)
 - Full interface, emails, and PDFs in 7 languages
-- Stripe subscription billing with automatic VAT via Stripe Tax; Elorus integration auto-issues the correct Τιμολόγιο or Απόδειξη to myDATA (ΑΑΔΕ) on every payment across all 6 customer/VAT categories
+- **Paddle** subscription billing — Paddle acts as Merchant of Record, automatically collecting and remitting EU VAT for all customer types worldwide
+- Public-facing legal pages: Terms of Service (`/terms`), Privacy Policy (`/privacy`), Refund Policy (`/refund`) — EU/Greek-law and GDPR compliant
 
 ---
 
@@ -290,7 +288,7 @@ Users register the websites they want to track. Each monitored site:
 
 - Has a URL and optional label
 - One site is marked as `is_primary` (the base plan site)
-- Additional sites are "extra sites" — each one triggers a Stripe subscription add-on
+- Additional sites are "extra sites" billed at an add-on rate
 
 Sites are linked to scheduled scans, MCP agents, and audit history.
 
@@ -299,7 +297,7 @@ Sites are linked to scheduled scans, MCP agents, and audit history.
 | Plan | Price | Billing |
 |---|---|---|
 | Pro Monthly | €19.99/month | Monthly recurring |
-| Pro Yearly | €199.99/year | Yearly recurring (~40% saving) |
+| Pro Yearly | €199.99/year | Yearly recurring (≈ 2 months free) |
 
 ### Extra Site Add-Ons
 
@@ -308,56 +306,49 @@ Sites are linked to scheduled scans, MCP agents, and audit history.
 | Extra Site Monthly | €9.99/month | per additional site |
 | Extra Site Yearly | €99.99/year | per additional site |
 
-Each additional site beyond the first is billed as a separate Stripe subscription item. The billing page shows a live breakdown: base plan + each extra site.
-
 ### Scan Limits
 
 - **30 scans/month** per registered site on a paid plan
 - Admins can grant `is_unlimited` (bypass all limits) or add a `crawl_quota_bonus` to any account
 
-### VAT & Invoicing (Elorus + myDATA)
+### VAT & Invoicing
 
-4uTest integrates with **Elorus** — a Greek accounting platform that connects directly to **myDATA (ΑΑΔΕ)**. On every successful Stripe payment, the platform automatically determines the correct document type, VAT treatment, and myDATA classification, creates the document in Elorus, and submits it to ΑΑΔΕ on your behalf.
+4uTest uses **Paddle** as its Merchant of Record. Paddle collects payment, applies the correct VAT rate for the customer's country, issues a compliant receipt, and remits VAT to the appropriate tax authority. No separate invoicing integration is required.
 
-#### Customer categories
+Paddle handles:
+- EU B2C VAT via the OSS scheme
+- B2B reverse-charge (0% VAT for EU companies with a valid VIES number)
+- Non-EU sales
+- Greek B2C and B2B transactions
 
-| Category | Document | VAT | myDATA type |
-|---|---|---|---|
-| **GR B2B** (Greek company with VAT) | Τιμολόγιο Παροχής Υπηρεσιών | 24% | 1.1 — Τιμολόγιο Πώλησης |
-| **GR B2C** (Greek individual) | Απόδειξη Λιανικής Υπηρεσιών | 24% | 11.1 — Απόδειξη Λιανικής |
-| **EU B2B** (EU company, valid VIES) | Τιμολόγιο — Ενδοκοινοτική Παροχή | 0% (Reverse Charge / Άρθρο 14) | 1.1 with VAT exemption category 1 |
-| **EU B2C** (EU individual, no valid VAT) | Απόδειξη Λιανικής (OSS) | Local country rate via Stripe Tax | 11.1 |
-| **Non-EU B2B** (company outside EU) | Τιμολόγιο — Εξαγωγή Υπηρεσιών | 0% (Εκτός πεδίου ΦΠΑ / Άρθρο 14) | 1.1 with VAT exemption category 7 |
-| **Non-EU B2C** (individual outside EU) | Απόδειξη Λιανικής | 0% (Εκτός πεδίου) | 11.1 with VAT exemption category 7 |
+Customers receive a Paddle-issued payment receipt. An additional payment confirmation email is sent by 4uTest via `HandlePaddlePaymentSuccess` on every `TransactionCompleted` webhook event.
 
-#### How it works
+### Paddle Database Tables
 
-1. **Stripe fires `invoice.paid`** — the webhook hits `StripeWebhookController::handleInvoicePaid()`.
-2. **Country and VAT detection** — the handler reads `invoice.customer_address.country` and `invoice.customer_tax_ids` from the Stripe payload. Falls back to the VAT number the customer entered at checkout.
-3. **VIES validation** — for EU customers with a VAT number the platform calls the EU VIES REST API (`ec.europa.eu/taxation_customs/vies`) in real time to verify it. Invalid or non-responding VIES → treated as B2C.
-4. **Elorus contact** — the customer is found in Elorus by VAT number, or created fresh. The Elorus contact ID is cached on the user record to avoid duplicates.
-5. **Document creation** — `ElorusService` calls `POST /v1.0/{org_id}/invoices/` with the correct `documenttype_id`, `client_id`, rows, and taxes. For 0% documents the correct `vat_exempt_category` is included for myDATA.
-6. **myDATA submission** — Elorus automatically transmits the document to ΑΑΔΕ via myDATA. No separate myDATA integration is needed.
+Cashier Paddle manages the following tables (migrations are in the project to allow custom columns):
 
-> **EU B2C / OSS note:** Full OSS compliance requires both Stripe Tax (`STRIPE_TAX_ENABLED=true`) and OSS mode enabled in your Elorus account. With Stripe Tax on, the correct local VAT rate is already computed by Stripe and the service extracts it from the invoice. Without Stripe Tax, EU B2C documents are created at 0% and flagged in the logs.
-
-#### Required env vars
-
-```env
-ELORUS_API_TOKEN=                 # Elorus → Settings → API & Integrations
-ELORUS_ORGANIZATION_ID=           # Visible in your Elorus dashboard URL
-ELORUS_TAX_24_ID=                 # GET /v1.0/{org_id}/taxdefinitions/
-ELORUS_DOCTYPE_INVOICE_ID=        # GET /v1.0/{org_id}/documenttypes/ → Τιμολόγιο 1.1
-ELORUS_DOCTYPE_RECEIPT_ID=        # GET /v1.0/{org_id}/documenttypes/ → Απόδειξη 11.1
-```
-
-#### Key files
-
-| File | Purpose |
+| Table | Purpose |
 |---|---|
-| `app/Services/ElorusService.php` | Full customer categorisation, VIES validation, Elorus API calls |
-| `app/Http/Controllers/StripeWebhookController.php` | Extends Cashier's webhook to hook `invoice.paid` |
-| `config/services.php` → `elorus` key | All Elorus configuration |
+| `customers` | Maps users to Paddle customer IDs (polymorphic `billable_type` / `billable_id`) |
+| `subscriptions` | One row per subscription; `status`, `next_billed_at` (custom column), `canceled_at`, `paused_at` |
+| `subscription_items` | Price ID and quantity per subscription |
+| `transactions` | Payment history with `paddle_id`, `total`, `currency`, `billed_at` |
+
+`next_billed_at` is populated and kept current by `HandlePaddleSubscriptionUpdated`, which fires on every `subscription.updated` webhook and reads `data.next_billed_at` from the Paddle payload.
+
+`Cashier::ignoreMigrations()` is called in `AppServiceProvider` so Cashier's own bundled migrations never run — the project owns every migration file.
+
+### Subscription Status Values
+
+Paddle uses: `active`, `trialing`, `paused`, `past_due`, `canceled` (one `l`).
+
+### Subscription Management
+
+All subscription management (cancel, update payment method, download invoices) happens through the **Paddle Customer Portal**. The portal URL is obtained by calling Paddle's REST API (`POST /customers/{paddle_id}/auth-token`) and reading `customer_portal_urls.general.overview` from the response. The "Manage subscription" button on the billing page redirects users there via `Inertia::location()`.
+
+### Renewal Reminders
+
+The `emails:renewal-reminders` artisan command runs daily. It queries subscriptions with `status = active` whose `next_billed_at` falls within the next 7 days and sends a `RenewalReminderMail` to each subscriber.
 
 ### Trial Codes
 
@@ -367,10 +358,6 @@ Admins can generate one-time trial access codes in the format `XXXX-XXXX`. Each 
 - Has an optional expiry date
 - Can optionally be linked to a specific site URL
 - Tracks who created it, who used it, and when
-
-### Subscription Management
-
-All subscription management happens through the **Stripe billing portal** — customers update their payment method, download invoices, manage extra site subscriptions, or cancel without contacting support. On cancel, access continues until the end of the current billing period.
 
 ---
 
@@ -453,7 +440,7 @@ Click **Deploy Agent**. The platform SSHes into the server using phpseclib and r
 
 No other containers, files, or services on the server are touched. No SSH tunnel is needed — Claude Code connects directly to the server on port 8765.
 
-SSH credentials are transmitted over HTTPS, used for a single SSH session, and never written to the database or any log. See §9 of the Terms of Service for the full disclosure.
+SSH credentials are transmitted over HTTPS, used for a single SSH session, and never written to the database or any log. See §10 of the Terms of Service for the full disclosure.
 
 > **Cloud provider note:** If your server is behind a cloud firewall (AWS Security Groups, DigitalOcean Cloud Firewall, Hetzner Firewall, etc.), you must also open port 8765 there manually — the script can only control the OS-level firewall.
 
@@ -581,8 +568,8 @@ Accessible at `/admin` — requires `is_admin = true` on the user account.
 | Capability | Detail |
 |---|---|
 | User list | All users, searchable by name or email |
-| Stats bar | Total users, subscribed, unlimited, month / total crawls, open tickets |
-| Per-user view | 6-month crawl activity chart; top 10 audited sites with URL, crawl count, avg score, last crawl date; Stripe subscription data (status, plan, next billing date) |
+| Stats bar | Total users, subscribed (active + trialing), unlimited, month / total crawls, open tickets |
+| Per-user view | 6-month crawl activity chart; top 10 audited sites with URL, crawl count, avg score, last crawl date; Paddle subscription data (status, plan, next billing date) |
 | Actions | Grant / revoke `is_admin`; grant / revoke `is_unlimited`; add `crawl_quota_bonus`; send direct email |
 | Export | Full user list as CSV |
 
@@ -626,9 +613,9 @@ Accessible at `/admin` — requires `is_admin = true` on the user account.
 
 | Feature | Implementation |
 |---|---|
-| CSRF protection | Laravel built-in; Inertia-aware; exempt for API routes using token auth |
+| CSRF protection | Laravel built-in; Inertia-aware; `/paddle/webhook` exempt (signature-verified by Cashier) |
 | Authentication | Laravel Breeze (session-based) + Sanctum (token-based for API) |
-| Subscription gate | Custom `subscription` middleware — checks active Stripe sub or `is_unlimited` |
+| Subscription gate | Custom `subscription` middleware — checks active/trialing Paddle sub or `is_unlimited` |
 | Admin gate | Custom `admin` middleware — checks `is_admin = true` |
 | Rate limiting | Per-route throttle middleware (see table below) |
 | Trusted proxies | `TrustProxies` middleware; configured for Nginx reverse proxy |
@@ -669,6 +656,7 @@ All routes in `routes/api.php`. Agent heartbeat uses Bearer token; all other aut
 | `/api/audit/catalog-integrity` | POST/GET | Sanctum | Single Catalog module |
 | `/api/audit/accessibility` | POST/GET | Sanctum | Single Accessibility module |
 | `/api/user` | GET | Sanctum | Current authenticated user |
+| `/paddle/webhook` | POST | Paddle signature | Cashier Paddle webhook — subscription and transaction events |
 
 ---
 
@@ -689,6 +677,7 @@ All routes in `routes/api.php`. Agent heartbeat uses Bearer token; all other aut
 |---|---|---|
 | `scans:run` | Every minute | Finds due scheduled scans and dispatches them |
 | `blog:publish-scheduled` | Every minute | Publishes scheduled blog posts whose `scheduled_at` has passed |
+| `emails:renewal-reminders` | Daily | Sends renewal reminder emails to subscribers whose `next_billed_at` is within 7 days |
 
 **Queue backend:** Redis. **Queue monitor:** Laravel Horizon (runs as a separate Docker container).
 
@@ -701,6 +690,10 @@ All emails are queued (never sent inline) and respect the recipient's language s
 | Email | Trigger | Recipient | Attachments |
 |---|---|---|---|
 | Scan completed | Scheduled scan finishes with notifications enabled | Site owner | PDF audit report |
+| Payment receipt | Paddle `TransactionCompleted` webhook (`HandlePaddlePaymentSuccess`) | Subscriber | None |
+| Renewal reminder | `emails:renewal-reminders` — 7 days before `next_billed_at` | Subscriber | None |
+| Refund request (admin notification) | User submits form at `/refund` | Admin (`ADMIN_SUPPORT_EMAIL`) | None |
+| Refund request (confirmation) | Same form submission | Form submitter | None |
 | New ticket | User opens a support ticket | Admin (`ADMIN_SUPPORT_EMAIL`) | None |
 | Ticket reply | Admin replies to a ticket | Ticket author | None |
 | Admin direct email | Admin sends from user management panel | Any user | None |
@@ -715,7 +708,7 @@ Everything below takes you from a blank server to a live production deployment.
 
 ---
 
-### This Deployment (4utest.com — June 2026)
+### This Deployment (4utest.com — July 2026)
 
 Actual production setup for reference:
 
@@ -730,8 +723,7 @@ Actual production setup for reference:
 | Domain | 4utest.com (registered via Papaki.gr) |
 | Email provider | Brevo SMTP (free tier — 300 emails/day) |
 | AI (blog drafts) | Mistral AI (`mistral-large-latest`) |
-| Payments | Stripe — currently in **test mode** (see [Switch to live mode](#12-switch-to-stripe-live-mode)) |
-| Invoicing | Elorus — **not yet configured** |
+| Payments | Paddle (sandbox during development, live for production) |
 
 **APP_KEY** was generated via:
 ```bash
@@ -746,7 +738,7 @@ docker compose -f docker-compose.yml run --rm php-fpm php artisan key:generate -
 - A VPS with at least **2 GB RAM** and **20 GB disk** (4 GB RAM recommended if you expect concurrent audits)
 - **Ubuntu 22.04, 24.04, or 26.04** (the scripts assume Debian-based Linux)
 - A **domain name** with access to its DNS settings
-- A **Stripe account** (stripe.com)
+- A **Paddle account** (paddle.com)
 - A **Brevo account** (brevo.com) for transactional email — the free plan sends up to 300 emails/day
 - SSH access to the server
 
@@ -860,75 +852,68 @@ TRUSTED_PROXIES=*
 TRUSTED_HOSTS=yourdomain.com
 ```
 
-Leave Stripe, mail, and Mistral fields blank for now — you'll fill them in the steps below.
+Leave Paddle and mail fields blank for now — you'll fill them in the steps below.
 
 ---
 
-### 5. Set up Stripe
+### 5. Set up Paddle
+
+Paddle is the Merchant of Record — it handles payment collection, VAT, and invoicing for all customer types worldwide.
 
 #### 5a. Create your products and prices
 
-Go to [dashboard.stripe.com](https://dashboard.stripe.com) → **Products** → **Add product**.
+Log into [vendors.paddle.com](https://vendors.paddle.com) (sandbox) or the live dashboard.
 
-Create four products:
+Go to **Catalog → Products** → **New product**.
 
-| Product name | Price | Billing period | Tax behaviour |
-|---|---|---|---|
-| 4uTest Pro Monthly | €19.99 | Monthly recurring | **Exclusive of tax** |
-| 4uTest Pro Yearly | €199.99 | Yearly recurring | **Exclusive of tax** |
-| 4uTest Extra Site Monthly | €9.99 | Monthly recurring | **Exclusive of tax** |
-| 4uTest Extra Site Yearly | €99.99 | Yearly recurring | **Exclusive of tax** |
+Create two products:
 
-The base plan includes one monitored site. The extra site products are add-ons users subscribe to for each additional site. Setting "Exclusive of tax" means Stripe adds VAT on top based on the customer's country — correct for EU compliance.
+| Product name | Price | Billing period |
+|---|---|---|
+| 4uTest Pro Monthly | €19.99 | Monthly recurring |
+| 4uTest Pro Yearly | €199.99 | Yearly recurring |
 
-Copy the `price_...` ID from each product into `.env`:
+After creating each product, copy the **Price ID** (format: `pri_...`):
+
 ```env
-STRIPE_MONTHLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxxxxxxxx
-STRIPE_YEARLY_PRICE_ID=price_xxxxxxxxxxxxxxxxxxxxxxxx
-STRIPE_MONTHLY_EXTRA_SITE_PRICE_ID=price_xxxxxxxxxxxxxxxxxxxxxxxx
-STRIPE_YEARLY_EXTRA_SITE_PRICE_ID=price_xxxxxxxxxxxxxxxxxxxxxxxx
+PADDLE_MONTHLY_PRICE_ID=pri_xxxxxxxxxxxxxxxxxxxxxxxx
+PADDLE_YEARLY_PRICE_ID=pri_xxxxxxxxxxxxxxxxxxxxxxxx
 ```
 
-#### 5b. Get your API keys
+#### 5b. Get your API key and client-side token
 
-Stripe dashboard → **Developers** → **API keys**:
+Paddle dashboard → **Developer Tools → Authentication**:
+
+- **API key** (server-side): used for server-side Paddle API calls
+- **Client-side token**: used by Paddle.js in the browser to open the checkout overlay
+
 ```env
-STRIPE_KEY=pk_live_...      # Publishable key (starts with pk_live)
-STRIPE_SECRET=sk_live_...   # Secret key (starts with sk_live)
+PADDLE_API_KEY=pdl_...
+PADDLE_CLIENT_SIDE_TOKEN=live_...
 ```
 
-#### 5c. Create a webhook
+#### 5c. Create a webhook endpoint
 
-Stripe dashboard → **Developers** → **Webhooks** → **Add endpoint**:
+Paddle dashboard → **Developer Tools → Notifications** → **New destination**:
 
-- **Endpoint URL:** `https://yourdomain.com/stripe/webhook`
-- **Events:** select `customer.subscription.*` and `invoice.*`
+- **URL:** `https://yourdomain.com/paddle/webhook`
+- **Events:** subscribe to `subscription.*` and `transaction.*`
 
-Click **Add endpoint**, then copy the **Signing secret**:
+After saving, copy the **Secret key**:
+
 ```env
-STRIPE_WEBHOOK_SECRET=whsec_...
+PADDLE_WEBHOOK_SECRET=pdl_ntfset_...
 ```
 
-This is what keeps your local database in sync with Stripe — when a payment succeeds, fails, or a subscription changes, Stripe calls this endpoint and the app updates accordingly.
+Webhooks are verified by Cashier Paddle using this secret.
 
-#### 5d. Enable the customer billing portal
+#### 5d. Sandbox vs live mode
 
-Stripe dashboard → **Settings** → **Billing** → **Customer portal** → Enable it.
-
-This is the "Manage subscription" page where customers can update their card, download invoices, or cancel without contacting you.
-
-#### 5e. Enable VAT collection (recommended)
-
-If you have customers in the EU:
-
-1. Stripe dashboard → **Tax** → **Get started** → Enable Stripe Tax
-2. Add your tax registration for each country you sell in (at minimum Greece at 24%)
-3. Set in `.env`:
 ```env
-STRIPE_TAX_ENABLED=true
+PADDLE_SANDBOX=true    # true = sandbox (testing), false = live (production)
 ```
 
-Stripe then automatically applies the correct VAT rate, gives 0% reverse charge to EU businesses with a valid VAT number, and includes everything on the invoice.
+In sandbox mode use [sandbox-vendors.paddle.com](https://sandbox-vendors.paddle.com). Switch to `false` and your live dashboard credentials when ready for real payments.
 
 ---
 
@@ -969,7 +954,7 @@ MAIL_USERNAME=xxxxxxx@smtp-brevo.com
 MAIL_PASSWORD=your-brevo-smtp-key
 MAIL_FROM_ADDRESS=noreply@yourdomain.com
 MAIL_FROM_NAME="4uTest"
-ADMIN_SUPPORT_EMAIL=you@yourdomain.com   # where new ticket alerts go
+ADMIN_SUPPORT_EMAIL=you@yourdomain.com   # where new ticket and refund request alerts go
 ```
 
 ---
@@ -986,67 +971,7 @@ This is only used for AI blog post generation in the admin panel. Leave it empty
 
 ---
 
-### 8. Set up Elorus (Greek invoicing & myDATA)
-
-Elorus connects to myDATA (ΑΑΔΕ) and automatically issues the correct document — invoice or receipt, with the right VAT — for every Stripe payment.
-
-#### 8a. Create an Elorus account
-
-Go to [elorus.com](https://elorus.com) and register your business. Activate the myDATA connection in **Settings → myDATA** and ensure your company details (ΑΦΜ, ΔΟΥ, address) match ΑΑΔΕ records exactly.
-
-#### 8b. Get your API token and organisation ID
-
-Elorus → **Settings → API & Integrations** → Create an API token.
-
-Your organisation ID is the number that appears in the URL when you are logged in: `https://app.elorus.com/{organisation_id}/...`
-
-```env
-ELORUS_API_TOKEN=your-elorus-token
-ELORUS_ORGANIZATION_ID=12345
-```
-
-#### 8c. Look up your tax definition ID (24% ΦΠΑ)
-
-Run this from your server (or any machine with curl):
-
-```bash
-curl -s -H "Authorization: Token YOUR_TOKEN" \
-  "https://api.elorus.com/v1.0/YOUR_ORG_ID/taxdefinitions/" | python3 -m json.tool
-```
-
-Find the entry where `rate` is `24` and copy its `id`.
-
-```env
-ELORUS_TAX_24_ID=5   # example
-```
-
-#### 8d. Look up your document type IDs
-
-```bash
-curl -s -H "Authorization: Token YOUR_TOKEN" \
-  "https://api.elorus.com/v1.0/YOUR_ORG_ID/documenttypes/" | python3 -m json.tool
-```
-
-Find:
-- The entry for **Τιμολόγιο Πώλησης** (myDATA type 1.1) → `ELORUS_DOCTYPE_INVOICE_ID`
-- The entry for **Απόδειξη Λιανικής** (myDATA type 11.1) → `ELORUS_DOCTYPE_RECEIPT_ID`
-
-```env
-ELORUS_DOCTYPE_INVOICE_ID=1   # example
-ELORUS_DOCTYPE_RECEIPT_ID=3   # example
-```
-
-#### 8e. For EU B2C / OSS compliance
-
-Enable both:
-1. Stripe Tax (`STRIPE_TAX_ENABLED=true`) — so Stripe computes the correct local VAT per EU country
-2. OSS mode in Elorus (**Settings → OSS/MOSS**) — so Elorus can issue receipts with foreign EU VAT rates
-
-Without these two, EU B2C receipts are created at 0% VAT and you will need to handle OSS separately with your accountant.
-
----
-
-### 9. Obtain the SSL certificate (run once)
+### 8. Obtain the SSL certificate (run once)
 
 ```bash
 cd /var/www/4utest/app-deploy
@@ -1066,7 +991,7 @@ The certificate auto-renews every 12 hours via the Certbot container — you nev
 
 ---
 
-### 10. Deploy the application
+### 9. Deploy the application
 
 ```bash
 cd /var/www/4utest/app-deploy
@@ -1074,11 +999,13 @@ chmod +x scripts/deploy.sh
 ./scripts/deploy.sh
 ```
 
-This script does everything: pulls the latest code, builds the Docker images, waits for MySQL to be healthy, runs database migrations, caches the Laravel config/routes/views, and starts all seven containers (Nginx, PHP-FPM, Horizon, Scheduler, MySQL, Redis, Certbot).
+This script does everything: pulls the latest code, builds the Docker images, waits for MySQL to be healthy, runs database migrations (`php artisan migrate --force`), caches the Laravel config/routes/views, and starts all seven containers (Nginx, PHP-FPM, Horizon, Scheduler, MySQL, Redis, Certbot).
+
+> **First deploy note:** Migrations create the Paddle tables (`customers`, `subscriptions`, `subscription_items`, `transactions`). `Cashier::ignoreMigrations()` in `AppServiceProvider` ensures Cashier's own bundled migrations never conflict with the project's custom schema.
 
 ---
 
-### 11. Create the admin account
+### 10. Create the admin account
 
 Register at `https://yourdomain.com/register`, then promote to admin:
 
@@ -1095,10 +1022,11 @@ exit
 
 ---
 
-### 12. Test everything
+### 11. Test everything
 
 **App basics**
 - [ ] `https://yourdomain.com` loads (green padlock)
+- [ ] `/pricing`, `/terms`, `/privacy`, `/refund` all load correctly
 - [ ] Can register a new account
 - [ ] Can log in
 
@@ -1106,12 +1034,14 @@ exit
 - [ ] Trigger a password reset — email arrives within 1–2 minutes
 - [ ] Open a support ticket — admin receives notification email
 - [ ] Reply to the ticket as admin — user receives notification email
+- [ ] Submit refund form at `/refund` — admin receives notification email
 
-**Stripe**
-- [ ] Use Stripe test card (`4242 4242 4242 4242`) to subscribe
-- [ ] Stripe Checkout opens with VAT calculation
-- [ ] After payment, subscription is active in the billing page
-- [ ] "Manage subscription" opens the Stripe billing portal
+**Paddle (sandbox)**
+- [ ] Click subscribe on the billing page — Paddle checkout opens
+- [ ] Complete test purchase — subscription shows as active in billing page
+- [ ] "Manage subscription" redirects to Paddle Customer Portal
+- [ ] Payment receipt email arrives after successful transaction
+- [ ] Paddle webhook shows as `200 OK` in the Paddle dashboard notification log
 
 **Audits**
 - [ ] Run a manual audit — completes within 60 seconds
@@ -1125,29 +1055,37 @@ exit
 - [ ] Email with PDF arrives after scan completes (allow 1–2 minutes)
 
 **Admin panel**
-- [ ] `/admin/users` shows the user list
+- [ ] `/admin/users` shows the user list with subscription status
 - [ ] `/admin/monitoring` shows server metrics and queue status with no failed jobs
 
 ---
 
-### 13. Switch to Stripe live mode
+### 12. Switch Paddle to live mode
 
-The steps above used test keys. Once you have tested everything:
+Once testing is complete in sandbox:
 
-1. Go to Stripe dashboard → toggle from **Test mode** to **Live mode** (top left)
-2. Repeat step 5a — create the same four products and prices in live mode
-3. Get your live API keys (step 5b) and live webhook (step 5c)
-4. Update `.env` with all the live `pk_live_`, `sk_live_`, `whsec_`, and `price_` values
-5. Redeploy:
-
-```bash
-cd /var/www/4utest/app-deploy
-./scripts/deploy.sh
-```
+1. Log into your **live** Paddle dashboard (vendors.paddle.com — toggle off sandbox)
+2. Repeat step 5a — create the same two products and prices in live mode
+3. Get live API key and client-side token (step 5b)
+4. Create a live webhook endpoint (step 5c) pointing to `https://yourdomain.com/paddle/webhook`
+5. Update `.env`:
+   ```env
+   PADDLE_SANDBOX=false
+   PADDLE_API_KEY=pdl_live_...
+   PADDLE_CLIENT_SIDE_TOKEN=live_...
+   PADDLE_WEBHOOK_SECRET=pdl_ntfset_live_...
+   PADDLE_MONTHLY_PRICE_ID=pri_live_...
+   PADDLE_YEARLY_PRICE_ID=pri_live_...
+   ```
+6. Redeploy:
+   ```bash
+   cd /var/www/4utest/app-deploy
+   ./scripts/deploy.sh
+   ```
 
 ---
 
-### 14. Set up database backups
+### 13. Set up database backups
 
 The deploy has no automatic backup — set one up before you have real users.
 
@@ -1162,7 +1100,7 @@ Or use a managed backup service — DigitalOcean Spaces, AWS S3, or Backblaze B2
 
 ---
 
-### 15. Set up GitHub Actions secrets (required for the MCP Agent image)
+### 14. Set up GitHub Actions secrets (required for the MCP Agent image)
 
 The MCP Agent Docker image (`4utest/mcp-agent:latest`) is built and pushed to Docker Hub automatically whenever you push changes to the `4u-test-agent/` directory. This requires two secrets in your GitHub repository:
 
@@ -1213,6 +1151,9 @@ docker compose exec php-fpm php artisan config:clear
 
 # Check Horizon queue status
 docker compose exec php-fpm php artisan horizon:status
+
+# Send renewal reminders manually
+docker compose exec php-fpm php artisan emails:renewal-reminders
 ```
 
 ---
