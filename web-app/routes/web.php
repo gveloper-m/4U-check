@@ -157,4 +157,4 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
 });
 
 // Paddle webhook — CSRF-exempt (see bootstrap/app.php), signature verified by Cashier Paddle
-\Laravel\Paddle\Paddle::routes();
+\Laravel\Paddle\Cashier::routes();
