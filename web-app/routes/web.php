@@ -155,6 +155,3 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::patch('/trial-codes/{trialCode}/note', [AdminTrialCodeController::class, 'updateNote'])->name('trial-codes.update-note');
     Route::delete('/trial-codes/{trialCode}', [AdminTrialCodeController::class, 'destroy'])->name('trial-codes.destroy');
 });
-
-// Paddle webhook — CSRF-exempt (see bootstrap/app.php), signature verified by Cashier Paddle
-\Laravel\Paddle\Cashier::routes();
