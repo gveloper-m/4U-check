@@ -458,13 +458,6 @@ export default function BillingIndex({
                 <div className="flex flex-col items-center justify-center rounded-xl border border-gray-300 dark:border-gray-700 bg-gray-100/50 dark:bg-gray-800/50 py-8 text-center">
                   <CreditCard className="mb-2 h-8 w-8 text-gray-600" />
                   <p className="text-sm text-gray-500">No payment method on file</p>
-                  {subscribed && (
-                    <form onSubmit={handlePortal} className="mt-3">
-                      <button type="submit" disabled={cancelForm.processing} className="text-xs text-violet-400 hover:text-violet-300">
-                        Add payment method
-                      </button>
-                    </form>
-                  )}
                 </div>
               )}
 
