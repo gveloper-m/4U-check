@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\FullAuditReport;
 use App\Models\TrialCode;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\Validation\ValidationException;
@@ -81,9 +83,31 @@ class RegisteredUserController extends Controller
             $user->forceFill(['trial_ends_at' => now()->addDays(7)])->save();
         }
 
+        // Claim the guest scan if this browser has one
+        $claimedReportId = null;
+        $guestToken = $request->cookie('guest_scan_token');
+        if ($guestToken) {
+            $claimed = DB::table('full_audit_reports')
+                ->whereNull('user_id')
+                ->where('guest_token', $guestToken)
+                ->select('id')
+                ->first();
+
+            if ($claimed) {
+                DB::table('full_audit_reports')
+                    ->where('id', $claimed->id)
+                    ->update(['user_id' => $user->id, 'updated_at' => now()]);
+                $claimedReportId = $claimed->id;
+            }
+        }
+
         event(new Registered($user));
 
         Auth::login($user);
+
+        if ($claimedReportId) {
+            return redirect()->route('audits.show', $claimedReportId);
+        }
 
         return redirect(route('billing', absolute: false));
     }

@@ -14,7 +14,6 @@ export interface User {
     agency_primary_color?: string | null;
     agency_secondary_color?: string | null;
     agency_footer_text?: string | null;
-    free_scan_used?: boolean;
 }
 
 export interface FullAuditReport {

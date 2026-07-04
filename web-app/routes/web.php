@@ -14,6 +14,7 @@ use App\Http\Controllers\TicketController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CookieConsentController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\GuestScanController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ScheduledScanController;
@@ -35,32 +36,33 @@ Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'sit
 Route::get('/robots.txt',  [\App\Http\Controllers\SitemapController::class, 'robots'])->name('robots');
 
 // Public
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'seo' => [
-            'title'       => '4utest — Website Audit Platform',
-            'description' => '4utest runs 7 deep audits in parallel — SEO, security, performance, broken links, e-commerce, marketing tracking, and accessibility — giving you a complete health score in minutes.',
-            'canonical'   => url('/'),
-            'type'        => 'website',
-            'image'       => config('app.url') . '/og-image.png',
-            'schema'      => [
-                '@context'            => 'https://schema.org',
-                '@type'               => 'SoftwareApplication',
-                'name'                => '4utest',
-                'description'         => '4utest runs 7 deep audits in parallel — SEO, security, performance, broken links, e-commerce, marketing tracking, and accessibility.',
-                'applicationCategory' => 'WebApplication',
-                'operatingSystem'     => 'All',
-                'url'                 => config('app.url'),
-                'offers'              => [
-                    '@type'           => 'Offer',
-                    'price'           => '19.99',
-                    'priceCurrency'   => 'EUR',
-                    'unitText'        => 'MON',
-                ],
-            ],
-        ],
-    ]);
+Route::get('/', function (Illuminate\Http\Request $request) {
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+
+    $guestToken = $request->cookie('guest_scan_token');
+
+    $alreadyScanned = \App\Models\FullAuditReport::whereNull('user_id')
+        ->where('created_at', '>', now()->subDays(30))
+        ->where(function ($q) use ($request, $guestToken) {
+            $q->where('guest_ip', $request->ip());
+            if ($guestToken) {
+                $q->orWhere('guest_token', $guestToken);
+            }
+        })
+        ->exists();
+
+    return Inertia::render('Landing', ['alreadyScanned' => $alreadyScanned]);
 })->name('home');
+
+// Guest free scan (no auth required)
+Route::post('/scan', [GuestScanController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('scan.store');
+Route::get('/scan/{uuid}/status', [GuestScanController::class, 'status'])
+    ->where('uuid', '[0-9a-f-]{36}')
+    ->name('scan.status');
 Route::get('/terms',   fn () => Inertia::render('Terms'))->name('terms');
 Route::get('/privacy', fn () => Inertia::render('Privacy'))->name('privacy');
 Route::get('/refund',  fn () => Inertia::render('Refund'))->name('refund');

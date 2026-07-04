@@ -9,6 +9,8 @@ class FullAuditReport extends Model
 {
     protected $fillable = [
         'user_id',
+        'guest_ip',
+        'guest_token',
         'name',
         'site_url',
         'status',

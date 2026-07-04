@@ -38,7 +38,6 @@ class HandleInertiaRequests extends Middleware
                     'agency_primary_color',
                     'agency_secondary_color',
                     'agency_footer_text',
-                    'free_scan_used',
                 ]),
                 'openTicketsCount' => $user?->is_admin
                     ? Ticket::whereIn('status', ['open', 'in_progress'])->count()

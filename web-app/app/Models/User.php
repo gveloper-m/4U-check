@@ -34,7 +34,6 @@ class User extends Authenticatable implements MustVerifyEmail
         'notify_payment',
         'notify_monthly_report',
         'notify_renewal_reminder',
-        'free_scan_used',
     ];
 
     protected $hidden = [
@@ -54,7 +53,6 @@ class User extends Authenticatable implements MustVerifyEmail
             'notify_payment'           => 'boolean',
             'notify_monthly_report'    => 'boolean',
             'notify_renewal_reminder'  => 'boolean',
-            'free_scan_used'           => 'boolean',
         ];
     }
 
@@ -103,10 +101,6 @@ class User extends Authenticatable implements MustVerifyEmail
     public function hasActiveSubscription(): bool
     {
         if ($this->is_unlimited) {
-            return true;
-        }
-
-        if (! $this->free_scan_used) {
             return true;
         }
 
