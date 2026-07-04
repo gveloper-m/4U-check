@@ -168,6 +168,19 @@ export default function AppLayout({ children }: PropsWithChildren) {
 
             {/* Main content */}
             <div className="lg:pl-64">
+                {auth.user && !auth.user.email_verified_at && (
+                    <div className="bg-amber-500 px-4 py-2.5 text-center text-sm font-medium text-white">
+                        Please confirm your email address. Check your inbox for a verification link.{' '}
+                        <Link
+                            href={route('verification.send')}
+                            method="post"
+                            as="button"
+                            className="underline hover:no-underline"
+                        >
+                            Resend email
+                        </Link>
+                    </div>
+                )}
                 <div className="sticky top-0 z-10 flex h-16 items-center gap-3 border-b border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-950/80 px-4 backdrop-blur-sm lg:px-6">
                     <button
                         onClick={() => setSidebarOpen(true)}

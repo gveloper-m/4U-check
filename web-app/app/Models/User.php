@@ -5,11 +5,12 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Paddle\Billable;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable, Billable;
@@ -33,6 +34,7 @@ class User extends Authenticatable
         'notify_payment',
         'notify_monthly_report',
         'notify_renewal_reminder',
+        'free_scan_used',
     ];
 
     protected $hidden = [
@@ -52,6 +54,7 @@ class User extends Authenticatable
             'notify_payment'           => 'boolean',
             'notify_monthly_report'    => 'boolean',
             'notify_renewal_reminder'  => 'boolean',
+            'free_scan_used'           => 'boolean',
         ];
     }
 
@@ -100,6 +103,10 @@ class User extends Authenticatable
     public function hasActiveSubscription(): bool
     {
         if ($this->is_unlimited) {
+            return true;
+        }
+
+        if (! $this->free_scan_used) {
             return true;
         }
 

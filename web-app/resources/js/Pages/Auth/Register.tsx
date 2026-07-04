@@ -255,6 +255,9 @@ export default function Register() {
           {processing && <Loader2 className="h-4 w-4 animate-spin" />}
           {t('auth.register.submit')}
         </button>
+        <p className="text-center text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+          Get 1 free scan included with every new account
+        </p>
       </form>
 
       <p className="mt-5 text-center text-sm text-gray-500">

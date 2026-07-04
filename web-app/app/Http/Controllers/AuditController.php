@@ -63,7 +63,9 @@ class AuditController extends Controller
 
         $user = auth()->user();
 
-        if ($user->hasReachedScanLimit()) {
+        $isFreeScan = ! $user->is_unlimited && ! $user->subscribed() && ! $user->free_scan_used;
+
+        if (! $isFreeScan && $user->hasReachedScanLimit()) {
             $used  = $user->scansThisMonth();
             $limit = $user->monthlyLimit();
             return back()->with('error', "Monthly scan limit reached ({$used}/{$limit}). Your quota resets on the 1st of next month.");
@@ -98,6 +100,10 @@ class AuditController extends Controller
             'created_at'  => now(),
             'updated_at'  => now(),
         ]);
+
+        if ($isFreeScan) {
+            $user->forceFill(['free_scan_used' => true])->save();
+        }
 
         foreach (self::AUDITORS as $key => $controllerClass) {
             RunAuditorJob::dispatch($reportId, $key, $controllerClass, $validated['site_url']);
