@@ -614,6 +614,16 @@ const cs = {
     catAccessibility: 'Přístupnost',
     catEcommerce: 'E-commerce',
     catTracking: 'Marketingový tracking',
+    alreadyUsed: 'Svůj bezplatný sken jste již použili.',
+    alreadyUsedCta: 'Vytvořte si bezplatný účet pro další skenování.',
+    resultsPremiumTitle: 'Chcete více? Vytvořte si bezplatný účet.',
+    resultsPremiumSub: 'Bezplatný sken zobrazuje skóre a problémy. Účet odemyká:',
+    resultsPremiumPdf: 'Export PDF — stáhněte a sdílejte zprávy',
+    resultsPremiumHistory: 'Historie — sledujte skóre v čase',
+    resultsPremiumScheduled: 'Plánované skeny — hodinové, denní, týdenní, měsíční',
+    resultsPremiumEmail: 'E-mailová upozornění při zjištění problémů',
+    resultsPremiumMultisite: 'Sledování více webových stránek',
+    resultsPremiumAgency: 'White-label zprávy pro agentury',
   },
 } as const;
 

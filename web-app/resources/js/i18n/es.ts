@@ -614,6 +614,16 @@ const es = {
     catAccessibility: 'Accesibilidad',
     catEcommerce: 'E-commerce',
     catTracking: 'Seguimiento de marketing',
+    alreadyUsed: 'Ya has usado tu análisis gratuito.',
+    alreadyUsedCta: 'Crea una cuenta gratuita para analizar más.',
+    resultsPremiumTitle: '¿Quieres más? Crea una cuenta gratuita.',
+    resultsPremiumSub: 'El análisis gratuito muestra la puntuación y los problemas. Una cuenta desbloquea:',
+    resultsPremiumPdf: 'Exportación PDF — descarga y comparte informes',
+    resultsPremiumHistory: 'Historial — sigue la puntuación en el tiempo',
+    resultsPremiumScheduled: 'Análisis programados — por hora, diario, semanal, mensual',
+    resultsPremiumEmail: 'Alertas por correo cuando se detectan problemas',
+    resultsPremiumMultisite: 'Monitorear múltiples sitios web',
+    resultsPremiumAgency: 'Informes de agencia en marca blanca',
   },
 } as const;
 

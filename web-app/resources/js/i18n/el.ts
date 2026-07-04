@@ -644,6 +644,16 @@ const el = {
     catAccessibility: 'Προσβασιμότητα',
     catEcommerce: 'E-commerce',
     catTracking: 'Marketing Tracking',
+    alreadyUsed: 'Έχεις ήδη χρησιμοποιήσει τη δωρεάν ανάλυσή σου.',
+    alreadyUsedCta: 'Δημιούργησε δωρεάν λογαριασμό για να αναλύεις περισσότερα.',
+    resultsPremiumTitle: 'Θέλεις περισσότερα; Δημιούργησε δωρεάν λογαριασμό.',
+    resultsPremiumSub: 'Η δωρεάν ανάλυση δείχνει το σκορ και τα προβλήματα. Ένας λογαριασμός ξεκλειδώνει:',
+    resultsPremiumPdf: 'Εξαγωγή PDF — κατέβασε και μοιράσου εκθέσεις',
+    resultsPremiumHistory: 'Ιστορικό — παρακολούθησε το σκορ στο χρόνο',
+    resultsPremiumScheduled: 'Προγραμματισμένες αναλύσεις — ωριαία, ημερήσια, εβδομαδιαία, μηνιαία',
+    resultsPremiumEmail: 'Ειδοποιήσεις email όταν ανιχνευτούν προβλήματα',
+    resultsPremiumMultisite: 'Παρακολούθηση πολλών ιστοσελίδων',
+    resultsPremiumAgency: 'White-label εκθέσεις πρακτορείου',
   },
 } as const;
 

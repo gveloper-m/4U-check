@@ -614,6 +614,16 @@ const nl = {
     catAccessibility: 'Toegankelijkheid',
     catEcommerce: 'E-commerce',
     catTracking: 'Marketingtracking',
+    alreadyUsed: 'Je hebt je gratis scan al gebruikt.',
+    alreadyUsedCta: 'Maak een gratis account aan om meer te scannen.',
+    resultsPremiumTitle: 'Wil je meer? Maak een gratis account aan.',
+    resultsPremiumSub: 'De gratis scan toont de score en problemen. Een account ontgrendelt:',
+    resultsPremiumPdf: 'PDF-export — download en deel rapporten',
+    resultsPremiumHistory: 'Geschiedenis — volg de score in de tijd',
+    resultsPremiumScheduled: 'Geplande scans — uurlijks, dagelijks, wekelijks, maandelijks',
+    resultsPremiumEmail: 'E-mailmeldingen wanneer problemen worden gedetecteerd',
+    resultsPremiumMultisite: 'Meerdere websites monitoren',
+    resultsPremiumAgency: 'White-label agentschapsrapporten',
   },
 } as const;
 

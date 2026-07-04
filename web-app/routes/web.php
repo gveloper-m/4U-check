@@ -37,8 +37,9 @@ Route::get('/robots.txt',  [\App\Http\Controllers\SitemapController::class, 'rob
 
 // Public
 Route::get('/', function (Illuminate\Http\Request $request) {
+    // Authenticated users see the homepage too (with Dashboard button)
     if (auth()->check()) {
-        return redirect()->route('dashboard');
+        return Inertia::render('Landing', ['alreadyScanned' => false]);
     }
 
     $guestToken = $request->cookie('guest_scan_token');

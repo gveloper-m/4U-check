@@ -644,6 +644,16 @@ const en = {
     catAccessibility: 'Accessibility',
     catEcommerce: 'E-commerce',
     catTracking: 'Marketing Tracking',
+    alreadyUsed: "You've already used your free scan.",
+    alreadyUsedCta: 'Create a free account to scan more.',
+    resultsPremiumTitle: 'Want more? Create a free account.',
+    resultsPremiumSub: 'The free scan shows you the score and issues. An account unlocks:',
+    resultsPremiumPdf: 'PDF export — download & share reports',
+    resultsPremiumHistory: 'Scan history — track score over time',
+    resultsPremiumScheduled: 'Scheduled scans — hourly, daily, weekly, monthly',
+    resultsPremiumEmail: 'Email alerts when issues are detected',
+    resultsPremiumMultisite: 'Monitor multiple websites',
+    resultsPremiumAgency: 'Agency white-label reports',
   },
 } as const;
 

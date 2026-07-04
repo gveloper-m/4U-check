@@ -614,6 +614,16 @@ const de = {
     catAccessibility: 'Barrierefreiheit',
     catEcommerce: 'E-Commerce',
     catTracking: 'Marketing-Tracking',
+    alreadyUsed: 'Du hast deinen kostenlosen Scan bereits verwendet.',
+    alreadyUsedCta: 'Erstelle ein kostenloses Konto, um mehr zu scannen.',
+    resultsPremiumTitle: 'Mehr wollen? Kostenloses Konto erstellen.',
+    resultsPremiumSub: 'Der kostenlose Scan zeigt Score und Probleme. Ein Konto schaltet frei:',
+    resultsPremiumPdf: 'PDF-Export — Berichte herunterladen & teilen',
+    resultsPremiumHistory: 'Scan-Verlauf — Score über Zeit verfolgen',
+    resultsPremiumScheduled: 'Geplante Scans — stündlich, täglich, wöchentlich, monatlich',
+    resultsPremiumEmail: 'E-Mail-Benachrichtigungen bei erkannten Problemen',
+    resultsPremiumMultisite: 'Mehrere Websites überwachen',
+    resultsPremiumAgency: 'Agentur White-Label-Berichte',
   },
 } as const;
 
