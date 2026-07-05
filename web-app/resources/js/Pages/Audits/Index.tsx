@@ -27,7 +27,7 @@ function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
   const { t } = useTranslation();
   if (status === 'completed') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-400 border border-emerald-500/20">
+      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
         <CheckCircle2 className="h-3 w-3" />
         {t('audits.completed')}
       </span>
@@ -35,14 +35,14 @@ function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
   }
   if (status === 'running') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-400 border border-violet-500/20">
+      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
         <Loader2 className="h-3 w-3 animate-spin" />
         {t('audits.running')}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2.5 py-0.5 text-xs font-medium text-red-400 border border-red-500/20">
+    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 dark:bg-red-950/50 px-2.5 py-0.5 text-xs font-medium text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800">
       <XCircle className="h-3 w-3" />
       {t('audits.failed')}
     </span>
@@ -105,12 +105,12 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
 
         {/* Flash messages */}
         {flash?.success && (
-          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
+          <div className="rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/50 px-4 py-3 text-sm text-green-700 dark:text-green-400">
             {flash.success}
           </div>
         )}
         {flash?.error && (
-          <div className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400">
+          <div className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/50 px-4 py-3 text-sm text-red-700 dark:text-red-400">
             {flash.error}
           </div>
         )}
@@ -123,7 +123,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
               <span className="text-sm font-medium text-gray-900 dark:text-white">{t('audits.quotaTitle')}</span>
             </div>
             {isUnlimited ? (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 text-xs font-medium text-emerald-400">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 px-3 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                 <Infinity className="h-3.5 w-3.5" />
                 {t('audits.quotaUnlimited')}
               </span>
@@ -151,7 +151,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
 
         {/* Limit reached banner */}
         {limitReached && (
-          <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          <div className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 px-4 py-3 text-sm text-red-700 dark:text-red-300">
             {t('audits.quotaLimitReached')}
           </div>
         )}
@@ -183,8 +183,8 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                       onClick={() => setData('site_url', site.url)}
                       className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                         (() => { try { return new URL(data.site_url).hostname === new URL(site.url).hostname; } catch { return false; } })()
-                          ? 'border-violet-500/60 bg-violet-600/15 text-violet-300'
-                          : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-violet-500/40 hover:text-violet-300'
+                          ? 'border-gray-900 dark:border-white bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-500 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
                       <Globe className="h-3 w-3" />

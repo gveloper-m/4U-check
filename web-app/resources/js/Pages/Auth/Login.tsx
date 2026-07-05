@@ -32,7 +32,7 @@ export default function Login({
       <h2 className="mb-6 text-xl font-bold text-gray-900 dark:text-white">{t('auth.login.title')}</h2>
 
       {status && (
-        <div className="mb-4 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-400">
+        <div className="mb-4 rounded-lg border border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-950/50 px-4 py-3 text-sm text-green-700 dark:text-green-400">
           {status}
         </div>
       )}

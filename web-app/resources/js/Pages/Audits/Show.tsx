@@ -64,7 +64,7 @@ function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
   }
   if (status === 'running') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/10 px-3 py-1 text-sm font-medium text-violet-400 border border-violet-500/20">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 dark:bg-gray-800 px-3 py-1 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
         <Loader2 className="h-4 w-4 animate-spin" />
         {t('audits.running')}
       </span>
@@ -91,16 +91,16 @@ interface SectionProps {
 function Section({ title, icon: Icon, color, bg, border, children, defaultOpen = false }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div className={`rounded-xl border ${border} overflow-hidden`}>
+    <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
-        className={`flex w-full items-center justify-between ${bg} px-5 py-4 text-left hover:brightness-110 transition-all`}
+        className="flex w-full items-center justify-between bg-white dark:bg-gray-900 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${bg} border ${border}`}>
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
             <Icon className={`h-4 w-4 ${color}`} />
           </div>
-          <span className={`font-semibold ${color}`}>{title}</span>
+          <span className="font-semibold text-gray-900 dark:text-white">{title}</span>
         </div>
         {open ? (
           <ChevronUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
@@ -407,16 +407,16 @@ export default function AuditShow({ report }: ShowProps) {
 
         {/* Running state — live progress */}
         {report.status === 'running' && (
-          <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 p-5">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-5">
             <div className="flex items-center gap-3 mb-4">
-              <Loader2 className="h-5 w-5 animate-spin text-violet-400 shrink-0" />
+              <Loader2 className="h-5 w-5 animate-spin text-gray-500 dark:text-gray-400 shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-medium text-violet-300">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {t('show.running')} — {progress ? `${progress.completed}/${progress.total}` : '0/6'} {t('show.runningModules')}
                 </p>
-                <div className="mt-2 h-1.5 w-full rounded-full bg-violet-900/40">
+                <div className="mt-2 h-1.5 w-full rounded-full bg-gray-100 dark:bg-gray-800">
                   <div
-                    className="h-1.5 rounded-full bg-violet-500 transition-all duration-500"
+                    className="h-1.5 rounded-full bg-violet-600 transition-all duration-500"
                     style={{ width: `${progress ? (progress.completed / progress.total) * 100 : 0}%` }}
                   />
                 </div>
@@ -434,7 +434,7 @@ export default function AuditShow({ report }: ShowProps) {
               ].map(({ key, label }) => {
                 const done = progress?.auditors?.[key] === 'done';
                 return (
-                  <div key={key} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium border ${done ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-gray-100/50 dark:bg-gray-800/50 border-gray-300 dark:border-gray-700 text-gray-500'}`}>
+                  <div key={key} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium border ${done ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400' : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700 text-gray-500'}`}>
                     {done
                       ? <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />
                       : <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />}
@@ -448,14 +448,14 @@ export default function AuditShow({ report }: ShowProps) {
 
         {/* Score deductions */}
         {report.score_deductions && report.score_deductions.length > 0 && (
-          <div className="rounded-xl border border-amber-500/20 bg-amber-500/10 p-5">
+          <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-5">
             <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="h-4 w-4 text-amber-400" />
-              <h3 className="text-sm font-semibold text-amber-400">{t('show.deductionsTitle')}</h3>
+              <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+              <h3 className="text-sm font-semibold text-amber-800 dark:text-amber-300">{t('show.deductionsTitle')}</h3>
             </div>
             <ul className="space-y-1">
               {report.score_deductions.map((d, i) => (
-                <li key={i} className="text-sm text-amber-300/80">
+                <li key={i} className="text-sm text-amber-700 dark:text-amber-400">
                   • {d}
                 </li>
               ))}

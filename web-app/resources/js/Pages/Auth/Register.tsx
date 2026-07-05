@@ -268,7 +268,7 @@ export default function Register() {
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowConfirm(false)} />
-          <div className="relative w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-2xl">
+          <div className="relative w-full max-w-md rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow">
             <button
               onClick={() => setShowConfirm(false)}
               className="absolute right-4 top-4 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
@@ -276,8 +276,8 @@ export default function Register() {
               <X className="h-5 w-5" />
             </button>
 
-            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 border border-amber-500/20">
-              <AlertTriangle className="h-6 w-6 text-amber-400" />
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+              <AlertTriangle className="h-6 w-6 text-amber-500 dark:text-amber-400" />
             </div>
 
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2">
@@ -288,9 +288,9 @@ export default function Register() {
               {t('auth.register.confirmModal.body')}
             </p>
 
-            <div className="mb-5 flex items-center gap-2 rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3">
-              <Globe className="h-4 w-4 shrink-0 text-violet-400" />
-              <span className="text-sm font-semibold text-violet-300 break-all">{data.primary_site}</span>
+            <div className="mb-5 flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
+              <Globe className="h-4 w-4 shrink-0 text-gray-500" />
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300 break-all">{data.primary_site}</span>
             </div>
 
             <div className="mb-5 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/10 px-3 py-3">

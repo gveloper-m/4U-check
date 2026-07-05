@@ -117,8 +117,8 @@ export default function ScheduledScansIndex({ scans, flash, sites }: ScheduledSc
                       onClick={() => setData('site_url', site.url)}
                       className={`flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
                         data.site_url === site.url
-                          ? 'border-violet-500/60 bg-violet-600/15 text-violet-300'
-                          : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-violet-500/40 hover:text-violet-300'
+                          ? 'border-gray-900 dark:border-white bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white'
+                          : 'border-gray-300 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-500 hover:text-gray-900 dark:hover:text-white'
                       }`}
                     >
                       <Globe className="h-3 w-3" />

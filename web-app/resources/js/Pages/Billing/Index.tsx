@@ -68,7 +68,7 @@ function SiteRow({ site, canRemove, onRemove, removing }: {
         {site.label && <p className="truncate text-xs text-gray-500">{site.url}</p>}
       </div>
       {site.is_primary ? (
-        <span className="flex items-center gap-1 rounded-full bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 text-xs font-medium text-violet-400 shrink-0">
+        <span className="flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 shrink-0">
           <Lock className="h-3 w-3" /> {t('billing.primarySite')}
         </span>
       ) : canRemove ? (
@@ -349,10 +349,10 @@ export default function BillingIndex({
                       key={p.key}
                       type="button"
                       onClick={() => subscribeForm.setData('plan', p.key)}
-                      className={`rounded-xl border p-4 text-left transition-colors ${
+                      className={`rounded-lg border p-4 text-left transition-colors ${
                         subscribeForm.data.plan === p.key
-                          ? 'border-violet-500/60 bg-violet-600/15'
-                          : 'border-gray-300 dark:border-gray-700 hover:border-gray-600'
+                          ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
                       }`}
                     >
                       <div className="text-xs font-medium text-gray-500 mb-1">{p.label}</div>
@@ -361,7 +361,7 @@ export default function BillingIndex({
                       </div>
                       <div className="mt-0.5 text-xs text-gray-500">{p.note}</div>
                       {p.key === 'yearly' && (
-                        <div className="mt-1.5 inline-block rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-400">
+                        <div className="mt-1.5 inline-block rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                           {t('billing.bestValue')}
                         </div>
                       )}
@@ -370,8 +370,8 @@ export default function BillingIndex({
                 </div>
 
                 {/* Per-site pricing callout */}
-                <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 space-y-1.5">
-                  <p className="text-sm font-semibold text-violet-300">{t('billing.perSiteTitle')}</p>
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4 space-y-1.5">
+                  <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('billing.perSiteTitle')}</p>
                   <p className="text-xs text-gray-500">{t('billing.perSiteBody', {
                     base: subscribeForm.data.plan === 'yearly' ? '€199.99' : '€19.99',
                     period: subscribeForm.data.plan === 'yearly' ? t('billing.perYear') : t('billing.perMonth'),
@@ -418,7 +418,7 @@ export default function BillingIndex({
                   <button
                     type="submit"
                     disabled={subscribing}
-                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors shadow-lg shadow-violet-500/25"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                   >
                     {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
                     {t('billing.subscribeBtn')} — €{previewBase.toFixed(2)} · {t('billing.exclVat')}
@@ -483,7 +483,7 @@ export default function BillingIndex({
                     <button
                       type="button"
                       onClick={() => setShowAddSite(true)}
-                      className="flex items-center gap-1.5 rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-500/20 transition-colors"
+                      className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-gray-400 transition-colors"
                     >
                       <Plus className="h-3.5 w-3.5" />
                       {t('billing.addSite')}
@@ -520,8 +520,8 @@ export default function BillingIndex({
       {showAddSite && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowAddSite(false)} />
-          <div className="relative w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-2xl">
-            <button onClick={() => setShowAddSite(false)} className="absolute right-4 top-4 text-gray-400 hover:text-gray-200">
+          <div className="relative w-full max-w-md rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow">
+            <button onClick={() => setShowAddSite(false)} className="absolute right-4 top-4 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200">
               <X className="h-5 w-5" />
             </button>
             <h3 className="mb-1 text-lg font-bold text-gray-900 dark:text-white">{t('billing.addSiteTitle')}</h3>
@@ -542,10 +542,10 @@ export default function BillingIndex({
                       key={p.key}
                       type="button"
                       onClick={() => addSiteForm.setData('plan', p.key)}
-                      className={`rounded-xl border p-3 text-left transition-colors ${
+                      className={`rounded-lg border p-3 text-left transition-colors ${
                         addSiteForm.data.plan === p.key
-                          ? 'border-violet-500/60 bg-violet-600/15'
-                          : 'border-gray-300 dark:border-gray-700 hover:border-gray-500'
+                          ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
                       }`}
                     >
                       <div className="text-xs font-medium text-gray-500 mb-0.5">{p.label}</div>
@@ -553,7 +553,7 @@ export default function BillingIndex({
                         {p.price}<span className="text-xs font-normal text-gray-500">{p.period}</span>
                       </div>
                       {p.badge && (
-                        <div className="mt-1 inline-block rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-xs font-medium text-emerald-400">
+                        <div className="mt-1 inline-block rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-1.5 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
                           {p.badge}
                         </div>
                       )}
@@ -614,21 +614,21 @@ export default function BillingIndex({
       {showCancel && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowCancel(false)} />
-          <div className="relative w-full max-w-sm rounded-2xl border border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-2xl">
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20">
+          <div className="relative w-full max-w-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
               <Ban className="h-5 w-5 text-red-400" />
             </div>
             <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{t('billing.cancelTitle')}</h3>
             <p className="mb-1 text-sm text-gray-600 dark:text-gray-400">{t('billing.cancelBody')}</p>
             <p className="mb-5 text-xs text-gray-500">
               {t('billing.cancelRefundNote')}{' '}
-              <a href="/refund" className="text-violet-400 hover:text-violet-300 underline">{t('billing.cancelRefundLink')}</a>.
+              <a href="/refund" className="text-violet-600 dark:text-violet-400 hover:underline">{t('billing.cancelRefundLink')}</a>.
             </p>
             <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => setShowCancel(false)}
-                className="flex-1 rounded-xl border border-gray-700 py-2.5 text-sm text-gray-300 hover:border-gray-500 transition-colors"
+                className="flex-1 rounded-lg border border-gray-200 dark:border-gray-600 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-400 transition-colors"
               >
                 {t('common.cancel')}
               </button>
@@ -636,7 +636,7 @@ export default function BillingIndex({
                 type="button"
                 onClick={handleCancelSubscription}
                 disabled={cancelForm.processing}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60 transition-colors"
               >
                 {cancelForm.processing ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {t('billing.cancelConfirm')}
@@ -650,8 +650,8 @@ export default function BillingIndex({
       {confirmRemove && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setConfirmRemove(null)} />
-          <div className="relative w-full max-w-sm rounded-2xl border border-gray-700 bg-white dark:bg-gray-900 p-6 shadow-2xl">
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-500/10 border border-red-500/20">
+          <div className="relative w-full max-w-sm rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-6 shadow">
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
               <AlertTriangle className="h-5 w-5 text-red-400" />
             </div>
             <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">{t('billing.removeSiteTitle')}</h3>
@@ -661,7 +661,7 @@ export default function BillingIndex({
               <button
                 type="button"
                 onClick={() => setConfirmRemove(null)}
-                className="flex-1 rounded-xl border border-gray-700 py-2.5 text-sm text-gray-300 hover:border-gray-500 transition-colors"
+                className="flex-1 rounded-lg border border-gray-200 dark:border-gray-600 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-400 transition-colors"
               >
                 {t('common.cancel')}
               </button>
@@ -669,7 +669,7 @@ export default function BillingIndex({
                 type="button"
                 onClick={() => handleRemoveSite(confirmRemove.id)}
                 disabled={removingId !== null}
-                className="flex-1 flex items-center justify-center gap-2 rounded-xl bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60 transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 rounded-lg bg-red-600 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60 transition-colors"
               >
                 {removingId !== null ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
                 {t('billing.removeSiteConfirm')}

@@ -60,13 +60,13 @@ export default function AdminTicketsIndex({ tickets, currentStatus, counts }: Pr
                         onClick={() => setFilter(f.key)}
                         className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
                             currentStatus === f.key
-                                ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
+                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
                                 : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200'
                         }`}
                     >
                         {f.label}
                         <span className={`rounded-full px-1.5 py-0.5 text-xs ${
-                            currentStatus === f.key ? 'bg-violet-500/20 text-violet-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                            currentStatus === f.key ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300' : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
                         }`}>
                             {counts[f.key] ?? 0}
                         </span>

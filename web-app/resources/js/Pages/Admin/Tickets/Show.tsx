@@ -31,7 +31,7 @@ function MessageBubble({ msg }: { msg: TicketMessage }) {
     return (
         <div className={`flex gap-3 ${isAdmin ? 'flex-row-reverse' : ''}`}>
             <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                isAdmin ? 'bg-violet-600/20 border border-violet-500/30 text-violet-300' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                isAdmin ? 'bg-gray-800 dark:bg-gray-600 text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
             }`}>
                 {isAdmin ? 'S' : (msg.user?.name?.charAt(0).toUpperCase() ?? '?')}
             </div>
@@ -40,10 +40,10 @@ function MessageBubble({ msg }: { msg: TicketMessage }) {
                     <span className="font-medium text-gray-600 dark:text-gray-400">{isAdmin ? 'Support Team' : (msg.user?.name ?? 'User')}</span>
                     <span>{formatDateTime(msg.created_at)}</span>
                 </div>
-                <div className={`rounded-2xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
+                <div className={`rounded-xl px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
                     isAdmin
-                        ? 'bg-violet-600/15 border border-violet-500/20 text-gray-800 dark:text-gray-200 rounded-tr-sm'
-                        : 'bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-sm'
+                        ? 'bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tr-sm'
+                        : 'bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 text-gray-800 dark:text-gray-200 rounded-tl-sm'
                 }`}>
                     {msg.body}
                 </div>
@@ -201,7 +201,7 @@ export default function AdminTicketShow({ ticket }: { ticket: Ticket }) {
                                     disabled={ticket.status === s || statusUpdating}
                                     className={`w-full rounded-lg px-3 py-2 text-xs font-medium text-left transition-colors ${
                                         ticket.status === s
-                                            ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
+                                            ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-200 dark:border-gray-700'
                                             : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 border border-transparent'
                                     }`}
                                 >

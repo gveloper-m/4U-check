@@ -108,12 +108,12 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             <Link
                                 key={item.routeName}
                                 href={item.href}
-                                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'}`}
+                                className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${active ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100'}`}
                             >
-                                <Icon className={`h-4 w-4 shrink-0 ${active ? 'text-violet-400' : ''}`} />
+                                <Icon className="h-4 w-4 shrink-0" />
                                 <span className="flex-1">{item.label}</span>
                                 {isTicketsAdmin && openTicketsCount != null && openTicketsCount > 0 && (
-                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-violet-500 px-1.5 text-xs font-semibold text-white">
+                                    <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-gray-800 dark:bg-gray-200 px-1.5 text-xs font-semibold text-white dark:text-gray-900">
                                         {openTicketsCount > 99 ? '99+' : openTicketsCount}
                                     </span>
                                 )}
@@ -128,8 +128,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
                             onClick={() => setUserMenuOpen(!userMenuOpen)}
                             className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-gray-100 transition-colors"
                         >
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-violet-600/20 border border-violet-500/30">
-                                <span className="text-xs font-semibold text-violet-300">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-200 dark:bg-gray-700">
+                                <span className="text-xs font-semibold text-gray-700 dark:text-gray-200">
                                     {auth.user.name.charAt(0).toUpperCase()}
                                 </span>
                             </div>
@@ -215,17 +215,13 @@ export default function AppLayout({ children }: PropsWithChildren) {
             </div>
             <CookieBanner />
             {toast && (
-                <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl text-sm font-medium ${
-                    toast.type === 'success'
-                        ? 'border-emerald-500/30 bg-white dark:bg-gray-900 text-emerald-300'
-                        : 'border-red-500/30 bg-white dark:bg-gray-900 text-red-300'
-                }`}>
+                <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 shadow text-sm font-medium text-gray-900 dark:text-white">
                     {toast.type === 'success'
-                        ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
-                        : <XCircle className="h-4 w-4 shrink-0 text-red-400" />
+                        ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                        : <XCircle className="h-4 w-4 shrink-0 text-red-500" />
                     }
                     <span>{toast.message}</span>
-                    <button onClick={() => setToast(null)} className="ml-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+                    <button onClick={() => setToast(null)} className="ml-2 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                         <X className="h-3.5 w-3.5" />
                     </button>
                 </div>

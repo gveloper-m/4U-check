@@ -14,7 +14,7 @@ function UL({ children }: { children: React.ReactNode }) {
 }
 function Highlight({ children }: { children: React.ReactNode }) {
     return (
-        <div className="my-4 rounded-xl border border-violet-500/20 bg-violet-500/5 px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
+        <div className="my-4 rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 px-5 py-4 text-sm text-gray-700 dark:text-gray-300">
             {children}
         </div>
     );
@@ -175,7 +175,7 @@ export default function Refund() {
             </P>
 
             {/* ── Refund Request Form ── */}
-            <div className="mt-14 rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 shadow-xl">
+            <div className="mt-14 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-8">
                 <h2 className="mb-1 text-base font-semibold text-gray-900 dark:text-white">Submit a Refund Request</h2>
                 <p className="mb-6 text-sm text-gray-500">Fill in the form below. Our team will review your request and reply within 3 business days.</p>
 

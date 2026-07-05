@@ -22,8 +22,8 @@ export default function Terms() {
             <Head title="Terms of Service — 4utest" />
 
             <div className="mb-8 flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-600/20 border border-violet-500/30">
-                    <FileText className="h-4 w-4 text-violet-400" />
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+                    <FileText className="h-4 w-4 text-violet-600 dark:text-violet-400" />
                 </div>
                 <div>
                     <h1 className="text-xl font-bold text-gray-900 dark:text-white">Terms of Service</h1>

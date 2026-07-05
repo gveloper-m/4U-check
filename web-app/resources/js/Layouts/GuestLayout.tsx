@@ -40,7 +40,7 @@ export default function Guest({ children }: PropsWithChildren) {
                 <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Website audit platform</p>
             </div>
 
-            <div className="w-full max-w-md rounded-2xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 shadow-2xl">
+            <div className="w-full max-w-md rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 shadow-sm">
                 {children}
             </div>
 
@@ -50,16 +50,12 @@ export default function Guest({ children }: PropsWithChildren) {
             <CookieBanner />
 
             {toast && (
-                <div className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-xl border px-4 py-3 shadow-2xl text-sm font-medium ${
-                    toast.type === 'success'
-                        ? 'border-emerald-500/30 bg-white dark:bg-gray-900 text-emerald-300'
-                        : 'border-red-500/30 bg-white dark:bg-gray-900 text-red-300'
-                }`}>
+                <div className="fixed bottom-4 right-4 z-50 flex items-center gap-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3 shadow text-sm font-medium text-gray-900 dark:text-white">
                     {toast.type === 'success'
-                        ? <CheckCircle2 className="h-5 w-5 shrink-0" />
-                        : <XCircle className="h-5 w-5 shrink-0" />}
+                        ? <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                        : <XCircle className="h-5 w-5 shrink-0 text-red-500" />}
                     <span>{toast.message}</span>
-                    <button onClick={() => setToast(null)} className="ml-1 opacity-60 hover:opacity-100">
+                    <button onClick={() => setToast(null)} className="ml-1 text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
                         <X className="h-4 w-4" />
                     </button>
                 </div>

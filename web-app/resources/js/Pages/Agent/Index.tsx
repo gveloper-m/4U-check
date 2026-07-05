@@ -128,7 +128,7 @@ function AgentCard({ agent, onDelete, onRegenerate, onSync }: {
         {agent.site && (
           <button
             onClick={onSync}
-            className="flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-1.5 text-xs font-medium text-violet-300 hover:bg-violet-500/20 transition-colors"
+            className="flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:border-gray-400 transition-colors"
           >
             <UploadCloud className="h-3.5 w-3.5" /> Push Latest Scan
           </button>
@@ -165,9 +165,9 @@ function ClaudeCodeStep({ serverIp }: { serverIp: string }) {
     null, 2,
   );
   return (
-    <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-5 space-y-4">
-      <p className="text-sm font-semibold text-violet-300">Last step — Connect Claude Code (on your local machine)</p>
-      <p className="text-xs text-gray-400">Port 8765 is already open on your server. Just add this to <code className="text-violet-300">~/.claude/settings.json</code> and restart Claude Code:</p>
+    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-5 space-y-4">
+      <p className="text-sm font-semibold text-gray-900 dark:text-white">Last step — Connect Claude Code (on your local machine)</p>
+      <p className="text-xs text-gray-500 dark:text-gray-400">Port 8765 is already open on your server. Just add this to <code className="text-gray-700 dark:text-gray-300 font-mono">~/.claude/settings.json</code> and restart Claude Code:</p>
       <div className="relative rounded-lg bg-gray-900 border border-gray-700 p-3 text-xs font-mono text-gray-300 whitespace-pre">
         {claudeConfig}
         <div className="absolute top-2 right-2"><CopyButton text={claudeConfig} /></div>
@@ -364,7 +364,7 @@ export default function AgentIndex({ agents, sites, auth }: Props) {
 
         {/* Create form */}
         {showCreate && (
-          <div className="rounded-xl border border-violet-500/30 bg-white dark:bg-gray-900 p-5">
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
             <h2 className="text-sm font-semibold text-gray-900 dark:text-white mb-4">Register a new agent</h2>
             <form onSubmit={submit} className="space-y-4">
               <div>

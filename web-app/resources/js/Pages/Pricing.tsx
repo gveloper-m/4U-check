@@ -3,7 +3,7 @@ import { PageProps } from '@/types';
 import {
   Zap, ArrowRight, CheckCircle2, XCircle, Search, Shield, BarChart3, Link2,
   ShoppingCart, Tag, Accessibility, Clock, Download, Globe, Bot,
-  HelpCircle, ChevronDown, ChevronUp, Star,
+  HelpCircle, ChevronDown, ChevronUp,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
@@ -95,10 +95,10 @@ function FaqItem({ q, a }: { q: string; a: string }) {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between py-5 text-left text-sm font-medium text-gray-900 dark:text-white hover:text-violet-400 transition-colors"
+        className="flex w-full items-center justify-between py-5 text-left text-sm font-medium text-gray-900 dark:text-white hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
       >
         {q}
-        {open ? <ChevronUp className="h-4 w-4 shrink-0 text-violet-400" /> : <ChevronDown className="h-4 w-4 shrink-0 text-gray-500" />}
+        {open ? <ChevronUp className="h-4 w-4 shrink-0 text-gray-500" /> : <ChevronDown className="h-4 w-4 shrink-0 text-gray-500" />}
       </button>
       {open && (
         <p className="pb-5 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{a}</p>
@@ -168,9 +168,7 @@ export default function Pricing({ auth }: PageProps) {
           {/* Hero */}
           <section className="px-6 pt-20 pb-12 text-center">
             <div className="mx-auto max-w-3xl">
-              <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-xs font-medium text-violet-300 mb-6">
-                <Star className="h-3.5 w-3.5" /> Merchant of Record — EU VAT handled by Paddle
-              </span>
+              <p className="text-sm font-medium text-violet-600 dark:text-violet-400 mb-5">Merchant of Record — EU VAT handled by Paddle</p>
               <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-5xl">
                 Simple, transparent pricing
               </h1>
@@ -205,7 +203,7 @@ export default function Pricing({ auth }: PageProps) {
               <div className="grid gap-6 sm:grid-cols-2">
 
                 {/* Base plan */}
-                <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 shadow-xl">
+                <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-8">
                   <div className="mb-2 text-sm font-semibold text-gray-500 uppercase tracking-wide">Pro Plan</div>
                   <div className="flex items-end gap-1 mt-1">
                     <span className="text-5xl font-extrabold text-gray-900 dark:text-white">€{price.toFixed(2)}</span>
@@ -216,10 +214,10 @@ export default function Pricing({ auth }: PageProps) {
                     <p className="mt-1 text-xs text-emerald-400 font-medium">≈ €16.67/month · 2 months free</p>
                   )}
 
-                  <div className="mt-6 rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3">
-                    <p className="text-xs font-semibold text-violet-300 mb-1">Need more sites?</p>
+                  <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Need more sites?</p>
                     <p className="text-xs text-gray-500">
-                      Add extra sites at <strong className="text-gray-300">€{extra.toFixed(2)}{period}</strong> each.
+                      Add extra sites at <strong className="text-gray-700 dark:text-gray-300">€{extra.toFixed(2)}{period}</strong> each.
                       Each site gets its own 30 scans/month.
                     </p>
                   </div>
@@ -235,21 +233,21 @@ export default function Pricing({ auth }: PageProps) {
 
                   <Link
                     href={auth?.user ? '/billing' : '/register'}
-                    className="mt-8 flex items-center justify-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-violet-500 hover:text-violet-400 transition-colors"
+                    className="mt-8 flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 py-3.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:border-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                   >
                     {auth?.user ? 'Manage Subscription' : 'Get Started'} <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
 
                 {/* Yearly highlight */}
-                <div className="relative rounded-2xl border border-violet-500/50 bg-white dark:bg-gray-900 p-8 shadow-2xl shadow-violet-500/10">
+                <div className="relative rounded-xl border-2 border-gray-900 dark:border-gray-100 bg-white dark:bg-gray-900 p-8">
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                     <span className="rounded-full bg-emerald-500 px-4 py-1 text-xs font-bold text-white shadow">
                       Best Value — 2 months free
                     </span>
                   </div>
 
-                  <div className="mb-2 text-sm font-semibold text-violet-400 uppercase tracking-wide">Pro Yearly</div>
+                  <div className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Pro Yearly</div>
                   <div className="flex items-end gap-1 mt-1">
                     <span className="text-5xl font-extrabold text-gray-900 dark:text-white">€199.99</span>
                     <span className="mb-1.5 text-gray-500">/year</span>
@@ -257,10 +255,10 @@ export default function Pricing({ auth }: PageProps) {
                   <p className="mt-1 text-xs text-gray-500">VAT incl. · 1 site included</p>
                   <p className="mt-1 text-xs text-emerald-400 font-medium">≈ €16.67/month · save ~€40 vs monthly</p>
 
-                  <div className="mt-6 rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3">
-                    <p className="text-xs font-semibold text-violet-300 mb-1">Extra sites</p>
+                  <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
+                    <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Extra sites</p>
                     <p className="text-xs text-gray-500">
-                      <strong className="text-gray-300">€99.99/year</strong> per additional site (save vs €9.99 × 12 = €119.88).
+                      <strong className="text-gray-700 dark:text-gray-300">€99.99/year</strong> per additional site (save vs €9.99 × 12 = €119.88).
                     </p>
                   </div>
 
@@ -275,7 +273,7 @@ export default function Pricing({ auth }: PageProps) {
 
                   <Link
                     href={auth?.user ? '/billing' : '/register'}
-                    className="mt-8 flex items-center justify-center gap-2 rounded-xl bg-violet-600 py-3.5 text-sm font-semibold text-white hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/25"
+                    className="mt-8 flex items-center justify-center gap-2 rounded-lg bg-violet-600 py-3.5 text-sm font-semibold text-white hover:bg-violet-500 transition-colors"
                   >
                     {auth?.user ? 'Upgrade to Yearly' : 'Get Started — Yearly'} <ArrowRight className="h-4 w-4" />
                   </Link>
@@ -299,8 +297,8 @@ export default function Pricing({ auth }: PageProps) {
                 {AUDIT_MODULES.slice(0, 7).map(m => {
                   const Icon = m.icon;
                   return (
-                    <div key={m.label} className={`rounded-2xl border ${m.border} ${m.bg} p-5`}>
-                      <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl border ${m.border} ${m.bg}`}>
+                    <div key={m.label} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
                         <Icon className={`h-5 w-5 ${m.color}`} />
                       </div>
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{m.label}</h3>
@@ -316,13 +314,13 @@ export default function Pricing({ auth }: PageProps) {
           <section className="px-6 py-20">
             <div className="mx-auto max-w-4xl">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-10">Monthly vs Yearly</h2>
-              <div className="overflow-x-auto rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-xl">
+              <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-700">
                       <th className="px-6 py-4 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide w-1/2">Feature</th>
                       <th className="px-6 py-4 text-center text-xs font-semibold text-gray-500 uppercase tracking-wide">Monthly</th>
-                      <th className="px-6 py-4 text-center text-xs font-semibold text-violet-400 uppercase tracking-wide bg-violet-500/5">Yearly ★</th>
+                      <th className="px-6 py-4 text-center text-xs font-semibold text-gray-900 dark:text-white uppercase tracking-wide bg-gray-50 dark:bg-gray-800">Yearly ★</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -330,7 +328,7 @@ export default function Pricing({ auth }: PageProps) {
                       <tr key={row.label} className="hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
                         <td className="px-6 py-3.5 text-gray-700 dark:text-gray-300 font-medium">{row.label}</td>
                         <td className="px-6 py-3.5 text-center"><CellValue v={row.monthly} /></td>
-                        <td className="px-6 py-3.5 text-center bg-violet-500/5"><CellValue v={row.yearly} /></td>
+                        <td className="px-6 py-3.5 text-center bg-gray-50 dark:bg-gray-800"><CellValue v={row.yearly} /></td>
                       </tr>
                     ))}
                   </tbody>
@@ -345,29 +343,29 @@ export default function Pricing({ auth }: PageProps) {
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-12">Everything included — no add-ons</h2>
               <div className="grid gap-8 md:grid-cols-3">
                 {[
-                  { icon: Clock,    color: 'text-emerald-400', bg: 'bg-emerald-500/10',
+                  { icon: Clock,    color: 'text-emerald-500 dark:text-emerald-400',
                     title: 'Scheduled scans',
                     desc: 'Set it and forget it. Schedule daily, weekly, or monthly audits. Get notified when your score drops.' },
-                  { icon: Download, color: 'text-blue-400',    bg: 'bg-blue-500/10',
+                  { icon: Download, color: 'text-blue-500 dark:text-blue-400',
                     title: 'PDF & CSV export',
                     desc: 'Download polished PDF reports to share with clients or management. Export raw data to CSV for custom analysis.' },
-                  { icon: Globe,    color: 'text-violet-400',  bg: 'bg-violet-500/10',
+                  { icon: Globe,    color: 'text-violet-600 dark:text-violet-400',
                     title: 'Public shareable links',
                     desc: 'Generate a public link to any audit report. Share with clients without giving them account access.' },
-                  { icon: BarChart3,color: 'text-amber-400',   bg: 'bg-amber-500/10',
+                  { icon: BarChart3,color: 'text-amber-500 dark:text-amber-400',
                     title: 'Historical trends',
                     desc: 'Track your health score over time. See how changes you make improve — or hurt — your site\'s performance.' },
-                  { icon: Bot,      color: 'text-pink-400',    bg: 'bg-pink-500/10',
+                  { icon: Bot,      color: 'text-pink-500 dark:text-pink-400',
                     title: 'AI fix suggestions',
                     desc: 'Every issue comes with an AI-generated explanation and a concrete fix recommendation you can act on.' },
-                  { icon: HelpCircle,color:'text-teal-400',    bg: 'bg-teal-500/10',
+                  { icon: HelpCircle,color:'text-teal-500 dark:text-teal-400',
                     title: 'Priority support',
                     desc: 'Email support with priority queue for paid subscribers. We aim to respond within 1 business day.' },
                 ].map(item => {
                   const Icon = item.icon;
                   return (
                     <div key={item.title} className="flex items-start gap-4">
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${item.bg}`}>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
                         <Icon className={`h-5 w-5 ${item.color}`} />
                       </div>
                       <div>
@@ -387,7 +385,7 @@ export default function Pricing({ auth }: PageProps) {
               <div className="text-center mb-10">
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Frequently asked questions</h2>
               </div>
-              <div className="rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-8 shadow-xl">
+              <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-8">
                 {FAQS.map(faq => <FaqItem key={faq.q} q={faq.q} a={faq.a} />)}
               </div>
             </div>
@@ -403,13 +401,13 @@ export default function Pricing({ auth }: PageProps) {
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link
                   href={auth?.user ? '/billing' : '/register'}
-                  className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-8 py-4 text-base font-semibold text-white hover:bg-violet-500 transition-colors shadow-lg shadow-violet-500/25"
+                  className="inline-flex items-center gap-2 rounded-lg bg-violet-600 px-8 py-4 text-base font-semibold text-white hover:bg-violet-500 transition-colors"
                 >
                   {auth?.user ? 'Go to Billing' : 'Start free'} <ArrowRight className="h-5 w-5" />
                 </Link>
                 <Link
                   href="/"
-                  className="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-700 px-8 py-4 text-base font-medium text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 px-8 py-4 text-base font-medium text-gray-700 dark:text-gray-300 hover:border-gray-500 hover:text-gray-900 dark:hover:text-white transition-colors"
                 >
                   Learn more
                 </Link>

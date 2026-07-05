@@ -44,14 +44,14 @@ export default function BlogIndex({ posts }: { posts: PaginatedPosts }) {
                         <Link
                             key={post.id}
                             href={`/blog/${post.slug}`}
-                            className="group flex flex-col rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden hover:border-violet-500/50 transition-colors"
+                            className="group flex flex-col rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-hidden hover:border-gray-400 dark:hover:border-gray-600 transition-colors"
                         >
                             {post.featured_image && (
                                 <div className="h-44 overflow-hidden bg-gray-100 dark:bg-gray-800">
                                     <img
                                         src={post.featured_image}
                                         alt={post.title}
-                                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                                        className="h-full w-full object-cover transition-opacity duration-300 group-hover:opacity-90"
                                     />
                                 </div>
                             )}

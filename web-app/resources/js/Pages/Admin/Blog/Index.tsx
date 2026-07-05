@@ -46,7 +46,7 @@ function StatusBadge({ status }: { status: Post['status'] }) {
         </span>
     );
     if (status === 'scheduled') return (
-        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-violet-500/10 text-violet-400 border border-violet-500/20">
+        <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
             <CalendarClock className="h-3 w-3" />
             Scheduled
         </span>
@@ -73,7 +73,7 @@ function AiGenerateModal({ onClose }: { onClose: () => void }) {
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="w-full max-w-lg rounded-2xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow-2xl">
+            <div className="w-full max-w-lg rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 shadow">
                 <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-6 py-4">
                     <div className="flex items-center gap-2.5">
                         <Sparkles className="h-5 w-5 text-violet-400" />
@@ -113,7 +113,7 @@ function AiGenerateModal({ onClose }: { onClose: () => void }) {
                         {errors.topic && <p className="mt-1 text-xs text-red-400">{errors.topic}</p>}
                     </div>
 
-                    <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4 text-sm text-gray-600 dark:text-gray-400 space-y-1.5">
+                    <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4 text-sm text-gray-600 dark:text-gray-400 space-y-1.5">
                         <p className="font-medium text-violet-300 flex items-center gap-1.5"><Sparkles className="h-3.5 w-3.5" /> What the AI generates:</p>
                         <ul className="space-y-1 text-xs list-disc list-inside">
                             <li>SEO-optimised title + meta description</li>
@@ -179,7 +179,7 @@ export default function AdminBlogIndex({ posts }: { posts: PaginatedPosts }) {
                 <div className="flex items-center gap-2">
                     <button
                         onClick={() => setShowAiModal(true)}
-                        className="flex items-center gap-2 rounded-lg border border-violet-500/40 bg-violet-600/10 px-4 py-2 text-sm font-medium text-violet-300 hover:bg-violet-600/20 hover:border-violet-500/60 transition-colors"
+                        className="flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:border-gray-400 transition-colors"
                     >
                         <Sparkles className="h-4 w-4" />
                         Generate AI Article
@@ -199,7 +199,7 @@ export default function AdminBlogIndex({ posts }: { posts: PaginatedPosts }) {
                     <FileText className="mx-auto mb-3 h-10 w-10 text-gray-700" />
                     <p className="text-gray-600 dark:text-gray-400">No blog posts yet.</p>
                     <div className="mt-4 flex items-center justify-center gap-3">
-                        <button onClick={() => setShowAiModal(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-violet-500/30 bg-violet-600/10 px-3 py-1.5 text-sm text-violet-400 hover:bg-violet-600/20 transition-colors">
+                        <button onClick={() => setShowAiModal(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-400 transition-colors">
                             <Sparkles className="h-3.5 w-3.5" /> Generate with AI
                         </button>
                         <Link href="/admin/blog/create" className="inline-flex items-center gap-1 text-sm text-violet-400 hover:text-violet-300">

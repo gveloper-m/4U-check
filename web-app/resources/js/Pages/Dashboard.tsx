@@ -39,10 +39,7 @@ function healthColor(score?: number): string {
 }
 
 function healthBg(score?: number): string {
-  if (score === undefined || score === null) return 'bg-gray-500/10 border-gray-400 dark:border-gray-500/20';
-  if (score >= 80) return 'bg-emerald-500/10 border-emerald-500/20';
-  if (score >= 50) return 'bg-amber-500/10 border-amber-500/20';
-  return 'bg-red-500/10 border-red-500/20';
+  return 'bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-800';
 }
 
 function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
@@ -57,7 +54,7 @@ function StatusBadge({ status }: { status: FullAuditReport['status'] }) {
   }
   if (status === 'running') {
     return (
-      <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-400 border border-violet-500/20">
+      <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700">
         <Loader2 className="h-3 w-3 animate-spin" />
         {t('audits.running')}
       </span>
@@ -93,33 +90,25 @@ export default function Dashboard({
       label: t('dashboard.totalScans'),
       value: totalReports,
       icon: FileSearch,
-      color: 'text-violet-400',
-      bg: 'bg-violet-500/10',
-      border: 'border-violet-500/20',
+      color: 'text-violet-600 dark:text-violet-400',
     },
     {
       label: t('dashboard.activeScheduled'),
       value: scheduledScans,
       icon: Clock,
-      color: 'text-blue-400',
-      bg: 'bg-blue-500/10',
-      border: 'border-blue-500/20',
+      color: 'text-blue-600 dark:text-blue-400',
     },
     {
       label: t('dashboard.subscription'),
       value: subscription === 'active' ? t('dashboard.active') : t('dashboard.inactive'),
       icon: CreditCard,
-      color: subscription === 'active' ? 'text-emerald-400' : 'text-red-400',
-      bg: subscription === 'active' ? 'bg-emerald-500/10' : 'bg-red-500/10',
-      border: subscription === 'active' ? 'border-emerald-500/20' : 'border-red-500/20',
+      color: subscription === 'active' ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400',
     },
     {
       label: t('dashboard.avgScore'),
       value: avg !== null ? `${avg}` : t('dashboard.noScore'),
       icon: Activity,
       color: avg !== null ? healthColor(avg) : 'text-gray-600 dark:text-gray-400',
-      bg: avg !== null ? healthBg(avg).split(' ')[0] : 'bg-gray-500/10',
-      border: avg !== null ? healthBg(avg).split(' ')[1] : 'border-gray-400 dark:border-gray-500/20',
     },
   ];
 
@@ -149,11 +138,11 @@ export default function Dashboard({
             return (
               <div
                 key={stat.label}
-                className={`rounded-xl border ${stat.border} ${stat.bg} p-5`}
+                className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5"
               >
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{stat.label}</p>
-                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${stat.bg} border ${stat.border}`}>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
                     <Icon className={`h-4 w-4 ${stat.color}`} />
                   </div>
                 </div>
@@ -198,7 +187,7 @@ export default function Dashboard({
         <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
           <div className="flex items-center justify-between border-b border-gray-200 dark:border-gray-800 px-5 py-4">
             <h2 className="text-base font-semibold text-gray-900 dark:text-white">{t('dashboard.recentScans')}</h2>
-            <Link href="/audits" className="text-sm text-violet-400 hover:text-violet-300 transition-colors">
+            <Link href="/audits" className="text-sm text-violet-600 dark:text-violet-400 hover:underline transition-colors">
               {t('dashboard.viewAll')}
             </Link>
           </div>
