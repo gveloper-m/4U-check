@@ -1,4 +1,4 @@
-import { useForm, usePage } from '@inertiajs/react';
+import { useForm } from '@inertiajs/react';
 import { Key, Plus, Trash2, Copy, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 import { useState } from 'react';
 
@@ -86,7 +86,6 @@ function CreateForm() {
           className={inputCls}
         />
         {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
-        {errors.api_key_name && <p className="mt-1 text-xs text-red-400">{errors.api_key_name}</p>}
       </div>
       <button
         type="submit"

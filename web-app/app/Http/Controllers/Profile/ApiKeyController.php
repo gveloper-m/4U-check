@@ -16,7 +16,7 @@ class ApiKeyController extends Controller
         $user = $request->user();
 
         if ($user->apiKeys()->count() >= 5) {
-            return back()->withErrors(['api_key_name' => 'Maximum 5 API keys allowed. Revoke one first.']);
+            return back()->withErrors(['name' => 'Maximum 5 API keys allowed. Revoke one first.']);
         }
 
         ['raw' => $raw, 'hash' => $hash, 'prefix' => $prefix] = ApiKey::generate();
