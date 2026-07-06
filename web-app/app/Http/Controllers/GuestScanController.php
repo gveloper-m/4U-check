@@ -99,6 +99,8 @@ class GuestScanController extends Controller
             $report->status = 'completed';
         }
 
+        $decode = fn(?string $v) => $v !== null ? json_decode($v, true) : null;
+
         return response()->json([
             'status'       => $report->status,
             'health_score' => $report->health_score,
@@ -114,6 +116,14 @@ class GuestScanController extends Controller
                 'catalog'         => $report->catalog_result !== null,
                 'tracking'        => $report->tracking_result !== null,
             ],
+            // Full module results — only populated once completed
+            'seo_result'           => $decode($report->seo_schema_result),
+            'security_result'      => $decode($report->security_result),
+            'performance_result'   => $decode($report->performance_result),
+            'broken_result'        => $decode($report->broken_resources_result),
+            'catalog_result'       => $decode($report->catalog_result),
+            'tracking_result'      => $decode($report->tracking_result),
+            'accessibility_result' => $decode($report->accessibility_result),
         ]);
     }
 }

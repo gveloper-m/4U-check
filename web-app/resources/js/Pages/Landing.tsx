@@ -8,7 +8,10 @@ import {
     ArrowRight, CheckCircle2, XCircle, X, Accessibility, Bot, HelpCircle,
     Terminal, Server, AlertTriangle, Globe, FileText, Calendar, Activity,
     ShoppingBag, BarChart2, Loader2, Mail, History, LayoutDashboard, Building2,
+    ChevronDown, ChevronUp,
 } from 'lucide-react';
+
+type ModuleResult = Record<string, unknown> | null;
 
 interface GuestReport {
     status: string;
@@ -17,14 +20,60 @@ interface GuestReport {
     progress: { completed: number; total: number };
     deductions: string[];
     categories: {
-        seo: boolean;
-        security: boolean;
-        performance: boolean;
-        broken_resources: boolean;
-        accessibility: boolean;
-        catalog: boolean;
-        tracking: boolean;
+        seo: boolean; security: boolean; performance: boolean;
+        broken_resources: boolean; accessibility: boolean; catalog: boolean; tracking: boolean;
     };
+    seo_result: ModuleResult;
+    security_result: ModuleResult;
+    performance_result: ModuleResult;
+    broken_result: ModuleResult;
+    catalog_result: ModuleResult;
+    tracking_result: ModuleResult;
+    accessibility_result: ModuleResult;
+}
+
+// ── module result helpers (same as Audits/Show.tsx) ───────────────────────────
+function gs(o: ModuleResult, k: string): string { const v = o?.[k]; return v == null ? 'N/A' : String(v); }
+function gn(o: ModuleResult, k: string): number | null { const v = o?.[k]; return typeof v === 'number' ? v : null; }
+function gb(o: ModuleResult, k: string): boolean | null { const v = o?.[k]; return typeof v === 'boolean' ? v : null; }
+function go(o: ModuleResult, k: string): ModuleResult { const v = o?.[k]; return (v && typeof v === 'object' && !Array.isArray(v)) ? v as ModuleResult : null; }
+function ga(o: ModuleResult, k: string): unknown[] { const v = o?.[k]; return Array.isArray(v) ? v : []; }
+function hk(o: ModuleResult, k: string): boolean { return !!o && Object.prototype.hasOwnProperty.call(o, k); }
+
+function MRow({ label, value, ok }: { label: string; value: React.ReactNode; ok?: boolean }) {
+    return (
+        <div className="flex items-start justify-between gap-4 py-2 border-b border-gray-200 dark:border-gray-800 last:border-0">
+            <span className="text-sm text-gray-600 dark:text-gray-400 shrink-0">{label}</span>
+            <div className="flex items-center gap-1.5 text-right">
+                {ok === true  && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />}
+                {ok === false && <XCircle      className="h-3.5 w-3.5 shrink-0 text-red-400" />}
+                <span className="text-sm text-gray-800 dark:text-gray-200">{value ?? 'N/A'}</span>
+            </div>
+        </div>
+    );
+}
+
+function AuditSection({ title, icon: Icon, color, children }: {
+    title: string; icon: React.ComponentType<{ className?: string }>; color: string; children: React.ReactNode;
+}) {
+    const [open, setOpen] = useState(false);
+    return (
+        <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+            <button onClick={() => setOpen(!open)}
+                className="flex w-full items-center justify-between bg-white dark:bg-gray-900 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
+                        <Icon className={`h-4 w-4 ${color}`} />
+                    </div>
+                    <span className="font-semibold text-gray-900 dark:text-white">{title}</span>
+                </div>
+                {open
+                    ? <ChevronUp   className="h-4 w-4 text-gray-500" />
+                    : <ChevronDown className="h-4 w-4 text-gray-500" />}
+            </button>
+            {open && <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">{children}</div>}
+        </div>
+    );
 }
 
 export default function Landing({ alreadyScanned }: { alreadyScanned: boolean }) {
@@ -348,9 +397,9 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                                     })}
                                 </div>
 
-                                {/* Issues list — fully visible */}
+                                {/* Score deductions */}
                                 {issues > 0 && (
-                                    <div className="mb-8 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 overflow-hidden">
+                                    <div className="mb-6 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 overflow-hidden">
                                         <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-200 dark:border-amber-800">
                                             <AlertTriangle className="h-4 w-4 text-amber-500 dark:text-amber-400 shrink-0" />
                                             <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
@@ -367,7 +416,164 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                                     </div>
                                 )}
 
-                                {/* Premium callout */}
+                                {/* Full module breakdowns — same as logged-in view */}
+                                {report.status === 'completed' && (() => {
+                                    const seo  = report.seo_result;
+                                    const sec  = report.security_result;
+                                    const perf = report.performance_result;
+                                    const brk  = report.broken_result;
+                                    const cat  = report.catalog_result;
+                                    const trk  = report.tracking_result;
+                                    const a11y = report.accessibility_result;
+
+                                    const seoMeta    = go(seo, 'meta_title');
+                                    const seoDesc    = go(seo, 'meta_description');
+                                    const seoH1      = go(seo, 'h1_tags');
+                                    const seoCanon   = go(seo, 'canonical');
+                                    const seoSchema  = go(seo, 'schema_validation');
+                                    const seoOg      = go(seo, 'open_graph');
+                                    const seoAlt     = go(seo, 'image_alt_text');
+                                    const seoTech    = go(seo, 'technical_seo');
+
+                                    const secSsl     = go(sec, 'ssl');
+                                    const secMixed   = go(sec, 'mixed_content');
+                                    const secHdrs    = go(sec, 'security_headers');
+                                    const secDns     = go(sec, 'dns_security');
+                                    const secRedirect= go(sec, 'https_redirect');
+                                    const secPresent = go(secHdrs, 'headers_present');
+
+                                    const perfMetrics = go(perf, 'metrics');
+                                    const perfDesktop = go(perfMetrics, 'desktop');
+                                    const perfMobile  = go(perfMetrics, 'mobile');
+                                    const perfPage    = go(perf, 'page_analysis');
+                                    const ttfb        = gn(perfMetrics, 'ttfb_ms');
+                                    const fcp         = gn(perfDesktop, 'fcp_ms') ?? gn(perfMobile, 'fcp_ms');
+                                    const lcp         = gn(perfDesktop, 'lcp_ms') ?? gn(perfMobile, 'lcp_ms');
+
+                                    const brkSummary = go(brk, 'summary');
+                                    const brkLinks   = ga(brk, 'broken_links') as Record<string, unknown>[];
+                                    const brkImages  = ga(brk, 'broken_images') as Record<string, unknown>[];
+
+                                    const trackScripts = go(trk, 'tracking_scripts');
+                                    const trackGa4  = go(trackScripts, 'ga4');
+                                    const trackFb   = go(trackScripts, 'facebook_pixel');
+                                    const trackTt   = go(trackScripts, 'tiktok_pixel');
+                                    const trackGtm  = go(trackScripts, 'google_tag_manager');
+
+                                    const a11yForms   = gn(a11y, 'unlabelled_inputs');
+                                    const a11yAlt     = gn(a11y, 'images_missing_alt');
+                                    const a11yContrast= gn(a11y, 'contrast_violations');
+                                    const a11yLang    = gb(a11y, 'has_lang_attribute');
+                                    const a11yMain    = gb(a11y, 'has_main_landmark');
+
+                                    return (
+                                        <div className="mb-6 space-y-3">
+                                            {/* SEO */}
+                                            <AuditSection title="SEO & Schema" icon={Search} color="text-violet-600 dark:text-violet-400">
+                                                {seo ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                                                    <MRow label="Meta Title"       value={gs(seoMeta,   'status')} ok={gs(seoMeta, 'status') === 'OK'} />
+                                                    <MRow label="Meta Description" value={gs(seoDesc,   'status')} ok={gs(seoDesc, 'status') === 'OK'} />
+                                                    <MRow label="H1 Tags"          value={`${gn(seoH1, 'count') ?? '?'} (${gs(seoH1, 'status')})`} ok={gs(seoH1, 'status') === 'OK'} />
+                                                    <MRow label="Canonical URL"    value={gs(seoCanon,  'status')} ok={gs(seoCanon, 'status') === 'OK'} />
+                                                    <MRow label="Schema Markup"    value={gb(seoSchema, 'has_valid_schema') ? 'Valid' : 'Missing/Invalid'} ok={gb(seoSchema, 'has_valid_schema') ?? undefined} />
+                                                    <MRow label="Open Graph"       value={gs(seoOg,     'status')} ok={gs(seoOg, 'status') === 'OK'} />
+                                                    <MRow label="Image Alt Text"   value={seoAlt ? `${gn(seoAlt, 'missing_alt') ?? 0} missing / ${gn(seoAlt, 'total_images') ?? '?'} total` : 'N/A'} ok={seoAlt ? gs(seoAlt, 'status') === 'OK' : undefined} />
+                                                    <MRow label="robots.txt"       value={gb(go(seoTech, 'robots_txt'), 'exists') === true ? 'Found' : 'Missing'} ok={gb(go(seoTech, 'robots_txt'), 'exists') ?? undefined} />
+                                                    <MRow label="sitemap.xml"      value={gb(go(seoTech, 'sitemap_xml'), 'exists') === true ? 'Found' : 'Missing'} ok={gb(go(seoTech, 'sitemap_xml'), 'exists') ?? undefined} />
+                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                            </AuditSection>
+
+                                            {/* Security */}
+                                            <AuditSection title="Security" icon={Shield} color="text-blue-600 dark:text-blue-400">
+                                                {sec ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                                                    <MRow label="SSL Certificate"  value={gb(secSsl, 'ssl_valid') ? `Valid — ${gn(secSsl, 'ssl_days_left')}d left` : (gs(secSsl, 'error') || 'Invalid')} ok={gb(secSsl, 'ssl_valid') ?? undefined} />
+                                                    <MRow label="HTTPS Redirect"   value={gb(secRedirect, 'redirects_to_https') === true ? 'Yes' : 'No'} ok={gb(secRedirect, 'redirects_to_https') ?? undefined} />
+                                                    <MRow label="Mixed Content"    value={gb(secMixed, 'has_mixed_content') ? 'Detected' : 'None'} ok={gb(secMixed, 'has_mixed_content') === false} />
+                                                    <MRow label="HSTS"             value={hk(secPresent, 'Strict-Transport-Security') ? 'Present' : 'Missing'} ok={hk(secPresent, 'Strict-Transport-Security')} />
+                                                    <MRow label="CSP"              value={hk(secPresent, 'Content-Security-Policy') ? 'Present' : 'Missing'} ok={hk(secPresent, 'Content-Security-Policy')} />
+                                                    <MRow label="X-Frame-Options"  value={hk(secPresent, 'X-Frame-Options') ? 'Present' : 'Missing'} ok={hk(secPresent, 'X-Frame-Options')} />
+                                                    <MRow label="SPF Record"       value={gb(secDns, 'spf_record_exists') ? 'Present' : 'Missing'} ok={gb(secDns, 'spf_record_exists') ?? undefined} />
+                                                    <MRow label="DMARC Record"     value={gb(secDns, 'dmarc_record_exists') ? 'Present' : 'Missing'} ok={gb(secDns, 'dmarc_record_exists') ?? undefined} />
+                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                            </AuditSection>
+
+                                            {/* Performance */}
+                                            <AuditSection title="Performance" icon={BarChart3} color="text-emerald-600 dark:text-emerald-400">
+                                                {perf ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                                                    <MRow label="TTFB"              value={ttfb !== null ? `${ttfb} ms` : 'N/A'} ok={ttfb !== null ? ttfb < 800 : undefined} />
+                                                    <MRow label="FCP (Desktop)"     value={fcp  !== null ? `${fcp} ms`  : 'N/A'} ok={fcp  !== null ? fcp  < 1800 : undefined} />
+                                                    <MRow label="LCP (Desktop)"     value={lcp  !== null ? `${lcp} ms`  : 'N/A'} ok={lcp  !== null ? lcp  < 2500 : undefined} />
+                                                    {perfMobile && gn(perfMobile, 'fcp_ms') !== null && <MRow label="FCP (Mobile)" value={`${gn(perfMobile, 'fcp_ms')} ms`} ok={(gn(perfMobile, 'fcp_ms') ?? 9999) < 1800} />}
+                                                    {perfMobile && gn(perfMobile, 'lcp_ms') !== null && <MRow label="LCP (Mobile)" value={`${gn(perfMobile, 'lcp_ms')} ms`} ok={(gn(perfMobile, 'lcp_ms') ?? 9999) < 2500} />}
+                                                    <MRow label="Compression"       value={gb(perfPage, 'compression_enabled') === true ? 'Enabled' : 'Disabled'} ok={gb(perfPage, 'compression_enabled') ?? undefined} />
+                                                    <MRow label="Pages Tested"      value={gn(perf, 'pages_tested') ?? 'N/A'} />
+                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                            </AuditSection>
+
+                                            {/* Broken Resources */}
+                                            <AuditSection title="Broken Links & Images" icon={Link2} color="text-red-600 dark:text-red-400">
+                                                {brk ? <div className="space-y-4">
+                                                    <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                                                        <MRow label="Links Checked"  value={gn(brkSummary, 'total_links_checked') ?? 'N/A'} />
+                                                        <MRow label="Broken Links"   value={gn(brkSummary, 'broken_links_count') ?? 0} ok={(gn(brkSummary, 'broken_links_count') ?? 1) === 0} />
+                                                        <MRow label="Images Checked" value={gn(brkSummary, 'total_images_checked') ?? 'N/A'} />
+                                                        <MRow label="Broken Images"  value={gn(brkSummary, 'broken_images_count') ?? 0} ok={(gn(brkSummary, 'broken_images_count') ?? 1) === 0} />
+                                                    </div>
+                                                    {brkLinks.length > 0 && (
+                                                        <div>
+                                                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">Broken Links ({brkLinks.length})</p>
+                                                            <div className="max-h-60 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-200 dark:divide-gray-800">
+                                                                {brkLinks.map((l, i) => (
+                                                                    <div key={i} className="px-3 py-2">
+                                                                        <div className="flex items-start justify-between gap-3">
+                                                                            <span className="break-all text-xs text-gray-700 dark:text-gray-300">{String(l.url ?? '')}</span>
+                                                                            {l.status_code != null && <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">{String(l.status_code)}</span>}
+                                                                        </div>
+                                                                        {l.found_on != null && <p className="mt-0.5 text-xs text-gray-500 break-all">Found on: {String(l.found_on)}</p>}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                            </AuditSection>
+
+                                            {/* E-commerce */}
+                                            <AuditSection title="E-commerce Catalog" icon={ShoppingCart} color="text-amber-600 dark:text-amber-400">
+                                                {cat ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                                                    <MRow label="Pages Crawled"    value={gn(cat, 'pages_crawled') ?? 'N/A'} />
+                                                    <MRow label="Product Pages"    value={gn(cat, 'product_pages_found') ?? 'N/A'} />
+                                                    <MRow label="Products Audited" value={gn(cat, 'products_audited') ?? 'N/A'} />
+                                                    <MRow label="Broken Products"  value={gn(cat, 'broken_products_count') ?? 0} ok={(gn(cat, 'broken_products_count') ?? 1) === 0} />
+                                                    <MRow label="Price Issues"     value={gn(cat, 'price_issues_count') ?? 0}  ok={(gn(cat, 'price_issues_count') ?? 1) === 0} />
+                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                            </AuditSection>
+
+                                            {/* Marketing Tracking */}
+                                            <AuditSection title="Marketing Tracking" icon={Tag} color="text-pink-600 dark:text-pink-400">
+                                                {trk ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                                                    <MRow label="Google Analytics 4" value={gb(trackGa4, 'detected') ? `Found (${gs(trackGa4, 'measurement_id')})` : 'Not found'} ok={gb(trackGa4, 'detected') ?? undefined} />
+                                                    <MRow label="Google Tag Manager" value={gb(trackGtm, 'detected') ? `Found (${gs(trackGtm, 'container_id')})` : 'Not found'} ok={gb(trackGtm, 'detected') ?? undefined} />
+                                                    <MRow label="Meta Pixel"         value={gb(trackFb, 'detected') ? `Found (${gs(trackFb, 'pixel_id')})` : 'Not found'} ok={gb(trackFb, 'detected') ?? undefined} />
+                                                    <MRow label="TikTok Pixel"       value={gb(trackTt, 'detected') ? 'Found' : 'Not found'} ok={gb(trackTt, 'detected') ?? undefined} />
+                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                            </AuditSection>
+
+                                            {/* Accessibility */}
+                                            <AuditSection title="Accessibility (WCAG)" icon={Accessibility} color="text-teal-600 dark:text-teal-400">
+                                                {a11y ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
+                                                    <MRow label="Unlabelled Inputs"  value={a11yForms   ?? 0} ok={(a11yForms   ?? 1) === 0} />
+                                                    <MRow label="Images Missing Alt" value={a11yAlt     ?? 0} ok={(a11yAlt     ?? 1) === 0} />
+                                                    <MRow label="Contrast Violations"value={a11yContrast ?? 0} ok={(a11yContrast ?? 1) === 0} />
+                                                    <MRow label="HTML lang Attribute"value={a11yLang === true ? 'Present' : 'Missing'} ok={a11yLang ?? undefined} />
+                                                    <MRow label="Main Landmark"      value={a11yMain === true ? 'Present' : 'Missing'} ok={a11yMain ?? undefined} />
+                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                            </AuditSection>
+                                        </div>
+                                    );
+                                })()}
+
+                                {/* Account CTA — now only mentions features beyond free scan */}
                                 <div className="rounded-xl border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 p-6">
                                     <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">{t('landing.resultsPremiumTitle')}</h3>
                                     <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{t('landing.resultsPremiumSub')}</p>
@@ -383,16 +589,10 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                                         })}
                                     </div>
                                     <div className="flex flex-col sm:flex-row gap-3">
-                                        <Link
-                                            href="/register"
-                                            className="flex items-center justify-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-500 px-6 py-3 text-sm font-semibold text-white transition-colors"
-                                        >
+                                        <Link href="/register" className="flex items-center justify-center gap-2 rounded-lg bg-violet-600 hover:bg-violet-500 px-6 py-3 text-sm font-semibold text-white transition-colors">
                                             {t('landing.ctaBtn')} <ArrowRight className="h-4 w-4" />
                                         </Link>
-                                        <Link
-                                            href="/login"
-                                            className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 hover:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 transition-colors"
-                                        >
+                                        <Link href="/login" className="flex items-center justify-center gap-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 hover:border-gray-400 px-6 py-3 text-sm font-semibold text-gray-700 dark:text-gray-300 transition-colors">
                                             {t('landing.ctaSignIn')}
                                         </Link>
                                     </div>
