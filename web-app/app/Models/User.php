@@ -104,7 +104,24 @@ class User extends Authenticatable implements MustVerifyEmail
             return true;
         }
 
+        if ($this->onCodeTrial()) {
+            return true;
+        }
+
         return $this->subscribed();
+    }
+
+    public function onCodeTrial(): bool
+    {
+        return $this->trial_ends_at !== null && $this->trial_ends_at->isFuture();
+    }
+
+    public function trialDaysLeft(): int
+    {
+        if (! $this->onCodeTrial()) {
+            return 0;
+        }
+        return max(0, (int) now()->diffInDays($this->trial_ends_at, false));
     }
 
     public function primarySite(): ?MonitoredSite

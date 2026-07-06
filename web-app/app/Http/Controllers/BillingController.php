@@ -31,6 +31,9 @@ class BillingController extends Controller
 
         return Inertia::render('Billing/Index', [
             'subscribed'   => $user->subscribed(),
+            'on_trial'     => $user->onCodeTrial(),
+            'trial_ends_at'   => $user->trial_ends_at?->toISOString(),
+            'trial_days_left' => $user->trialDaysLeft(),
             'subscription' => $subscription ? [
                 'status'         => $subscription->status,
                 'paused_at'      => $subscription->paused_at,
@@ -51,7 +54,7 @@ class BillingController extends Controller
             'site_count'          => $siteCount,
             'current_plan'        => $plan,
             'monthly_total'       => $monthlyTotal,
-            'extra_sites_enabled' => $user->is_unlimited || $user->subscribed(),
+            'extra_sites_enabled' => $user->is_unlimited || $user->subscribed() || $user->onCodeTrial(),
             'paddle' => [
                 'token'            => config('cashier.client_side_token'),
                 'environment'      => config('cashier.sandbox') ? 'sandbox' : 'production',
@@ -144,7 +147,7 @@ class BillingController extends Controller
         ]);
 
         $user = $request->user();
-        abort_unless($user->is_unlimited, 403, 'Payment required to add extra sites.');
+        abort_unless($user->is_unlimited || $user->onCodeTrial(), 403, 'Payment required to add extra sites.');
 
         $user->monitoredSites()->create([
             'url'        => $validated['url'],

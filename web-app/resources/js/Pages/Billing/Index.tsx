@@ -7,7 +7,7 @@ import { initializePaddle, type Paddle } from '@paddle/paddle-js';
 import axios from 'axios';
 import {
   CreditCard, CheckCircle2, XCircle, Infinity, ArrowRight, Loader2,
-  ShieldCheck, Globe, Lock, Plus, Trash2, AlertTriangle, X, Ban,
+  ShieldCheck, Globe, Lock, Plus, Trash2, AlertTriangle, X, Ban, Clock,
 } from 'lucide-react';
 
 interface SiteData {
@@ -40,6 +40,9 @@ interface PaddleConfig {
 
 interface BillingProps extends PageProps {
   subscribed: boolean;
+  on_trial: boolean;
+  trial_ends_at: string | null;
+  trial_days_left: number;
   subscription: SubscriptionData | null;
   is_unlimited: boolean;
   payment_method: PaymentMethodData | null;
@@ -87,7 +90,8 @@ function SiteRow({ site, canRemove, onRemove, removing }: {
 }
 
 export default function BillingIndex({
-  subscribed, subscription, is_unlimited, payment_method,
+  subscribed, on_trial, trial_ends_at, trial_days_left,
+  subscription, is_unlimited, payment_method,
   company_name, vat_number, flash,
   sites, site_count, current_plan, monthly_total, extra_sites_enabled,
   paddle: paddleConfig,
@@ -249,6 +253,106 @@ export default function BillingIndex({
                     <p className="font-semibold text-emerald-400">{t('billing.unlimited')}</p>
                     <p className="text-xs text-emerald-300/70">{t('billing.unlimitedSub')}</p>
                   </div>
+                </div>
+              </div>
+            ) : on_trial ? (
+              /* ── Free trial via code ── */
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 rounded-xl border border-violet-500/30 bg-violet-500/10 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-violet-500/20 border border-violet-500/30 shrink-0">
+                    <Clock className="h-5 w-5 text-violet-400" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-violet-400">Free Trial Active</p>
+                    <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">
+                      {trial_days_left > 0
+                        ? <>{trial_days_left} day{trial_days_left !== 1 ? 's' : ''} remaining</>
+                        : 'Expires today'}
+                      {trial_ends_at && (
+                        <span className="ml-1.5 text-xs text-gray-500">
+                          (until {new Date(trial_ends_at).toLocaleDateString()})
+                        </span>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-0.5">You have full access to all features during your trial.</p>
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Upgrade now to keep access after your trial ends</p>
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    {([
+                      {
+                        key: 'monthly' as const,
+                        label: t('billing.monthly'),
+                        price: '€19.99',
+                        period: t('billing.perMonth'),
+                        note: `${t('billing.exclVat')} · ${t('billing.billedMonthly')}`,
+                      },
+                      {
+                        key: 'yearly' as const,
+                        label: t('billing.yearly'),
+                        price: '€199.99',
+                        period: t('billing.perYear'),
+                        note: `${t('billing.exclVat')} · ${t('billing.twoMonthsFree')}`,
+                      },
+                    ]).map(p => (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => subscribeForm.setData('plan', p.key)}
+                        className={`rounded-lg border p-3 text-left transition-colors ${
+                          subscribeForm.data.plan === p.key
+                            ? 'border-gray-900 dark:border-white bg-gray-50 dark:bg-gray-800'
+                            : 'border-gray-200 dark:border-gray-700 hover:border-gray-400 dark:hover:border-gray-500'
+                        }`}
+                      >
+                        <div className="text-xs font-medium text-gray-500 mb-1">{p.label}</div>
+                        <div className="text-lg font-bold text-gray-900 dark:text-white">
+                          {p.price}<span className="text-xs font-normal text-gray-500">{p.period}</span>
+                        </div>
+                        <div className="mt-0.5 text-xs text-gray-500">{p.note}</div>
+                        {p.key === 'yearly' && (
+                          <div className="mt-1 inline-block rounded-full bg-emerald-100 dark:bg-emerald-900/40 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                            {t('billing.bestValue')}
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  <form onSubmit={handleSubscribe} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">{t('billing.companyName')}</label>
+                        <input
+                          type="text"
+                          value={subscribeForm.data.company_name}
+                          onChange={e => subscribeForm.setData('company_name', e.target.value)}
+                          placeholder="Acme Ltd."
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-600 focus:border-violet-500 focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-gray-600 dark:text-gray-400">{t('billing.vatNumber')}</label>
+                        <input
+                          type="text"
+                          value={subscribeForm.data.vat_number}
+                          onChange={e => subscribeForm.setData('vat_number', e.target.value.toUpperCase())}
+                          placeholder={t('billing.vatNumberPlaceholder')}
+                          className="w-full rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-600 focus:border-violet-500 focus:outline-none font-mono"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={subscribing}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                    >
+                      {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                      {t('billing.subscribeBtn')} — €{previewBase.toFixed(2)} · {t('billing.exclVat')}
+                    </button>
+                    <p className="text-center text-xs text-gray-500">{t('billing.nofees')}</p>
+                  </form>
                 </div>
               </div>
             ) : subscribed && subscription ? (
@@ -470,7 +574,7 @@ export default function BillingIndex({
             </div>
 
             {/* Monitored sites */}
-            {(subscribed || is_unlimited) && (
+            {(subscribed || is_unlimited || on_trial) && (
               <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6">
                 <div className="mb-4 flex items-center justify-between">
                   <div>
@@ -499,7 +603,7 @@ export default function BillingIndex({
                       <SiteRow
                         key={site.id}
                         site={site}
-                        canRemove={subscribed || is_unlimited}
+                        canRemove={subscribed || is_unlimited || on_trial}
                         onRemove={(id) => setConfirmRemove(sites.find(s => s.id === id) ?? null)}
                         removing={removingId === site.id}
                       />
