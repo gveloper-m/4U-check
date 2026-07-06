@@ -4,6 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\BlogPost;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class PublishScheduledBlogPosts extends Command
 {
@@ -26,8 +28,27 @@ class PublishScheduledBlogPosts extends Command
 
         if ($published->isEmpty()) {
             $this->line('No scheduled posts due.');
+        } else {
+            $this->pingSitemapIndexers();
         }
 
         return self::SUCCESS;
+    }
+
+    private function pingSitemapIndexers(): void
+    {
+        $sitemap = urlencode(url('/sitemap.xml'));
+        $targets = [
+            "https://www.google.com/ping?sitemap={$sitemap}",
+            "https://www.bing.com/ping?sitemap={$sitemap}",
+        ];
+        foreach ($targets as $url) {
+            try {
+                Http::timeout(10)->get($url);
+                $this->line("Pinged: {$url}");
+            } catch (\Exception $e) {
+                Log::warning("Sitemap ping failed: {$url} — {$e->getMessage()}");
+            }
+        }
     }
 }

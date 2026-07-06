@@ -87,7 +87,25 @@ class MistralBlogService
             }
         }
 
+        // Add unique lock parameters so loremflickr serves a distinct photo for each image,
+        // even when the AI reuses the same keyword combination across articles.
+        $data['featured_image'] = $this->lockFlickrUrl($data['featured_image']);
+        $data['content']        = preg_replace_callback(
+            '~(https://loremflickr\.com/[^\s"\'<>]+)~i',
+            fn($m) => $this->lockFlickrUrl($m[1]),
+            $data['content']
+        );
+
         return $data;
+    }
+
+    private function lockFlickrUrl(string $url): string
+    {
+        // Strip any existing lock param, then add a fresh random one
+        $base = preg_replace('/([?&])lock=[^&]+(&|$)/', '$1', $url);
+        $base = rtrim($base, '?&');
+        $sep  = str_contains($base, '?') ? '&' : '?';
+        return $base . $sep . 'lock=' . random_int(1, 999999);
     }
 
     private function buildPrompt(string $language, string $topic): string
@@ -103,7 +121,7 @@ Requirements:
 - Meta description: exactly 150–160 characters, includes the primary keyword, subtle value proposition
 - Use proper HTML tags only: h2, h3, p, ul, ol, li, strong, em, img
 - Structure: intro → 3-5 main sections with h2 headings → practical takeaways → conclusion
-- Include exactly 3 images using this URL pattern: https://loremflickr.com/1200/630/keyword1,keyword2 (replace keyword1,keyword2 with 2–3 relevant English keywords, no spaces, comma-separated). Place each image after a section heading as an <img> tag with descriptive alt text.
+- Include exactly 3 images using this URL pattern: https://loremflickr.com/1200/630/keyword1,keyword2 — place each after a section heading as an <img> tag with descriptive alt text. CRITICAL: every image MUST use a completely different keyword pair that reflects THAT section's specific subtopic. Never repeat the same keyword combination. Example for an SEO article: img1="seo,search" img2="developer,code" img3="analytics,dashboard".
 - Near the end (second-to-last paragraph), naturally mention 4uTest in one sentence as a useful free tool — not promotional, just helpful context. Example: "Tools like [4uTest](https://4utest.io) automate this entire audit process, scanning your site across all these dimensions in minutes and giving you an actionable health score."
 - Do NOT say "In conclusion" or "In summary" — end with a strong final thought
 - The writing must feel authored by a senior web professional, not AI-generated

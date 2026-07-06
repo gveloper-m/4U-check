@@ -13,15 +13,54 @@ interface Post {
     author: { id: number; name: string };
 }
 
+interface Seo {
+    title?: string;
+    description?: string;
+    canonical?: string;
+    type?: string;
+    image?: string;
+    published_at?: string;
+    author?: string;
+    schema?: Record<string, unknown>;
+}
+
 function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-export default function BlogShow({ post, seo }: { post: Post; seo?: { description?: string } }) {
+export default function BlogShow({ post, seo }: { post: Post; seo?: Seo }) {
+    const title = seo?.title ?? `${post.title} — 4utest Blog`;
+    const description = seo?.description ?? post.excerpt ?? '';
+    const image = seo?.image ?? post.featured_image ?? '';
+    const canonical = seo?.canonical ?? `/blog/${post.slug}`;
+
     return (
         <BlogLayout>
-            <Head title={`${post.title} — 4utest Blog`}>
-                {seo?.description && <meta name="description" content={seo.description} />}
+            <Head title={title}>
+                {description && <meta name="description" content={description} />}
+                {canonical && <link rel="canonical" href={canonical} />}
+
+                {/* Open Graph */}
+                <meta property="og:type" content="article" />
+                <meta property="og:title" content={title} />
+                {description && <meta property="og:description" content={description} />}
+                {canonical && <meta property="og:url" content={canonical} />}
+                {image && <meta property="og:image" content={image} />}
+                {seo?.published_at && <meta property="article:published_time" content={seo.published_at} />}
+                {seo?.author && <meta property="article:author" content={seo.author} />}
+
+                {/* Twitter Card */}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={title} />
+                {description && <meta name="twitter:description" content={description} />}
+                {image && <meta name="twitter:image" content={image} />}
+
+                {/* JSON-LD */}
+                {seo?.schema && (
+                    <script type="application/ld+json">
+                        {JSON.stringify(seo.schema)}
+                    </script>
+                )}
             </Head>
 
             <Link href="/blog" className="mb-8 inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">

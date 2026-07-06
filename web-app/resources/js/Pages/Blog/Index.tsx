@@ -24,11 +24,33 @@ function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
 }
 
-export default function BlogIndex({ posts }: { posts: PaginatedPosts }) {
+interface Seo {
+    title?: string;
+    description?: string;
+    canonical?: string;
+    image?: string;
+}
+
+export default function BlogIndex({ posts, seo }: { posts: PaginatedPosts; seo?: Seo }) {
+    const title = seo?.title ?? 'Blog — 4utest';
+    const description = seo?.description ?? 'Tips, guides, and updates on website auditing, SEO, security, and performance.';
+    const canonical = seo?.canonical ?? '/blog';
+    const image = seo?.image ?? '';
+
     return (
         <BlogLayout>
-            <Head title="Blog — 4utest">
-                <meta name="description" content="Tips, guides, and updates on website auditing, SEO, security, and performance." />
+            <Head title={title}>
+                <meta name="description" content={description} />
+                <link rel="canonical" href={canonical} />
+                <meta property="og:type" content="website" />
+                <meta property="og:title" content={title} />
+                <meta property="og:description" content={description} />
+                <meta property="og:url" content={canonical} />
+                {image && <meta property="og:image" content={image} />}
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={title} />
+                <meta name="twitter:description" content={description} />
+                {image && <meta name="twitter:image" content={image} />}
             </Head>
 
             <div className="mb-10">

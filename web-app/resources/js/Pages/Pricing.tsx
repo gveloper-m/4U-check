@@ -121,9 +121,21 @@ export default function Pricing({ auth }: PageProps) {
   const extra  = billing === 'yearly' ? EXTRA_YEARLY  : EXTRA_MONTHLY;
   const period = billing === 'yearly' ? '/year' : '/month';
 
+  const faqSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQS.map(f => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  };
+
   return (
     <>
-      <Head title="Pricing — 4utest Website Audit Platform" />
+      <Head title="Pricing — 4utest Website Audit Platform">
+        <script type="application/ld+json">{JSON.stringify(faqSchema)}</script>
+      </Head>
 
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
 
