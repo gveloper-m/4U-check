@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\MonitoringController as AdminMonitoringController
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
 use App\Http\Controllers\Admin\TrialCodeController as AdminTrialCodeController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use App\Http\Controllers\AdminMassEmailController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\NotificationPrefsController;
 use App\Http\Controllers\AuditController;
@@ -158,4 +159,13 @@ Route::middleware(['auth', 'verified', 'admin'])->prefix('admin')->name('admin.'
     Route::post('/trial-codes', [AdminTrialCodeController::class, 'store'])->name('trial-codes.store');
     Route::patch('/trial-codes/{trialCode}/note', [AdminTrialCodeController::class, 'updateNote'])->name('trial-codes.update-note');
     Route::delete('/trial-codes/{trialCode}', [AdminTrialCodeController::class, 'destroy'])->name('trial-codes.destroy');
+
+    Route::get('/mass-email',                                    [AdminMassEmailController::class, 'index'])->name('mass-email.index');
+    Route::post('/mass-email',                                   [AdminMassEmailController::class, 'store'])->name('mass-email.store');
+    Route::post('/mass-email/import',                            [AdminMassEmailController::class, 'import'])->name('mass-email.import');
+    Route::post('/mass-email/start',                             [AdminMassEmailController::class, 'start'])->name('mass-email.start');
+    Route::delete('/mass-email/all',                             [AdminMassEmailController::class, 'destroyAll'])->name('mass-email.destroy-all');
+    Route::delete('/mass-email/{massEmail}',                     [AdminMassEmailController::class, 'destroy'])->name('mass-email.destroy');
+    Route::post('/mass-email/{massEmail}/retry',                 [AdminMassEmailController::class, 'retry'])->name('mass-email.retry');
+    Route::patch('/mass-email/{massEmail}/language',             [AdminMassEmailController::class, 'updateLanguage'])->name('mass-email.update-language');
 });

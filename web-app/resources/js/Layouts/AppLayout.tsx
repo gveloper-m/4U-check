@@ -23,6 +23,7 @@ import {
     HelpCircle,
     Activity,
     Bot,
+    Mail,
 } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import ThemeToggle from '@/Components/ThemeToggle';
@@ -68,6 +69,7 @@ export default function AppLayout({ children }: PropsWithChildren) {
             { label: 'Users',        href: '/admin/users',        icon: Users,    routeName: 'admin.users.index' },
             { label: 'Monitoring',   href: '/admin/monitoring',   icon: Activity, routeName: 'admin.monitoring.index' },
             { label: 'Trial Codes',  href: '/admin/trial-codes',  icon: Tag,      routeName: 'admin.trial-codes.index' },
+            { label: 'Mass Email',   href: '/admin/mass-email',   icon: Mail,     routeName: 'admin.mass-email.index' },
         ] : []),
     ];
 
