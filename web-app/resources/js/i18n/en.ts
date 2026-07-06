@@ -61,11 +61,13 @@ const en = {
       'Scheduled automatic scans',
       'Full scan history & comparisons',
       'PDF & CSV exports',
+      'REST API access',
     ],
     extraFeatures: {
       scheduled: { title: 'Automated Scans', desc: 'Schedule hourly, daily, weekly, or monthly scans. Get notified by email on completion.' },
       export: { title: 'Export Results', desc: 'Download PDF reports for clients or CSV data for your own analysis.' },
       track: { title: 'Track Progress', desc: 'Compare any two scans side by side to see your health score improve.' },
+      api: { title: 'REST API', desc: 'Trigger scans and fetch results from any tool. Generate API keys in your profile.' },
     },
     agent: {
       badge: 'MCP Agent — included free',
@@ -634,6 +636,8 @@ const en = {
     featMultisiteDesc: 'Monitor all your websites from a single dashboard.',
     featAgency: 'Agency features',
     featAgencyDesc: 'Custom branding and white-label reports for your clients.',
+    featApi: 'REST API access',
+    featApiDesc: 'Trigger scans, fetch results, and download PDFs and CSVs programmatically.',
     ctaTitle: "See the full report — it's free",
     ctaSub: 'Get the complete breakdown, download a PDF, and keep monitoring your site every month.',
     ctaBtn: 'Create Free Account',

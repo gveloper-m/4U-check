@@ -61,11 +61,13 @@ const cs = {
       'Naplánovaná automatická skenování',
       'Kompletní historie & porovnání',
       'Exporty PDF & CSV',
+      'Přístup k REST API',
     ],
     extraFeatures: {
       scheduled: { title: 'Automatizovaná skenování', desc: 'Naplánujte hodinová, denní, týdenní nebo měsíční skenování.' },
       export: { title: 'Export výsledků', desc: 'Stáhněte PDF zprávy pro klienty nebo CSV data pro vlastní analýzu.' },
       track: { title: 'Sledování pokroku', desc: 'Porovnejte dvě skenování vedle sebe a sledujte zlepšení vašeho skóre.' },
+      api: { title: 'REST API', desc: 'Spouštějte skenování a načítejte výsledky z libovolného nástroje. Vytvářejte API klíče ve svém profilu.' },
     },
     agent: {
       badge: 'MCP Agent — zdarma v ceně',
@@ -604,6 +606,8 @@ const cs = {
     featMultisiteDesc: 'Sledujte všechny své weby z jednoho přehledu.',
     featAgency: 'Funkce pro agentury',
     featAgencyDesc: 'Zprávy pod vlastní značkou pro vaše klienty.',
+    featApi: 'Přístup k REST API',
+    featApiDesc: 'Spouštějte skenování, načítejte výsledky a stahujte PDF a CSV programaticky.',
     ctaTitle: 'Zobrazit celou zprávu — zdarma',
     ctaSub: 'Získejte kompletní přehled, stáhněte PDF a sledujte svůj web každý měsíc.',
     ctaBtn: 'Vytvořit bezplatný účet',

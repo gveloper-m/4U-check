@@ -61,11 +61,13 @@ const nl = {
       'Geplande automatische scans',
       'Volledige scangeschiedenis & vergelijkingen',
       'PDF- & CSV-exports',
+      'REST API-toegang',
     ],
     extraFeatures: {
       scheduled: { title: 'Geautomatiseerde scans', desc: 'Plan scans elk uur, dagelijks, wekelijks of maandelijks.' },
       export: { title: 'Resultaten exporteren', desc: 'Download PDF-rapporten voor klanten of CSV-data voor uw eigen analyse.' },
       track: { title: 'Voortgang bijhouden', desc: 'Vergelijk twee scans naast elkaar om uw gezondheidsscore te zien verbeteren.' },
+      api: { title: 'REST API', desc: 'Start scans en haal resultaten op vanuit elk hulpmiddel. Maak API-sleutels aan in uw profiel.' },
     },
     agent: {
       badge: 'MCP Agent — gratis inbegrepen',
@@ -604,6 +606,8 @@ const nl = {
     featMultisiteDesc: 'Monitor al je websites vanuit één dashboard.',
     featAgency: 'Agentschapsfuncties',
     featAgencyDesc: 'Aangepaste white-label rapporten voor je klanten.',
+    featApi: 'REST API-toegang',
+    featApiDesc: 'Start scans, haal resultaten op en download PDF\'s en CSV\'s via code.',
     ctaTitle: 'Bekijk het volledige rapport — het is gratis',
     ctaSub: 'Krijg het volledige overzicht, download een PDF en blijf je site elke maand monitoren.',
     ctaBtn: 'Gratis account aanmaken',

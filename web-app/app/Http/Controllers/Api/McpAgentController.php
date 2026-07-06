@@ -45,8 +45,7 @@ class McpAgentController extends Controller
 
     private function resolveAgent(Request $request): ?McpAgent
     {
-        $header = $request->header('Authorization', '');
-        $token  = str_replace('Bearer ', '', $header);
+        $token = $request->bearerToken();
         if (! $token) {
             return null;
         }

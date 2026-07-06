@@ -52,11 +52,13 @@ const es = {
       'Escaneos automáticos programados',
       'Historial completo y comparaciones',
       'Exportaciones PDF y CSV',
+      'Acceso a la API REST',
     ],
     extraFeatures: {
       scheduled: { title: 'Escaneos automatizados', desc: 'Programe escaneos por hora, diarios, semanales o mensuales.' },
       export: { title: 'Exportar resultados', desc: 'Descargue informes PDF para clientes o datos CSV para su análisis.' },
       track: { title: 'Seguir el progreso', desc: 'Compare dos escaneos lado a lado para ver mejorar su puntuación.' },
+      api: { title: 'API REST', desc: 'Inicie análisis y obtenga resultados desde cualquier herramienta. Genere claves de API en su perfil.' },
     },
     agent: {
       badge: 'MCP Agent — incluido gratis',
@@ -604,6 +606,8 @@ const es = {
     featMultisiteDesc: 'Supervisa todos tus sitios desde un único panel de control.',
     featAgency: 'Funciones de agencia',
     featAgencyDesc: 'Informes de marca blanca personalizados para tus clientes.',
+    featApi: 'Acceso a la API REST',
+    featApiDesc: 'Inicie análisis, obtenga resultados y descargue PDF y CSV mediante programación.',
     ctaTitle: 'Ver el informe completo — es gratis',
     ctaSub: 'Obtén el análisis completo, descarga un PDF y mantén tu sitio monitoreado cada mes.',
     ctaBtn: 'Crear cuenta gratuita',

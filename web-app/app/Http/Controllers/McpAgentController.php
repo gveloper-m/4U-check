@@ -237,7 +237,7 @@ BASH;
 
         // Find latest completed report for this site
         $report = FullAuditReport::where('user_id', auth()->id())
-            ->where('url', $agent->monitoredSite->url)
+            ->where('site_url', $agent->monitoredSite->url)
             ->where('status', 'completed')
             ->latest()
             ->first();

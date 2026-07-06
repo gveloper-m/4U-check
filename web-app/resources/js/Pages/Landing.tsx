@@ -8,7 +8,7 @@ import {
     ArrowRight, CheckCircle2, XCircle, X, Accessibility, Bot, HelpCircle,
     Terminal, Server, AlertTriangle, Globe, FileText, Calendar, Activity,
     ShoppingBag, BarChart2, Loader2, Mail, History, LayoutDashboard, Building2,
-    ChevronDown, ChevronUp,
+    ChevronDown, ChevronUp, Code,
 } from 'lucide-react';
 
 type ModuleResult = Record<string, unknown> | null;
@@ -793,11 +793,12 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                 {/* Extra features */}
                 <section className="px-6 py-16 border-t border-gray-200 dark:border-gray-800">
                     <div className="mx-auto max-w-4xl">
-                        <div className="grid gap-6 md:grid-cols-3">
+                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                             {[
                                 { icon: Clock,     title: t('welcome.extraFeatures.scheduled.title'), desc: t('welcome.extraFeatures.scheduled.desc'), color: 'text-emerald-400' },
                                 { icon: Download,  title: t('welcome.extraFeatures.export.title'),    desc: t('welcome.extraFeatures.export.desc'),    color: 'text-blue-400'    },
                                 { icon: BarChart3, title: t('welcome.extraFeatures.track.title'),     desc: t('welcome.extraFeatures.track.desc'),     color: 'text-violet-400'  },
+                                { icon: Code,      title: t('welcome.extraFeatures.api.title'),       desc: t('welcome.extraFeatures.api.desc'),       color: 'text-amber-400'   },
                             ].map(item => {
                                 const Icon = item.icon;
                                 return (

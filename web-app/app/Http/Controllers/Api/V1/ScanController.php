@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Jobs\RunAuditorJob;
 use App\Models\FullAuditReport;
+use App\Rules\PublicUrl;
 use App\Http\Controllers\SeoSchemaAuditController;
 use App\Http\Controllers\SecurityInfrastructureController;
 use App\Http\Controllers\EcommerceCatalogAuditController;
@@ -49,12 +50,27 @@ class ScanController extends Controller
         }
 
         $validated = $request->validate([
-            'url'  => ['required', 'url', 'max:2048'],
+            'url'  => ['required', 'url', 'max:2048', new PublicUrl],
             'name' => ['nullable', 'string', 'max:100'],
         ]);
 
         $url  = rtrim($validated['url'], '/');
         $name = $validated['name'] ?? $url;
+
+        // Enforce site restriction: only allow scanning registered sites (if user has any)
+        $userSites = $user->monitoredSites()->pluck('url')->toArray();
+        if (! empty($userSites)) {
+            $scanHost     = strtolower(parse_url($url, PHP_URL_HOST) ?? '');
+            $allowedHosts = array_map(
+                fn($s) => strtolower(parse_url($s, PHP_URL_HOST) ?? ''),
+                $userSites
+            );
+            if (! in_array($scanHost, $allowedHosts, true)) {
+                return response()->json([
+                    'error' => 'You can only scan websites registered in your plan. Add the site in Billing first.',
+                ], 422);
+            }
+        }
 
         $reportId = DB::table('full_audit_reports')->insertGetId([
             'user_id'     => $user->id,

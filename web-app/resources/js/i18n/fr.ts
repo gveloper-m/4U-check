@@ -61,11 +61,13 @@ const fr = {
       'Scans automatiques planifiés',
       'Historique complet & comparaisons',
       'Exports PDF & CSV',
+      'Accès API REST',
     ],
     extraFeatures: {
       scheduled: { title: 'Scans automatisés', desc: 'Planifiez des scans horaires, quotidiens, hebdomadaires ou mensuels.' },
       export: { title: 'Exporter les résultats', desc: 'Téléchargez des rapports PDF pour les clients ou des données CSV pour votre analyse.' },
       track: { title: 'Suivre la progression', desc: 'Comparez deux scans côte à côte pour voir votre score de santé s\'améliorer.' },
+      api: { title: 'API REST', desc: 'Déclenchez des analyses et récupérez des résultats depuis n\'importe quel outil. Créez des clés API dans votre profil.' },
     },
     agent: {
       badge: 'MCP Agent — inclus gratuitement',
@@ -604,6 +606,8 @@ const fr = {
     featMultisiteDesc: 'Surveillez tous vos sites depuis un tableau de bord unique.',
     featAgency: 'Fonctionnalités agence',
     featAgencyDesc: 'Rapports en marque blanche personnalisés pour vos clients.',
+    featApi: 'Accès API REST',
+    featApiDesc: 'Déclenchez des analyses, récupérez des résultats et téléchargez des PDF et CSV par code.',
     ctaTitle: "Voir le rapport complet — c'est gratuit",
     ctaSub: 'Obtenez le bilan complet, téléchargez un PDF et surveillez votre site chaque mois.',
     ctaBtn: 'Créer un compte gratuit',
