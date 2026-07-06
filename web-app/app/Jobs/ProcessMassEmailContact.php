@@ -2,13 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Http\Controllers\Audits\AccessibilityAuditController;
-use App\Http\Controllers\Audits\BrokenResourceController;
-use App\Http\Controllers\Audits\EcommerceCatalogAuditController;
-use App\Http\Controllers\Audits\PerformanceAuditController;
-use App\Http\Controllers\Audits\SecurityInfrastructureController;
-use App\Http\Controllers\Audits\SeoSchemaAuditController;
-use App\Http\Controllers\Audits\TrackingAuditController;
+use App\Http\Controllers\AccessibilityAuditController;
+use App\Http\Controllers\BrokenResourceController;
+use App\Http\Controllers\EcommerceCatalogAuditController;
+use App\Http\Controllers\PerformanceAuditController;
+use App\Http\Controllers\SecurityInfrastructureController;
+use App\Http\Controllers\SeoSchemaAuditController;
+use App\Http\Controllers\TrackingAuditController;
 use App\Models\MassEmailContact;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
