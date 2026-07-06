@@ -186,19 +186,46 @@ export default function ApiKeysSection({ apiKeys, newApiKey, hasSubscription }: 
         </div>
       )}
 
-      <div className="mt-5 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 px-4 py-3">
-        <p className="mb-1.5 text-xs font-semibold text-gray-700 dark:text-gray-300">Quick start</p>
-        <code className="block text-xs font-mono text-gray-600 dark:text-gray-400 leading-relaxed">
-          curl -H "Authorization: Bearer YOUR_KEY" \<br />
-          &nbsp;&nbsp;https://app.4utest.com/api/v1/me
-        </code>
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
-          <span>GET /api/v1/me</span>
-          <span>GET /api/v1/sites</span>
-          <span>POST /api/v1/scans</span>
-          <span>GET /api/v1/scans/{'{id}'}/pdf</span>
-          <span>GET /api/v1/scans/{'{id}'}/csv</span>
+      <div className="mt-5 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
+        <div className="bg-gray-50 dark:bg-gray-800/60 px-4 py-2.5 border-b border-gray-200 dark:border-gray-800">
+          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">Quick start — base URL: <span className="font-mono text-violet-500 dark:text-violet-400">https://4utest.com/api/v1</span></p>
         </div>
+
+        {[
+          {
+            label: 'Account info',
+            code: `curl -H "Authorization: Bearer YOUR_KEY" \\\n  https://4utest.com/api/v1/me`,
+          },
+          {
+            label: 'List monitored sites',
+            code: `curl -H "Authorization: Bearer YOUR_KEY" \\\n  https://4utest.com/api/v1/sites`,
+          },
+          {
+            label: 'Trigger a scan',
+            code: `curl -X POST \\\n  -H "Authorization: Bearer YOUR_KEY" \\\n  -H "Content-Type: application/json" \\\n  -d '{"url":"https://example.com","name":"My site"}' \\\n  https://4utest.com/api/v1/scans`,
+          },
+          {
+            label: 'Check scan status / results',
+            code: `curl -H "Authorization: Bearer YOUR_KEY" \\\n  https://4utest.com/api/v1/scans/{id}`,
+          },
+          {
+            label: 'Download PDF report',
+            code: `curl -H "Authorization: Bearer YOUR_KEY" \\\n  https://4utest.com/api/v1/scans/{id}/pdf -o report.pdf`,
+          },
+          {
+            label: 'Download CSV data',
+            code: `curl -H "Authorization: Bearer YOUR_KEY" \\\n  https://4utest.com/api/v1/scans/{id}/csv -o report.csv`,
+          },
+          {
+            label: 'Scan history (paginated)',
+            code: `curl -H "Authorization: Bearer YOUR_KEY" \\\n  "https://4utest.com/api/v1/scans?page=2"`,
+          },
+        ].map((item, idx, arr) => (
+          <div key={idx} className={`px-4 py-3 ${idx < arr.length - 1 ? 'border-b border-gray-200 dark:border-gray-800' : ''}`}>
+            <p className="mb-1.5 text-xs font-medium text-gray-600 dark:text-gray-400">{item.label}</p>
+            <pre className="overflow-x-auto text-xs font-mono text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre">{item.code}</pre>
+          </div>
+        ))}
       </div>
     </div>
   );
