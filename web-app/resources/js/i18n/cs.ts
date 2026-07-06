@@ -84,6 +84,18 @@ const cs = {
       ],
       note: 'Jeden agent na registrovaný web. Součástí každého plánu bez příplatku.',
     },
+    api: {
+      badge: 'REST API pro vývojáře',
+      title: 'Automatizujte audity z vlastních nástrojů',
+      sub: 'Integrujte 4utest do svých CI/CD pipelines, vlastních dashboardů nebo klientských reportovacích systémů. Naše jednoduché REST API vám umožňuje programově spouštět nové audity, sledovat pokrok a načítat kompletní výsledky zdraví.',
+      bullets: [
+        'Vygenerujte až 5 zabezpečených API klíčů ve svém profilu',
+        'Spouštějte kompletní audity se 7 moduly asynchronně pomocí POST požadavků',
+        'Sledujte a stahujte kompletní výsledky auditů a skóre zdraví ve formátu JSON',
+        'Stahujte PDF reporty s bílým štítkem a nezpracovaná data CSV programově',
+      ],
+      note: 'Přístup k API využívá stávající limit skenování vašeho účtu. Omezení rychlosti na 60 požadavků za minutu.',
+    },
   },
   dashboard: {
     title: 'Přehled',

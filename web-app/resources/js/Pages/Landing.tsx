@@ -8,7 +8,7 @@ import {
     ArrowRight, CheckCircle2, XCircle, X, Accessibility, Bot, HelpCircle,
     Terminal, Server, AlertTriangle, Globe, FileText, Calendar, Activity,
     ShoppingBag, BarChart2, Loader2, Mail, History, LayoutDashboard, Building2,
-    ChevronDown, ChevronUp, Code,
+    ChevronDown, ChevronUp, Code, Key,
 } from 'lucide-react';
 
 type ModuleResult = Record<string, unknown> | null;
@@ -82,6 +82,7 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
 
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const [agentTooltip, setAgentTooltip] = useState(false);
+    const [apiTab, setApiTab] = useState<'request' | 'response'>('request');
     const [phase, setPhase] = useState<'idle' | 'scanning' | 'done'>('idle');
     const [siteUrl, setSiteUrl] = useState('');
     const [uuid, setUuid] = useState<string | null>(null);
@@ -629,6 +630,100 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                                     </div>
                                 );
                             })}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Developer REST API Section */}
+                <section className="px-6 py-20 border-t border-gray-200 dark:border-gray-800 bg-gray-50/50 dark:bg-gray-900/10">
+                    <div className="mx-auto max-w-6xl">
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-8 lg:p-12">
+                            <div className="grid gap-10 lg:grid-cols-2 items-center">
+                                <div>
+                                    <p className="mb-4 flex items-center gap-2 text-sm font-medium text-violet-600 dark:text-violet-400">
+                                        <Key className="h-4 w-4" />
+                                        {t('welcome.api.badge')}
+                                    </p>
+                                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white flex items-start gap-2">
+                                        {t('welcome.api.title')}
+                                    </h2>
+                                    <p className="mt-4 text-gray-600 dark:text-gray-400 leading-relaxed">{t('welcome.api.sub')}</p>
+                                    <ul className="mt-6 space-y-3">
+                                        {(t('welcome.api.bullets', { returnObjects: true }) as string[]).map((text, i) => {
+                                            const icons = [Key, Zap, Code, Download];
+                                            const Icon = icons[i] ?? Key;
+                                            return (
+                                                <li key={i} className="flex items-center gap-3 text-sm text-gray-700 dark:text-gray-300">
+                                                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-gray-100 dark:bg-gray-800">
+                                                        <Icon className="h-3.5 w-3.5 text-gray-500 dark:text-gray-400" />
+                                                    </div>
+                                                    {text}
+                                                </li>
+                                            );
+                                        })}
+                                    </ul>
+                                    <p className="mt-4 text-xs text-gray-500">{t('welcome.api.note')}</p>
+                                    <Link
+                                        href="/register"
+                                        className="mt-6 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-6 py-3 text-sm font-semibold text-white hover:bg-violet-500 transition-colors"
+                                    >
+                                        {t('welcome.getStarted')} <ArrowRight className="h-4 w-4" />
+                                    </Link>
+                                </div>
+
+                                {/* Interactive API Code Mockup */}
+                                <div className="rounded-xl border border-gray-700 bg-gray-950 overflow-hidden shadow-2xl">
+                                    <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 bg-gray-900">
+                                        <div className="flex items-center gap-1.5">
+                                            <span className="h-3 w-3 rounded-full bg-red-500/70" />
+                                            <span className="h-3 w-3 rounded-full bg-amber-500/70" />
+                                            <span className="h-3 w-3 rounded-full bg-emerald-500/70" />
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setApiTab('request')}
+                                                className={`px-3 py-1 rounded text-xs font-mono transition-colors ${apiTab === 'request' ? 'bg-gray-800 text-violet-400 font-semibold' : 'text-gray-400 hover:text-gray-200'}`}
+                                            >
+                                                curl_request
+                                            </button>
+                                            <button
+                                                onClick={() => setApiTab('response')}
+                                                className={`px-3 py-1 rounded text-xs font-mono transition-colors ${apiTab === 'response' ? 'bg-gray-800 text-violet-400 font-semibold' : 'text-gray-400 hover:text-gray-200'}`}
+                                            >
+                                                json_response
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div className="p-5 font-mono text-xs space-y-2 text-left overflow-x-auto">
+                                        {apiTab === 'request' ? (
+                                            <div className="text-gray-300">
+                                                <p className="text-violet-400"># Start a website audit</p>
+                                                <p><span className="text-pink-400">curl</span> -X POST https://4utest.io/api/v1/audits \</p>
+                                                <p className="pl-4">-H <span className="text-emerald-400">"Authorization: Bearer 4u_sec_key_..."</span> \</p>
+                                                <p className="pl-4">-H <span className="text-emerald-400">"Content-Type: application/json"</span> \</p>
+                                                <p className="pl-4">-d <span className="text-emerald-400">'{'{'}"url": "https://example.com"{'}'}'</span></p>
+                                                <p className="mt-4 text-violet-400"># Poll result status</p>
+                                                <p><span className="text-pink-400">curl</span> https://4utest.io/api/v1/audits/a1b2c3d4 \</p>
+                                                <p className="pl-4">-H <span className="text-emerald-400">"Authorization: Bearer 4u_sec_key_..."</span></p>
+                                            </div>
+                                        ) : (
+                                            <div className="text-emerald-400">
+                                                <p className="text-gray-500">{"{"}</p>
+                                                <p className="pl-4"><span className="text-blue-400">"status"</span>: <span className="text-emerald-300">"completed"</span>,</p>
+                                                <p className="pl-4"><span className="text-blue-400">"health_score"</span>: <span className="text-amber-300">88</span>,</p>
+                                                <p className="pl-4"><span className="text-blue-400">"site_url"</span>: <span className="text-emerald-300">"https://example.com"</span>,</p>
+                                                <p className="pl-4"><span className="text-blue-400">"modules"</span>: {"{"}</p>
+                                                <p className="pl-8"><span className="text-blue-400">"seo"</span>: {"{"} <span className="text-blue-400">"score"</span>: 95, <span className="text-blue-400">"issues"</span>: 2 {"}"},</p>
+                                                <p className="pl-8"><span className="text-blue-400">"security"</span>: {"{"} <span className="text-blue-400">"score"</span>: 82, <span className="text-blue-400">"issues"</span>: 3 {"}"},</p>
+                                                <p className="pl-8"><span className="text-blue-400">"performance"</span>: {"{"} <span className="text-blue-400">"score"</span>: 89, <span className="text-blue-400">"ttfb_ms"</span>: 310 {"}"}</p>
+                                                <p className="pl-4">{"}"},</p>
+                                                <p className="pl-4"><span className="text-blue-400">"pdf_export_url"</span>: <span className="text-emerald-300">"https://4utest.io/exports/pdf/a1b2c3d4"</span></p>
+                                                <p className="text-gray-500">{"}"}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>

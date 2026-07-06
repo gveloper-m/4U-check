@@ -84,6 +84,18 @@ const nl = {
       ],
       note: 'Één agent per geregistreerde site. Bij elk plan inbegrepen zonder extra kosten.',
     },
+    api: {
+      badge: 'REST API voor ontwikkelaars',
+      title: 'Automatiseer audits vanuit uw eigen tools',
+      sub: 'Integreer 4utest in uw CI/CD-pipelines, aangepaste dashboards of klantrapportagesystemen. Onze eenvoudige REST API stelt u in staat om programmasturing nieuwe audits te starten, de voortgang te peilen en volledige gezondheidsresultaten op te halen.',
+      bullets: [
+        'Genereer tot 5 beveiligde API-sleutels in uw profiel',
+        'Start asynchroon volledige 7-module audits via POST-verzoeken',
+        'Peil en haal volledige auditresultaten en gezondheidsscores op in JSON-formaat',
+        'Download white-label PDF-rapporten en ruwe CSV-gegevens programmasturing',
+      ],
+      note: 'API-toegang maakt gebruik van het bestaande scanquotum van uw account. Snelheidsbeperking tot 60 verzoeken per minuut.',
+    },
   },
   dashboard: {
     title: 'Dashboard',

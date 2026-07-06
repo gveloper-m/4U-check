@@ -84,6 +84,18 @@ const de = {
       ],
       note: 'Ein Agent pro registrierter Website. In jedem Plan kostenlos enthalten.',
     },
+    api: {
+      badge: 'Entwickler-REST-API',
+      title: 'Audits über eigene Tools automatisieren',
+      sub: 'Integrieren Sie 4utest in Ihre CI/CD-Pipelines, benutzerdefinierten Dashboards oder Kundenberichtssysteme. Unsere einfache REST-API ermöglicht es Ihnen, neue Audits programmgesteuert auszulösen, den Fortschritt abzufragen und vollständige Testergebnisse abzurufen.',
+      bullets: [
+        'Generieren Sie bis zu 5 sichere API-Schlüssel in Ihrem Profil',
+        'Führen Sie vollständige Audits mit 7 Modulen asynchron über POST-Anfragen aus',
+        'Rufen Sie vollständige Auditsergebnisse und Gesundheitsbewertungen im JSON-Format ab',
+        'Laden Sie White-Label-PDF-Berichte und CSV-Rohdaten programmgesteuert herunter',
+      ],
+      note: 'Der API-Zugriff verbraucht Ihr bestehendes Scan-Kontingent. Ratenbegrenzung auf 60 Anfragen pro Minute.',
+    },
   },
   dashboard: {
     title: 'Dashboard',

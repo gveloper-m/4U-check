@@ -75,6 +75,18 @@ const es = {
       ],
       note: 'Un agente por sitio registrado. Incluido sin coste adicional en cada plan.',
     },
+    api: {
+      badge: 'API REST para desarrolladores',
+      title: 'Automatice las auditorías desde sus propias herramientas',
+      sub: 'Integre 4utest en sus pipelines de CI/CD, paneles personalizados o sistemas de informes de clientes. Nuestra sencilla API REST le permite iniciar nuevas auditorías, consultar el progreso y recuperar resultados de salud completos mediante programación.',
+      bullets: [
+        'Genere hasta 5 claves de API seguras en su perfil',
+        'Inicie auditorías completas de 7 módulos de forma asíncrona mediante solicitudes POST',
+        'Consulte y recupere resultados de auditoría completos y puntuaciones de salud en formato JSON',
+        'Descargue informes PDF de marca blanca y datos CSV sin procesar mediante programación',
+      ],
+      note: 'El acceso a la API utiliza la cuota de escaneos de su cuenta existente. Límite de velocidad de 60 solicitudes por minuto.',
+    },
     monthly: 'Mensual',
     yearly: 'Anual',
     perYear: '/año',

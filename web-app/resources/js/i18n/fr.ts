@@ -84,6 +84,18 @@ const fr = {
       ],
       note: 'Un agent par site enregistré. Inclus sans frais supplémentaires dans chaque plan.',
     },
+    api: {
+      badge: 'API REST pour développeurs',
+      title: 'Automatisez les audits depuis vos propres outils',
+      sub: 'Intégrez 4utest dans vos pipelines CI/CD, vos tableaux de bord personnalisés ou vos systèmes de reporting client. Notre API REST simple vous permet de déclencher de nouveaux audits, de suivre la progression et de récupérer les résultats de santé complets par programme.',
+      bullets: [
+        'Générez jusqu\'à 5 clés API sécurisées dans votre profil',
+        'Déclenchez des audits complets de 7 modules de manière asynchrone via des requêtes POST',
+        'Suivez et récupérez les résultats d\'audit complets et les scores de santé au format JSON',
+        'Téléchargez des rapports PDF en marque blanche et des données CSV brutes par programme',
+      ],
+      note: 'L\'accès à l\'API utilise le quota de scans de votre compte existant. Limité à 60 requêtes par minute.',
+    },
   },
   dashboard: {
     title: 'Tableau de bord',
