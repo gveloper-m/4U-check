@@ -112,7 +112,10 @@ class MassProspectMail extends Mailable
         $strings = $this->strings();
         $domain  = parse_url($this->website, PHP_URL_HOST) ?: $this->website;
         $subject = strtr($strings['subject'], ['{domain}' => $domain, '{score}' => $this->score]);
-        return new Envelope(subject: $subject);
+        return new Envelope(
+            from:    new \Illuminate\Mail\Mailables\Address('4utestservice@gmail.com', '4uTest'),
+            subject: $subject,
+        );
     }
 
     public function content(): Content
