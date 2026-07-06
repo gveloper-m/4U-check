@@ -296,14 +296,32 @@ class AccessibilityAuditController extends Controller
             $headings[] = ['level' => $level, 'text' => mb_substr(trim($h->textContent), 0, 80)];
         }
 
-        $issues      = [];
-        $h1Count     = count(array_filter($headings, fn($h) => $h['level'] === 1));
-        $prevLevel   = 0;
+        $issues    = [];
+        $h1Count   = count(array_filter($headings, fn($h) => $h['level'] === 1));
+        $prevLevel = 0;
+
+        // Multiple H1s inside separate <article> elements is valid HTML5 — the standard
+        // pattern for archive/blog-list pages. Only flag if H1s are not article-scoped.
+        $articleCount   = $xpath->query('//article')->length;
+        $h1sInArticles  = 0;
+        if ($h1Count > 1 && $articleCount > 0) {
+            foreach ($xpath->query('//h1') as $h1) {
+                $parent = $h1->parentNode;
+                while ($parent) {
+                    if ($parent instanceof \DOMElement && strtolower($parent->nodeName) === 'article') {
+                        $h1sInArticles++;
+                        break;
+                    }
+                    $parent = $parent->parentNode ?? null;
+                }
+            }
+        }
+        $allH1sInArticles = $h1Count > 1 && $h1sInArticles === $h1Count;
 
         if ($h1Count === 0) {
             $issues[] = 'No H1 tag found on the page';
-        } elseif ($h1Count > 1) {
-            $issues[] = "Multiple H1 tags found ({$h1Count}) — only one H1 is recommended";
+        } elseif ($h1Count > 1 && !$allH1sInArticles) {
+            $issues[] = "Multiple H1 tags ({$h1Count}) on a single-topic page — one H1 per page is recommended";
         }
 
         foreach ($headings as $i => $heading) {

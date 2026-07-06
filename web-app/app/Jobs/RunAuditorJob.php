@@ -159,15 +159,23 @@ class RunAuditorJob implements ShouldQueue
         $seo = $audits['seo_schema'] ?? [];
         if (($seo['status'] ?? '') === 'ok') {
             if (($seo['meta_title']['status'] ?? '')       !== 'OK') { $score -= 5;  $deductions[] = 'SEO: bad meta title (-5)'; }
-            if (($seo['meta_description']['status'] ?? '') !== 'OK') { $score -= 5;  $deductions[] = 'SEO: bad meta description (-5)'; }
+            // Meta description is secondary — lower weight; lede paragraph matters more
+            if (($seo['meta_description']['status'] ?? '') === 'MISSING') { $score -= 2; $deductions[] = 'SEO: missing meta description (-2)'; }
             if (($seo['h1_tags']['status'] ?? '')          !== 'OK') { $score -= 5;  $deductions[] = 'SEO: H1 issue (-5)'; }
             if (($seo['canonical']['status'] ?? '') === 'MISSING')   { $score -= 3;  $deductions[] = 'SEO: missing canonical (-3)'; }
             if (($seo['canonical']['status'] ?? '') === 'MISMATCH')  { $score -= 5;  $deductions[] = 'SEO: canonical mismatch (-5)'; }
             if (! ($seo['schema_validation']['has_valid_schema'] ?? false)) { $score -= 5; $deductions[] = 'SEO: no structured data (-5)'; }
             if (($seo['open_graph']['status'] ?? '') === 'MISSING')  { $score -= 5;  $deductions[] = 'SEO: missing OG tags (-5)'; }
-            if (($seo['image_alt_text']['status'] ?? '') === 'BAD')  { $score -= 5;  $deductions[] = 'SEO: images missing alt text (-5)'; }
+            if (($seo['image_alt_text']['status'] ?? '') === 'BAD')  { $score -= 5;  $deductions[] = 'SEO: images missing alt attribute (-5)'; }
             if (! ($seo['technical_seo']['robots_txt']['exists']  ?? true)) { $score -= 3; $deductions[] = 'SEO: robots.txt missing (-3)'; }
             if (! ($seo['technical_seo']['sitemap_xml']['exists'] ?? true)) { $score -= 3; $deductions[] = 'SEO: sitemap.xml missing (-3)'; }
+            // New signals
+            if ($seo['robots_directives']['is_noindex'] ?? false)           { $score -= 10; $deductions[] = 'SEO: page is noindexed (-10)'; }
+            if (($seo['page_content']['content_depth'] ?? '') === 'thin')   { $score -= 5;  $deductions[] = 'SEO: thin content (< 300 words) (-5)'; }
+            if (($seo['url_quality']['status'] ?? '') === 'BAD')            { $score -= 3;  $deductions[] = 'SEO: URL slug quality issues (-3)'; }
+            if (\count($seo['heading_structure']['issues'] ?? []) > 1)      { $score -= 3;  $deductions[] = 'SEO: heading structure issues (-3)'; }
+            $internalLinks = $seo['internal_linking']['internal_links'] ?? null;
+            if ($internalLinks !== null && $internalLinks < 2)              { $score -= 3;  $deductions[] = 'SEO: very few internal links (-3)'; }
         }
 
         // --- Security ---
