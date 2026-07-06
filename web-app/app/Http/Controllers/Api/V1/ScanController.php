@@ -16,7 +16,6 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class ScanController extends Controller
 {
@@ -58,20 +57,20 @@ class ScanController extends Controller
         $name = $validated['name'] ?? $url;
 
         $reportId = DB::table('full_audit_reports')->insertGetId([
-            'user_id'    => $user->id,
-            'site_url'   => $url,
-            'name'       => $name,
-            'status'     => 'pending',
-            'share_uuid' => Str::uuid(),
-            'created_at' => now(),
-            'updated_at' => now(),
+            'user_id'     => $user->id,
+            'site_url'    => $url,
+            'name'        => $name,
+            'status'      => 'running',
+            'executed_at' => now(),
+            'created_at'  => now(),
+            'updated_at'  => now(),
         ]);
 
         foreach (self::AUDITORS as $key => $controllerClass) {
             RunAuditorJob::dispatch($reportId, $key, $controllerClass, $url);
         }
 
-        return response()->json(['id' => $reportId, 'status' => 'pending', 'url' => $url], 202);
+        return response()->json(['id' => $reportId, 'status' => 'running', 'url' => $url], 202);
     }
 
     public function show(Request $request, int $id): JsonResponse
