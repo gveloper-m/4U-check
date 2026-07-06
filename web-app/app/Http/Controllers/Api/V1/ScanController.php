@@ -100,13 +100,27 @@ class ScanController extends Controller
         $user     = $request->user();
         $filename = 'audit-' . preg_replace('/[^a-z0-9]+/', '-', strtolower(parse_url($report->site_url, PHP_URL_HOST) ?? 'report')) . '.pdf';
 
-        return Pdf::loadView('exports.audit-report', [
-            'report'   => $report,
-            'user'     => $user,
-            'isAgency' => $user->is_agency,
-        ])
+        $agency = null;
+        if ($user->is_agency) {
+            $logoPath = null;
+            if ($user->agency_logo) {
+                $path = storage_path('app/public/' . $user->agency_logo);
+                if (file_exists($path)) {
+                    $logoPath = $path;
+                }
+            }
+            $agency = [
+                'name'            => $user->company_name,
+                'logo_path'       => $logoPath,
+                'primary_color'   => $user->agency_primary_color   ?? '#1a1a2e',
+                'secondary_color' => $user->agency_secondary_color ?? '#2d3748',
+                'footer_text'     => $user->agency_footer_text,
+            ];
+        }
+
+        return Pdf::loadView('exports.audit-report', ['report' => $report, 'agency' => $agency])
             ->setPaper('a4', 'portrait')
-            ->setOptions(['isRemoteEnabled' => false, 'isHtml5ParserEnabled' => true])
+            ->setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false])
             ->download($filename);
     }
 
