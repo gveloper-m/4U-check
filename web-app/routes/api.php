@@ -30,6 +30,17 @@ Route::get('/health', function () {
     }
 });
 
+// REST API v1 — authenticated via API key (Bearer token)
+Route::prefix('v1')->middleware(['api-key', 'throttle:60,1'])->group(function () {
+    Route::get('me',               [\App\Http\Controllers\Api\V1\MeController::class,   'show']);
+    Route::get('sites',            [\App\Http\Controllers\Api\V1\SiteController::class, 'index']);
+    Route::get('scans',            [\App\Http\Controllers\Api\V1\ScanController::class, 'index']);
+    Route::post('scans',           [\App\Http\Controllers\Api\V1\ScanController::class, 'store']);
+    Route::get('scans/{id}',       [\App\Http\Controllers\Api\V1\ScanController::class, 'show']);
+    Route::get('scans/{id}/pdf',   [\App\Http\Controllers\Api\V1\ScanController::class, 'pdf']);
+    Route::get('scans/{id}/csv',   [\App\Http\Controllers\Api\V1\ScanController::class, 'csv']);
+});
+
 // Legacy single-module API routes — protected, throttled
 Route::middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::post('/audit/broken-resources', [\App\Http\Controllers\BrokenResourceController::class, 'auditBrokenResources']);

@@ -29,6 +29,18 @@ class ProfileController extends Controller
                 'notify_renewal_reminder' => (bool) $user->notify_renewal_reminder,
             ],
             'notifications_saved'     => session('notifications_saved', false),
+            'apiKeys'                 => $user->apiKeys()
+                ->orderByDesc('created_at')
+                ->get()
+                ->map(fn ($k) => [
+                    'id'           => $k->id,
+                    'name'         => $k->name,
+                    'key_prefix'   => $k->key_prefix,
+                    'last_used_at' => $k->last_used_at?->toIso8601String(),
+                    'created_at'   => $k->created_at?->toIso8601String(),
+                ]),
+            'new_api_key'             => session('new_api_key'),
+            'hasSubscription'         => $user->hasActiveSubscription(),
         ]);
     }
 

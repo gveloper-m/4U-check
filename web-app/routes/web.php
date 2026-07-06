@@ -87,6 +87,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    Route::post('/profile/api-keys', [\App\Http\Controllers\Profile\ApiKeyController::class, 'store'])->name('api-keys.store');
+    Route::delete('/profile/api-keys/{apiKey}', [\App\Http\Controllers\Profile\ApiKeyController::class, 'destroy'])->name('api-keys.destroy');
+
     Route::post('/language', [LanguageController::class, 'update'])->name('language.update');
     Route::post('/agency', [AgencyController::class, 'update'])->name('agency.update');
     Route::post('/notification-prefs', [NotificationPrefsController::class, 'update'])->name('notification-prefs.update');

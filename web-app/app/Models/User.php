@@ -143,4 +143,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(ScheduledScan::class);
     }
+
+    public function apiKeys(): HasMany
+    {
+        return $this->hasMany(ApiKey::class);
+    }
 }

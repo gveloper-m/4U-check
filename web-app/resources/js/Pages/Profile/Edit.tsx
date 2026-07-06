@@ -3,6 +3,7 @@ import { Head, Link, useForm, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { FormEventHandler, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import ApiKeysSection from './Partials/ApiKeysSection';
 import {
   User,
   Lock,
@@ -25,11 +26,22 @@ interface NotificationPrefs {
   notify_renewal_reminder: boolean;
 }
 
+interface ApiKeyItem {
+  id: number;
+  name: string;
+  key_prefix: string;
+  last_used_at: string | null;
+  created_at: string;
+}
+
 interface EditProps extends PageProps {
   mustVerifyEmail: boolean;
   status?: string;
   notificationPrefs: NotificationPrefs;
   notifications_saved?: boolean;
+  apiKeys: ApiKeyItem[];
+  new_api_key?: string | null;
+  hasSubscription: boolean;
 }
 
 /* ─────────────── Shared input style ─────────────── */
@@ -652,7 +664,7 @@ function NotificationsCard({ prefs, saved }: { prefs: NotificationPrefs; saved?:
 }
 
 /* ─────────────── Page ─────────────── */
-export default function ProfileEdit({ mustVerifyEmail, status, notificationPrefs, notifications_saved }: EditProps) {
+export default function ProfileEdit({ mustVerifyEmail, status, notificationPrefs, notifications_saved, apiKeys, new_api_key, hasSubscription }: EditProps) {
   const { t } = useTranslation();
 
   return (
@@ -668,6 +680,11 @@ export default function ProfileEdit({ mustVerifyEmail, status, notificationPrefs
         <ProfileInfoForm mustVerifyEmail={mustVerifyEmail} status={status} />
         <AgencyCard />
         <NotificationsCard prefs={notificationPrefs} saved={notifications_saved} />
+        <ApiKeysSection
+          apiKeys={apiKeys}
+          newApiKey={new_api_key}
+          hasSubscription={hasSubscription}
+        />
         <PasswordForm />
         <InstructionsSection />
         <DeleteAccountForm />

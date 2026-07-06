@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'subscription' => \App\Http\Middleware\RequireActiveSubscription::class,
             'admin'        => \App\Http\Middleware\EnsureUserIsAdmin::class,
+            'api-key'      => \App\Middleware\AuthenticateApiKey::class,
         ]);
 
         // Paddle sends real POST requests without CSRF tokens
