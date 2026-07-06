@@ -3,9 +3,9 @@
 use App\Http\Controllers\Admin\BlogController as AdminBlogController;
 use App\Http\Controllers\Admin\MonitoringController as AdminMonitoringController;
 use App\Http\Controllers\Admin\TicketController as AdminTicketController;
-use App\Http\Controllers\Admin\TrialCodeController as AdminTrialCodeController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use App\Http\Controllers\AdminMassEmailController;
+use App\Http\Controllers\AdminTrialCodeController;
 use App\Http\Controllers\AgencyController;
 use App\Http\Controllers\NotificationPrefsController;
 use App\Http\Controllers\AuditController;

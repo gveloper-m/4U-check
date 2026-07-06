@@ -45,12 +45,11 @@ class RegisteredUserController extends Controller
         // Validate trial code before creating the user
         $trialCode = null;
         if ($request->filled('trial_code')) {
-            $trialCode = TrialCode::where('code', strtoupper(trim($request->trial_code)))
-                ->whereNull('used_by')
-                ->first();
-            if (! $trialCode) {
+            $trialCode = TrialCode::where('code', strtoupper(trim($request->trial_code)))->first();
+
+            if (! $trialCode || ! $trialCode->isRedeemable()) {
                 throw ValidationException::withMessages([
-                    'trial_code' => 'This trial code is invalid or has already been used.',
+                    'trial_code' => 'This trial code is invalid, expired, or has reached its usage limit.',
                 ]);
             }
         }
@@ -74,13 +73,18 @@ class RegisteredUserController extends Controller
         ]);
 
         if ($trialCode) {
-            $trialCode->update([
-                'used_by'    => $user->id,
-                'used_at'    => now(),
-                'expires_at' => now()->addDays(7),
-                'site_url'   => $request->primary_site,
-            ]);
-            $user->forceFill(['trial_ends_at' => now()->addDays(7)])->save();
+            $days = max(1, (int) ($trialCode->premium_days ?? 7));
+            $updates = [
+                'use_count' => ($trialCode->use_count ?? 0) + 1,
+                'used_at'   => $trialCode->used_at ?? now(),  // keep first-use timestamp
+                'site_url'  => $trialCode->site_url ?? $request->primary_site,
+            ];
+            // For single-use codes also record who used it
+            if ($trialCode->max_uses === null) {
+                $updates['used_by'] = $user->id;
+            }
+            $trialCode->update($updates);
+            $user->forceFill(['trial_ends_at' => now()->addDays($days)])->save();
         }
 
         // Claim the guest scan if this browser has one
