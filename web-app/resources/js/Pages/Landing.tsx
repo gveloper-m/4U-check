@@ -602,28 +602,30 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                     );
                 })()}
 
-                {/* Features grid — 7 audit modules */}
+                {/* Features — 7 audit modules */}
                 <section className="px-6 py-20">
-                    <div className="mx-auto max-w-7xl">
-                        <div className="mb-12 text-center">
-                            <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
-                                {t('welcome.featuresTitle')}
-                            </h2>
-                            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">{t('welcome.featuresSub')}</p>
+                    <div className="mx-auto max-w-4xl">
+                        <div className="mb-8 flex items-end justify-between gap-4">
+                            <div>
+                                <h2 className="text-3xl font-bold text-gray-900 dark:text-white sm:text-4xl">
+                                    {t('welcome.featuresTitle')}
+                                </h2>
+                                <p className="mt-2 text-base text-gray-600 dark:text-gray-400">{t('welcome.featuresSub')}</p>
+                            </div>
                         </div>
-                        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                            {features.map(f => {
+                        <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900">
+                            {features.map((f, idx) => {
                                 const Icon = f.icon;
                                 return (
                                     <div
                                         key={f.title}
-                                        className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-6"
+                                        className={`flex items-start gap-4 px-6 py-5 ${idx < features.length - 1 ? 'border-b border-gray-200 dark:border-gray-800' : ''}`}
                                     >
-                                        <div className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                                            <Icon className={`h-5 w-5 ${f.color}`} />
+                                        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${f.color}`} />
+                                        <div>
+                                            <span className="text-sm font-semibold text-gray-900 dark:text-white">{f.title}</span>
+                                            <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{f.desc}</p>
                                         </div>
-                                        <h3 className="text-base font-semibold text-gray-900 dark:text-white">{f.title}</h3>
-                                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{f.desc}</p>
                                     </div>
                                 );
                             })}
@@ -691,7 +693,7 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                                         <span className="h-3 w-3 rounded-full bg-red-500/70" />
                                         <span className="h-3 w-3 rounded-full bg-amber-500/70" />
                                         <span className="h-3 w-3 rounded-full bg-emerald-500/70" />
-                                        <span className="ml-2 text-xs text-gray-500 font-mono">Claude Code — 4uTest Agent</span>
+                                        <span className="ml-2 text-xs text-gray-500 font-mono">Claude Code — 4utest Agent</span>
                                     </div>
                                     <div className="p-5 font-mono text-xs space-y-2 text-left">
                                         <p><span className="text-violet-400">Claude:</span> <span className="text-gray-300">get_audit_report()</span></p>
@@ -789,24 +791,26 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                 </section>
 
                 {/* Extra features */}
-                <section className="px-6 py-20">
-                    <div className="mx-auto max-w-7xl grid gap-8 md:grid-cols-3">
-                        {[
-                            { icon: Clock,     title: t('welcome.extraFeatures.scheduled.title'), desc: t('welcome.extraFeatures.scheduled.desc'), color: 'text-emerald-400' },
-                            { icon: Download,  title: t('welcome.extraFeatures.export.title'),    desc: t('welcome.extraFeatures.export.desc'),    color: 'text-blue-400'    },
-                            { icon: BarChart3, title: t('welcome.extraFeatures.track.title'),     desc: t('welcome.extraFeatures.track.desc'),     color: 'text-violet-400'  },
-                        ].map(item => {
-                            const Icon = item.icon;
-                            return (
-                                <div key={item.title} className="text-center">
-                                    <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-gray-100 dark:bg-gray-800">
-                                        <Icon className={`h-6 w-6 ${item.color}`} />
+                <section className="px-6 py-16 border-t border-gray-200 dark:border-gray-800">
+                    <div className="mx-auto max-w-4xl">
+                        <div className="grid gap-6 md:grid-cols-3">
+                            {[
+                                { icon: Clock,     title: t('welcome.extraFeatures.scheduled.title'), desc: t('welcome.extraFeatures.scheduled.desc'), color: 'text-emerald-400' },
+                                { icon: Download,  title: t('welcome.extraFeatures.export.title'),    desc: t('welcome.extraFeatures.export.desc'),    color: 'text-blue-400'    },
+                                { icon: BarChart3, title: t('welcome.extraFeatures.track.title'),     desc: t('welcome.extraFeatures.track.desc'),     color: 'text-violet-400'  },
+                            ].map(item => {
+                                const Icon = item.icon;
+                                return (
+                                    <div key={item.title} className="flex items-start gap-3">
+                                        <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${item.color}`} />
+                                        <div>
+                                            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{item.title}</h3>
+                                            <p className="mt-1 text-sm text-gray-600 dark:text-gray-400 leading-relaxed">{item.desc}</p>
+                                        </div>
                                     </div>
-                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{item.title}</h3>
-                                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">{item.desc}</p>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </section>
 

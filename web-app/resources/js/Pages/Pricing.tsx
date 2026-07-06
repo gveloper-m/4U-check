@@ -53,7 +53,7 @@ const COMPARISON_ROWS = [
   { label: 'Shareable report links', monthly: true,          yearly: true },
   { label: 'Historical trends',      monthly: true,          yearly: true },
   { label: 'MCP Agent',               monthly: true,          yearly: true },
-  { label: 'Priority support',       monthly: true,          yearly: true },
+  { label: 'Email support',           monthly: true,          yearly: true },
   { label: 'Savings vs monthly',     monthly: '—',           yearly: '2 months free (~€40)' },
 ];
 
@@ -76,11 +76,11 @@ const FAQS = [
   },
   {
     q: 'Do you offer refunds?',
-    a: 'We offer a 7-day money-back guarantee if you\'re not satisfied. Contact support within 7 days of your first charge.',
+    a: 'Under EU Directive 2011/83/EU you have a 14-day right of withdrawal. However, by subscribing and actively using the service (running audits or downloading reports), you expressly request immediate performance and the right of withdrawal is waived once the service has been accessed. If you have not used the service, contact us within 14 days for a full refund. See our Refund Policy for full details.',
   },
   {
     q: 'Is there a free trial?',
-    a: 'Yes — register for free and run your first audit at no cost. We may offer limited trial codes via our newsletter. Paid plans unlock unlimited scheduled scans and full monthly quota.',
+    a: 'Yes — register for free and run your first audit at no cost. We offer trial codes that give 7 days of full paid access. Ask us or check our newsletter for current promotions. Paid plans unlock scheduled scans and the full monthly scan quota.',
   },
   {
     q: 'Can I use 4utest for client sites?',
@@ -293,7 +293,7 @@ export default function Pricing({ auth }: PageProps) {
               </div>
 
               <p className="mt-4 text-center text-xs text-gray-500">
-                No contracts. Cancel anytime. 7-day money-back guarantee.
+                No contracts. Cancel anytime.
               </p>
             </div>
           </section>
@@ -305,16 +305,16 @@ export default function Pricing({ auth }: PageProps) {
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white">7 audit modules in every scan</h2>
                 <p className="mt-3 text-gray-600 dark:text-gray-400">All modules run in parallel. Full results in minutes.</p>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {AUDIT_MODULES.slice(0, 7).map(m => {
+              <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden bg-white dark:bg-gray-900">
+                {AUDIT_MODULES.slice(0, 7).map((m, idx) => {
                   const Icon = m.icon;
                   return (
-                    <div key={m.label} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
-                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                        <Icon className={`h-5 w-5 ${m.color}`} />
+                    <div key={m.label} className={`flex items-start gap-4 px-6 py-4 ${idx < 6 ? 'border-b border-gray-200 dark:border-gray-800' : ''}`}>
+                      <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${m.color}`} />
+                      <div>
+                        <span className="text-sm font-semibold text-gray-900 dark:text-white">{m.label}</span>
+                        <p className="mt-0.5 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">{m.desc}</p>
                       </div>
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1">{m.label}</h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{m.desc}</p>
                     </div>
                   );
                 })}
@@ -353,14 +353,14 @@ export default function Pricing({ auth }: PageProps) {
           <section className="border-t border-gray-200 dark:border-gray-800 bg-white/50 dark:bg-gray-900/50 px-6 py-20">
             <div className="mx-auto max-w-7xl">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white text-center mb-12">Everything included — no add-ons</h2>
-              <div className="grid gap-8 md:grid-cols-3">
+              <div className="grid gap-5 md:grid-cols-3">
                 {[
                   { icon: Clock,    color: 'text-emerald-500 dark:text-emerald-400',
                     title: 'Scheduled scans',
-                    desc: 'Set it and forget it. Schedule daily, weekly, or monthly audits. Get notified when your score drops.' },
+                    desc: 'Schedule daily, weekly, or monthly audits. Get notified by email on completion.' },
                   { icon: Download, color: 'text-blue-500 dark:text-blue-400',
                     title: 'PDF & CSV export',
-                    desc: 'Download polished PDF reports to share with clients or management. Export raw data to CSV for custom analysis.' },
+                    desc: 'Download PDF reports to share with clients or management. Export raw data to CSV for custom analysis.' },
                   { icon: Globe,    color: 'text-violet-600 dark:text-violet-400',
                     title: 'Public shareable links',
                     desc: 'Generate a public link to any audit report. Share with clients without giving them account access.' },
@@ -371,15 +371,13 @@ export default function Pricing({ auth }: PageProps) {
                     title: 'MCP Agent',
                     desc: 'Deploy a lightweight agent on your server. Claude Code connects via MCP to read files, apply fixes, and verify changes — no copy-pasting.' },
                   { icon: HelpCircle,color:'text-teal-500 dark:text-teal-400',
-                    title: 'Priority support',
-                    desc: 'Email support with priority queue for paid subscribers. We aim to respond within 1 business day.' },
+                    title: 'Email support',
+                    desc: 'Email support for paid subscribers. We aim to respond within 1 business day.' },
                 ].map(item => {
                   const Icon = item.icon;
                   return (
-                    <div key={item.title} className="flex items-start gap-4">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
-                        <Icon className={`h-5 w-5 ${item.color}`} />
-                      </div>
+                    <div key={item.title} className="flex items-start gap-3">
+                      <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${item.color}`} />
                       <div>
                         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{item.title}</h3>
                         <p className="mt-1 text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{item.desc}</p>
@@ -424,7 +422,7 @@ export default function Pricing({ auth }: PageProps) {
                   Learn more
                 </Link>
               </div>
-              <p className="mt-4 text-xs text-gray-500">No credit card required to sign up. 7-day money-back guarantee on paid plans.</p>
+              <p className="mt-4 text-xs text-gray-500">No credit card required to sign up. See our <a href="/refund" className="underline hover:no-underline">refund policy</a>.</p>
             </div>
           </section>
 
