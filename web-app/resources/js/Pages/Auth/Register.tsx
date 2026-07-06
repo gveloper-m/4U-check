@@ -151,8 +151,8 @@ export default function Register() {
             value={data.trial_code}
             onChange={(e) => setData('trial_code', e.target.value.toUpperCase())}
             className={inputCls}
-            placeholder="XXXX-XXXX"
-            maxLength={9}
+            placeholder="e.g. ABCD-EFGH or TESTER4WEEK"
+            maxLength={64}
             style={{ fontFamily: 'monospace', letterSpacing: '0.08em' }}
           />
           <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{t('auth.register.trialCodeHint')}</p>
