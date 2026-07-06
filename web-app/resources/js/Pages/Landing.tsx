@@ -199,7 +199,7 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
 
     return (
         <>
-            <Head title="4uTest — Website Audit Platform" />
+            <Head title="4utest — Website Audit Platform" />
             <div className="min-h-screen bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
 
                 {/* Navbar */}

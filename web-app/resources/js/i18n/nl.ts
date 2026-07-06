@@ -27,7 +27,7 @@ const nl = {
     cta: 'Gratis starten',
     signin: 'Inloggen',
     getStarted: 'Aan de slag',
-    pricingNav: 'Pricing',
+    pricingNav: 'Prijzen',
     featuresTitle: '7 auditmodules bij elke scan',
     featuresSub: 'Gelijktijdig uitgevoerd. Resultaten in minuten.',
     pricingTitle: 'Eenvoudige prijzen',
@@ -56,7 +56,7 @@ const nl = {
       accessibility: { title: 'Toegankelijkheid', desc: 'WCAG-controles, formulierlabels, ARIA-attributen, koppenstructuur, afbeelding alt-teksten.' },
     },
     planFeatures: [
-      'Onbeperkte website-scans',
+      '30 scans/maand per geregistreerde website',
       'Alle 7 auditmodules',
       'Geplande automatische scans',
       'Volledige scangeschiedenis & vergelijkingen',
@@ -135,7 +135,7 @@ const nl = {
     quotaUsed: '{{used}} / {{limit}} scans gebruikt deze maand',
     quotaRemaining: '{{remaining}} resterend',
     quotaResets: 'Wordt gereset op {{date}}',
-    quotaLimitReached: 'Je hebt alle 120 scans van deze maand gebruikt. Je quotum wordt op de 1e van volgende maand gereset.',
+    quotaLimitReached: 'Je hebt alle scans van deze maand gebruikt. Je quotum wordt op de 1e van volgende maand gereset.',
     quotaUnlimited: 'Onbeperkte scans',
     registeredSites: 'Uw geregistreerde sites:',
     urlRestricted: 'U kunt elke pagina op uw geregistreerde sites scannen.',
@@ -276,7 +276,7 @@ const nl = {
     subscribeBtn: 'Nu abonneren',
     nofees: 'Geen installatiekosten. Op elk moment opzegbaar.',
     features: [
-      'Onbeperkte website-scans',
+      '30 scans/maand per geregistreerde website',
       'Alle 7 auditmodules',
       'Geplande automatische scans',
       'PDF- & CSV-exports',
@@ -322,6 +322,13 @@ const nl = {
     siteLabel: 'Label',
     noSites: 'Nog geen sites geregistreerd.',
     extraSitesNotEnabled: 'Extra site-uitbreidingen zijn nog niet beschikbaar. Neem contact op met support.',
+    trialActive: 'Gratis proefperiode actief',
+    trialDaysLeft_one: '1 dag resterend',
+    trialDaysLeft_other: '{{count}} dagen resterend',
+    trialExpiresToday: 'Verloopt vandaag',
+    trialUntil: '(tot {{date}})',
+    trialFullAccess: 'U heeft volledige toegang tot alle functies tijdens uw proefperiode.',
+    trialUpgradePrompt: 'Upgrade nu om toegang te behouden na het einde van uw proefperiode',
   },
   scheduled: {
     title: 'Geplande scans',
@@ -357,6 +364,8 @@ const nl = {
     deleteConfirm: 'Deze geplande scan verwijderen?',
     notifyEmail: 'E-mail sturen wanneer scan voltooid is',
     notifyCol: 'E-mail',
+    lastResult: 'Laatste resultaat',
+    on: 'Aan',
   },
   auth: {
     login: {

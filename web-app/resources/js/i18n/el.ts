@@ -27,7 +27,7 @@ const el = {
     cta: 'Ξεκινήστε δωρεάν',
     signin: 'Σύνδεση',
     getStarted: 'Ξεκινήστε',
-    pricingNav: 'Pricing',
+    pricingNav: 'Τιμολόγηση',
     featuresTitle: '7 ενότητες ελέγχου σε κάθε σάρωση',
     featuresSub: 'Εκτελούνται παράλληλα. Αποτελέσματα σε λεπτά.',
     pricingTitle: 'Τιμολόγηση ανά ιστοσελίδα',
@@ -322,6 +322,13 @@ const el = {
     siteLabel: 'Ετικέτα',
     noSites: 'Δεν υπάρχουν ακόμα καταχωρημένες ιστοσελίδες.',
     extraSitesNotEnabled: 'Η προσθήκη έξτρα ιστοσελίδων δεν είναι ακόμα διαθέσιμη. Επικοινωνήστε με την υποστήριξη.',
+    trialActive: 'Δοκιμαστική Περίοδος Ενεργή',
+    trialDaysLeft_one: '1 ημέρα απομένει',
+    trialDaysLeft_other: '{{count}} ημέρες απομένουν',
+    trialExpiresToday: 'Λήγει σήμερα',
+    trialUntil: '(έως {{date}})',
+    trialFullAccess: 'Έχετε πλήρη πρόσβαση σε όλες τις λειτουργίες κατά τη δοκιμαστική περίοδο.',
+    trialUpgradePrompt: 'Αναβαθμίστε τώρα για να διατηρήσετε πρόσβαση μετά τη λήξη της δοκιμής',
   },
   scheduled: {
     title: 'Προγραμματισμένοι Έλεγχοι',
@@ -357,6 +364,8 @@ const el = {
     deleteConfirm: 'Διαγραφή αυτού του προγραμματισμένου ελέγχου;',
     notifyEmail: 'Ειδοποίησέ με όταν ολοκληρωθεί ο έλεγχος',
     notifyCol: 'Email',
+    lastResult: 'Τελευταίο Αποτέλεσμα',
+    on: 'Ενεργό',
   },
   auth: {
     login: {

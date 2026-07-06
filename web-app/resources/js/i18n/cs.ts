@@ -27,7 +27,7 @@ const cs = {
     cta: 'Začít zdarma',
     signin: 'Přihlásit se',
     getStarted: 'Začít',
-    pricingNav: 'Pricing',
+    pricingNav: 'Ceník',
     featuresTitle: '7 auditních modulů při každém skenování',
     featuresSub: 'Spouštěno souběžně. Výsledky za minuty.',
     pricingTitle: 'Jednoduchá cena',
@@ -56,7 +56,7 @@ const cs = {
       accessibility: { title: 'Přístupnost', desc: 'WCAG kontroly, popisky formulářů, ARIA atributy, hierarchie nadpisů, alternativní texty obrázků.' },
     },
     planFeatures: [
-      'Neomezené skenování webů',
+      '30 skenů/měsíc na registrovaný web',
       'Všech 7 auditních modulů',
       'Naplánovaná automatická skenování',
       'Kompletní historie & porovnání',
@@ -135,7 +135,7 @@ const cs = {
     quotaUsed: '{{used}} / {{limit}} skenování použito tento měsíc',
     quotaRemaining: '{{remaining}} zbývající',
     quotaResets: 'Resetuje se {{date}}',
-    quotaLimitReached: 'Vyčerpali jste všech 120 skenování za tento měsíc. Váš limit se obnoví 1. dne příštího měsíce.',
+    quotaLimitReached: 'Vyčerpali jste všechna skenování za tento měsíc. Váš limit se obnoví 1. dne příštího měsíce.',
     quotaUnlimited: 'Neomezené skenování',
     registeredSites: 'Vaše registrované weby:',
     urlRestricted: 'Můžete skenovat libovolnou stránku na vašich registrovaných webech.',
@@ -276,7 +276,7 @@ const cs = {
     subscribeBtn: 'Předplatit nyní',
     nofees: 'Žádné poplatky za nastavení. Zrušení kdykoli.',
     features: [
-      'Neomezené skenování webů',
+      '30 skenů/měsíc na registrovaný web',
       'Všech 7 auditních modulů',
       'Naplánovaná automatická skenování',
       'Exporty PDF & CSV',
@@ -322,6 +322,13 @@ const cs = {
     siteLabel: 'Popisek',
     noSites: 'Zatím nejsou registrovány žádné weby.',
     extraSitesNotEnabled: 'Doplňky pro extra weby zatím nejsou dostupné. Kontaktujte podporu.',
+    trialActive: 'Zkušební období aktivní',
+    trialDaysLeft_one: '1 den zbývá',
+    trialDaysLeft_other: '{{count}} dní zbývá',
+    trialExpiresToday: 'Vyprší dnes',
+    trialUntil: '(do {{date}})',
+    trialFullAccess: 'Během zkušebního období máte plný přístup ke všem funkcím.',
+    trialUpgradePrompt: 'Upgradujte nyní, abyste si zachovali přístup po skončení zkušebního období',
   },
   scheduled: {
     title: 'Naplánovaná skenování',
@@ -357,6 +364,8 @@ const cs = {
     deleteConfirm: 'Smazat toto naplánované skenování?',
     notifyEmail: 'Poslat email po dokončení skenování',
     notifyCol: 'Email',
+    lastResult: 'Poslední výsledek',
+    on: 'Zapnuto',
   },
   auth: {
     login: {

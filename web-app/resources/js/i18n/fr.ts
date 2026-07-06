@@ -27,7 +27,7 @@ const fr = {
     cta: 'Commencer gratuitement',
     signin: 'Se connecter',
     getStarted: 'Commencer',
-    pricingNav: 'Pricing',
+    pricingNav: 'Tarifs',
     featuresTitle: '7 modules d\'audit à chaque scan',
     featuresSub: 'Exécutés simultanément. Résultats en minutes.',
     pricingTitle: 'Tarification simple',
@@ -56,7 +56,7 @@ const fr = {
       accessibility: { title: 'Accessibilité', desc: 'Vérifications WCAG, libellés de formulaire, attributs ARIA, hiérarchie des titres, textes alt des images.' },
     },
     planFeatures: [
-      'Scans de sites illimités',
+      '30 analyses/mois par site enregistré',
       'Les 7 modules d\'audit',
       'Scans automatiques planifiés',
       'Historique complet & comparaisons',
@@ -135,7 +135,7 @@ const fr = {
     quotaUsed: '{{used}} / {{limit}} analyses utilisées ce mois-ci',
     quotaRemaining: '{{remaining}} restantes',
     quotaResets: 'Réinitialisation le {{date}}',
-    quotaLimitReached: "Vous avez utilisé les 120 analyses de ce mois. Votre quota est réinitialisé le 1er du mois prochain.",
+    quotaLimitReached: "Vous avez utilisé toutes vos analyses ce mois-ci. Votre quota est réinitialisé le 1er du mois prochain.",
     quotaUnlimited: 'Analyses illimitées',
     registeredSites: 'Vos sites enregistrés :',
     urlRestricted: "Vous pouvez scanner n'importe quelle page sur vos sites enregistrés.",
@@ -276,7 +276,7 @@ const fr = {
     subscribeBtn: 'S\'abonner maintenant',
     nofees: 'Pas de frais d\'installation. Annulable à tout moment.',
     features: [
-      'Scans de sites illimités',
+      '30 analyses/mois par site enregistré',
       'Les 7 modules d\'audit',
       'Scans automatiques planifiés',
       'Exports PDF & CSV',
@@ -322,6 +322,13 @@ const fr = {
     siteLabel: 'Libellé',
     noSites: 'Aucun site enregistré pour le moment.',
     extraSitesNotEnabled: "Les modules complémentaires de sites supplémentaires ne sont pas encore disponibles. Contactez le support.",
+    trialActive: 'Essai gratuit actif',
+    trialDaysLeft_one: '1 jour restant',
+    trialDaysLeft_other: '{{count}} jours restants',
+    trialExpiresToday: "Expire aujourd'hui",
+    trialUntil: "(jusqu'au {{date}})",
+    trialFullAccess: 'Vous avez accès à toutes les fonctionnalités pendant votre essai.',
+    trialUpgradePrompt: 'Passez à Pro maintenant pour conserver votre accès après la fin de votre essai',
   },
   scheduled: {
     title: 'Scans planifiés',
@@ -357,6 +364,8 @@ const fr = {
     deleteConfirm: 'Supprimer ce scan planifié ?',
     notifyEmail: 'M\'envoyer un e-mail à la fin du scan',
     notifyCol: 'E-mail',
+    lastResult: 'Dernier résultat',
+    on: 'Activé',
   },
   auth: {
     login: {

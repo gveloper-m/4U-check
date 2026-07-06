@@ -27,7 +27,7 @@ const de = {
     cta: 'Kostenlos starten',
     signin: 'Anmelden',
     getStarted: 'Loslegen',
-    pricingNav: 'Pricing',
+    pricingNav: 'Preise',
     featuresTitle: '7 Audit-Module bei jedem Scan',
     featuresSub: 'Parallel ausgeführt. Ergebnisse in Minuten.',
     pricingTitle: 'Einfache Preisgestaltung',
@@ -56,7 +56,7 @@ const de = {
       accessibility: { title: 'Barrierefreiheit', desc: 'WCAG-Prüfungen, Formular-Labels, ARIA-Attribute, Überschriften-Hierarchie, Bild-Alt-Texte.' },
     },
     planFeatures: [
-      'Unbegrenzte Website-Scans',
+      '30 Scans/Monat pro registrierter Website',
       'Alle 7 Audit-Module',
       'Geplante automatische Scans',
       'Vollständiger Scan-Verlauf & Vergleiche',
@@ -276,7 +276,7 @@ const de = {
     subscribeBtn: 'Jetzt abonnieren',
     nofees: 'Keine Einrichtungsgebühren. Jederzeit kündbar.',
     features: [
-      'Unbegrenzte Website-Scans',
+      '30 Scans/Monat pro registrierter Website',
       'Alle 7 Audit-Module',
       'Geplante automatische Scans',
       'PDF- & CSV-Exporte',
@@ -322,6 +322,13 @@ const de = {
     siteLabel: 'Bezeichnung',
     noSites: 'Noch keine Websites registriert.',
     extraSitesNotEnabled: 'Zusätzliche Website-Erweiterungen sind noch nicht verfügbar. Kontakt Support.',
+    trialActive: 'Kostenlose Testphase aktiv',
+    trialDaysLeft_one: '1 Tag verbleibend',
+    trialDaysLeft_other: '{{count}} Tage verbleibend',
+    trialExpiresToday: 'Läuft heute ab',
+    trialUntil: '(bis {{date}})',
+    trialFullAccess: 'Sie haben während Ihrer Testphase vollen Zugriff auf alle Funktionen.',
+    trialUpgradePrompt: 'Upgraden Sie jetzt, um nach Ablauf Ihrer Testphase weiter Zugriff zu haben',
   },
   scheduled: {
     title: 'Geplante Scans',
@@ -357,6 +364,8 @@ const de = {
     deleteConfirm: 'Diesen geplanten Scan löschen?',
     notifyEmail: 'E-Mail senden, wenn Scan abgeschlossen',
     notifyCol: 'E-Mail',
+    lastResult: 'Letztes Ergebnis',
+    on: 'An',
   },
   auth: {
     login: {

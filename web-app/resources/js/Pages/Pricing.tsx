@@ -38,7 +38,7 @@ const PLAN_FEATURES = [
   'PDF & CSV export of every report',
   'Shareable public report links',
   'Historical trend tracking',
-  'AI-powered fix suggestions',
+  'MCP Agent — Claude fixes what the audit finds',
   'Priority email support',
   'Paddle-secured billing — EU VAT handled automatically',
 ];
@@ -52,7 +52,7 @@ const COMPARISON_ROWS = [
   { label: 'PDF / CSV export',       monthly: true,          yearly: true },
   { label: 'Shareable report links', monthly: true,          yearly: true },
   { label: 'Historical trends',      monthly: true,          yearly: true },
-  { label: 'AI fix suggestions',     monthly: true,          yearly: true },
+  { label: 'MCP Agent',               monthly: true,          yearly: true },
   { label: 'Priority support',       monthly: true,          yearly: true },
   { label: 'Savings vs monthly',     monthly: '—',           yearly: '2 months free (~€40)' },
 ];
@@ -368,8 +368,8 @@ export default function Pricing({ auth }: PageProps) {
                     title: 'Historical trends',
                     desc: 'Track your health score over time. See how changes you make improve — or hurt — your site\'s performance.' },
                   { icon: Bot,      color: 'text-pink-500 dark:text-pink-400',
-                    title: 'AI fix suggestions',
-                    desc: 'Every issue comes with an AI-generated explanation and a concrete fix recommendation you can act on.' },
+                    title: 'MCP Agent',
+                    desc: 'Deploy a lightweight agent on your server. Claude Code connects via MCP to read files, apply fixes, and verify changes — no copy-pasting.' },
                   { icon: HelpCircle,color:'text-teal-500 dark:text-teal-400',
                     title: 'Priority support',
                     desc: 'Email support with priority queue for paid subscribers. We aim to respond within 1 business day.' },
@@ -408,7 +408,7 @@ export default function Pricing({ auth }: PageProps) {
             <div className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Ready to audit your site?</h2>
               <p className="mt-4 text-gray-600 dark:text-gray-400">
-                Join teams and freelancers who use 4utest to keep their websites healthy and competitive.
+                Run 7 parallel audits on your site — SEO, security, performance, broken links, e-commerce, tracking, and accessibility — and get a full health score in minutes.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
                 <Link

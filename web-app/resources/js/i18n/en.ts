@@ -322,6 +322,13 @@ const en = {
     siteLabel: 'Label',
     noSites: 'No sites registered yet.',
     extraSitesNotEnabled: 'Extra site add-ons are not yet available. Contact support.',
+    trialActive: 'Free Trial Active',
+    trialDaysLeft_one: '1 day remaining',
+    trialDaysLeft_other: '{{count}} days remaining',
+    trialExpiresToday: 'Expires today',
+    trialUntil: '(until {{date}})',
+    trialFullAccess: 'You have full access to all features during your trial.',
+    trialUpgradePrompt: 'Upgrade now to keep access after your trial ends',
   },
   scheduled: {
     title: 'Scheduled Scans',
@@ -357,6 +364,8 @@ const en = {
     deleteConfirm: 'Delete this scheduled scan?',
     notifyEmail: 'Email me when scan completes',
     notifyCol: 'Email',
+    lastResult: 'Last Result',
+    on: 'On',
   },
   auth: {
     login: {

@@ -263,23 +263,23 @@ export default function BillingIndex({
                     <Clock className="h-5 w-5 text-violet-400" />
                   </div>
                   <div>
-                    <p className="font-semibold text-violet-400">Free Trial Active</p>
+                    <p className="font-semibold text-violet-400">{t('billing.trialActive')}</p>
                     <p className="text-sm text-gray-700 dark:text-gray-300 mt-0.5">
                       {trial_days_left > 0
-                        ? <>{trial_days_left} day{trial_days_left !== 1 ? 's' : ''} remaining</>
-                        : 'Expires today'}
+                        ? t('billing.trialDaysLeft', { count: trial_days_left })
+                        : t('billing.trialExpiresToday')}
                       {trial_ends_at && (
                         <span className="ml-1.5 text-xs text-gray-500">
-                          (until {new Date(trial_ends_at).toLocaleDateString()})
+                          {t('billing.trialUntil', { date: new Date(trial_ends_at).toLocaleDateString() })}
                         </span>
                       )}
                     </p>
-                    <p className="text-xs text-gray-500 mt-0.5">You have full access to all features during your trial.</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{t('billing.trialFullAccess')}</p>
                   </div>
                 </div>
 
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 p-4">
-                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Upgrade now to keep access after your trial ends</p>
+                  <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">{t('billing.trialUpgradePrompt')}</p>
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     {([
                       {

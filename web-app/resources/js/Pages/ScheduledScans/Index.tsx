@@ -245,7 +245,7 @@ export default function ScheduledScansIndex({ scans, flash, sites }: ScheduledSc
                       {t('scheduled.lastRun')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                      Last Result
+                      {t('scheduled.lastResult')}
                     </th>
                     <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('scheduled.nextRun')}
@@ -303,7 +303,7 @@ export default function ScheduledScansIndex({ scans, flash, sites }: ScheduledSc
                               href={`/audits/${scan.last_report.id}`}
                               className="inline-flex items-center gap-1 text-xs text-violet-400 hover:text-violet-300 transition-colors"
                             >
-                              View
+                              {t('common.view')}
                               <ExternalLink className="h-3 w-3" />
                             </Link>
                           </div>
@@ -318,7 +318,7 @@ export default function ScheduledScansIndex({ scans, flash, sites }: ScheduledSc
                         {scan.notify_email ? (
                           <span className="inline-flex items-center gap-1 rounded-full bg-violet-500/10 px-2.5 py-0.5 text-xs font-medium text-violet-400 border border-violet-500/20">
                             <Mail className="h-3 w-3" />
-                            On
+                            {t('scheduled.on')}
                           </span>
                         ) : (
                           <span className="text-gray-600 text-xs">—</span>
