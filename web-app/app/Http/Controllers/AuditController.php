@@ -229,9 +229,13 @@ class AuditController extends Controller
             ];
         }
 
+        // The `true` (mergeWithDefaults) is required — without it, setOptions()
+        // replaces the whole Options object and silently resets chroot to
+        // dompdf's own vendor directory, breaking every local <img> (logo,
+        // screenshots) with no error, just a blank box.
         $pdf = Pdf::loadView('exports.audit-report', ['report' => $report, 'agency' => $agency])
             ->setPaper('a4', 'portrait')
-            ->setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false]);
+            ->setOptions(['defaultFont' => 'DejaVu Sans', 'isRemoteEnabled' => false], true);
 
         $safeHost = preg_replace('/[^a-zA-Z0-9\-.]/', '', parse_url($report->site_url, PHP_URL_HOST) ?? '');
         $filename = 'audit-report-' . $safeHost . '-' . $report->created_at->format('Ymd-His') . '.pdf';

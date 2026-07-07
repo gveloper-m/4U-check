@@ -47,6 +47,14 @@
 
   .footer { margin: 30px; font-size: 9px; color: #a0aec0; text-align: center;
              border-top: 1px solid #e2e8f0; padding-top: 10px; }
+
+  .screenshot-grid { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .screenshot-cell { width: 50%; padding: 6px; border: none; vertical-align: top; }
+  .screenshot-img { width: 100%; max-height: 150px; border: 1px solid #e2e8f0; border-radius: 4px; }
+  .screenshot-badge { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 8px;
+                       font-weight: 700; background: {{ $sectionBg }}; color: #fff; margin: 5px 0 3px; }
+  .screenshot-caption { font-size: 9px; color: #2d3748; word-break: break-all; }
+  .screenshot-code { font-size: 8px; color: #718096; word-break: break-all; font-family: monospace; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -86,6 +94,42 @@
     @foreach($report->score_deductions as $ded)
       <div class="deduction-item">&#8722; {{ $ded }}</div>
     @endforeach
+  </div>
+</div>
+@endif
+
+<!-- Screenshot Gallery -->
+@php
+  $screenshots = \App\Support\PdfScreenshotGallery::build(
+      $report->performance_result,
+      $report->broken_resources_result,
+      $report->accessibility_result,
+      $report->site_url
+  );
+@endphp
+@if(!empty($screenshots))
+<div class="section">
+  <div class="section-header">Screenshot Gallery</div>
+  <div class="section-body">
+    <table class="screenshot-grid">
+      @foreach(array_chunk($screenshots, 2) as $pair)
+        <tr>
+          @foreach($pair as $shot)
+            <td class="screenshot-cell">
+              <span class="screenshot-badge">{{ $shot['badge'] }}</span><br>
+              <img src="{{ $shot['path'] }}" class="screenshot-img" alt="{{ $shot['badge'] }} screenshot">
+              <div class="screenshot-caption">{{ $shot['caption'] }}</div>
+              @if($shot['code'])
+                <div class="screenshot-code">{{ $shot['code'] }}</div>
+              @endif
+            </td>
+          @endforeach
+          @if(count($pair) === 1)
+            <td class="screenshot-cell"></td>
+          @endif
+        </tr>
+      @endforeach
+    </table>
   </div>
 </div>
 @endif

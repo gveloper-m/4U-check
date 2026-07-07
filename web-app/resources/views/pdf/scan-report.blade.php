@@ -62,6 +62,14 @@
   .module-block { margin-bottom: 14px; }
   .module-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
   .module-title { font-size: 12px; font-weight: bold; color: #3f3f46; }
+
+  .screenshot-grid { width: 100%; border-collapse: collapse; margin-top: 8px; }
+  .screenshot-cell { width: 50%; padding: 6px; border: none; vertical-align: top; }
+  .screenshot-img { width: 100%; max-height: 150px; border: 1px solid #e4e4e7; border-radius: 4px; }
+  .screenshot-badge { display: inline-block; padding: 1px 7px; border-radius: 8px; font-size: 8px;
+                       font-weight: bold; background: #7c3aed; color: #fff; margin: 5px 0 3px; }
+  .screenshot-caption { font-size: 9px; color: #3f3f46; word-break: break-all; }
+  .screenshot-code { font-size: 8px; color: #71717a; word-break: break-all; font-family: monospace; margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -100,7 +108,34 @@
   $br    = $report->broken_resources_result ? json_decode($report->broken_resources_result, true) : null;
   $perf  = $report->performance_result      ? json_decode($report->performance_result, true)      : null;
   $a11y  = $report->accessibility_result    ? json_decode($report->accessibility_result, true)    : null;
+  $screenshots = \App\Support\PdfScreenshotGallery::build($perf, $br, $a11y, $scan->site_url);
 @endphp
+
+@if(!empty($screenshots))
+{{-- ======================== SCREENSHOT GALLERY ======================== --}}
+<div class="section">
+  <h2>Screenshot Gallery</h2>
+  <table class="screenshot-grid">
+    @foreach(array_chunk($screenshots, 2) as $pair)
+      <tr>
+        @foreach($pair as $shot)
+          <td class="screenshot-cell">
+            <span class="screenshot-badge">{{ $shot['badge'] }}</span><br>
+            <img src="{{ $shot['path'] }}" class="screenshot-img" alt="{{ $shot['badge'] }} screenshot">
+            <div class="screenshot-caption">{{ $shot['caption'] }}</div>
+            @if($shot['code'])
+              <div class="screenshot-code">{{ $shot['code'] }}</div>
+            @endif
+          </td>
+        @endforeach
+        @if(count($pair) === 1)
+          <td class="screenshot-cell"></td>
+        @endif
+      </tr>
+    @endforeach
+  </table>
+</div>
+@endif
 
 {{-- ======================== SEO & SCHEMA ======================== --}}
 <div class="section">
