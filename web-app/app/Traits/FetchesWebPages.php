@@ -120,6 +120,7 @@ trait FetchesWebPages
     {
         $chromePath = $this->findChromePath();
         if (! $chromePath) {
+            Log::warning('Screenshot capture skipped: no Chrome/Chromium binary found (CHROME_PATH not set and none of the known paths exist).', ['url' => $url]);
             return null;
         }
 
@@ -145,9 +146,17 @@ trait FetchesWebPages
 
             $shot->save($absolute);
 
-            return file_exists($absolute) ? $relative : null;
+            if (! file_exists($absolute)) {
+                Log::warning('Screenshot capture reported success but no file was written.', ['url' => $url, 'selector' => $selector, 'path' => $absolute]);
+                return null;
+            }
+
+            return $relative;
         } catch (\Throwable $e) {
-            Log::debug('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage());
+            Log::warning('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage(), [
+                'chrome_path' => $chromePath,
+                'exception'   => get_class($e),
+            ]);
             return null;
         }
     }

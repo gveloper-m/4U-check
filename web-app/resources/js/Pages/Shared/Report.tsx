@@ -669,6 +669,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     {(() => {
                       const fuzzSummary  = getObj(fuzz, 'summary');
                       const fuzzFindings = getArr(fuzz, 'findings');
+                      const fuzzTargets  = getNum(fuzz, 'targets_tested') ?? 0;
                       const severityColor = (sev: string) =>
                         sev === 'high' ? 'text-red-600 border-red-200 bg-red-50'
                         : sev === 'medium' ? 'text-amber-600 border-amber-200 bg-amber-50'
@@ -688,7 +689,9 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                           </div>
 
                           {fuzzFindings.length === 0 ? (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{t('show.fuzz.noFindings')}</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {fuzzTargets === 0 ? t('show.fuzz.noTargets') : t('show.fuzz.noFindings')}
+                            </p>
                           ) : (
                             <div>
                               <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600 dark:text-gray-400">

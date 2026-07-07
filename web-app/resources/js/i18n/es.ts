@@ -276,6 +276,7 @@ const es = {
       requestsSent: 'Solicitudes Enviadas',
       totalFindings: 'Hallazgos',
       noFindings: 'No se encontraron problemas — todas las entradas probadas se gestionaron de forma segura.',
+      noTargets: 'No se encontraron entradas probables — las páginas rastreadas no tenían parámetros de URL ni formularios tipo búsqueda (GET) que probar. Esto es habitual en sitios con URLs limpias y búsqueda solo mediante JavaScript.',
       findingsTitle: 'Hallazgos',
       param: 'Parámetro',
       types: {

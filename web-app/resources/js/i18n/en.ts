@@ -276,6 +276,7 @@ const en = {
       requestsSent: 'Requests Sent',
       totalFindings: 'Findings',
       noFindings: 'No issues found — all tested inputs were handled safely.',
+      noTargets: 'No fuzzable inputs were found — the crawled pages had no URL parameters and no search-style (GET) forms to test. This is common on sites with clean URLs and JavaScript-only search.',
       findingsTitle: 'Findings',
       param: 'Parameter',
       types: {

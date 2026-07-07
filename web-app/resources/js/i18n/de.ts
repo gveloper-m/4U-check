@@ -276,6 +276,7 @@ const de = {
       requestsSent: 'Gesendete Anfragen',
       totalFindings: 'Befunde',
       noFindings: 'Keine Probleme gefunden — alle getesteten Eingaben wurden sicher behandelt.',
+      noTargets: 'Es wurden keine fuzzbaren Eingaben gefunden — die gecrawlten Seiten hatten keine URL-Parameter und keine suchähnlichen (GET-)Formulare zum Testen. Das ist häufig bei Websites mit sauberen URLs und reiner JavaScript-Suche.',
       findingsTitle: 'Befunde',
       param: 'Parameter',
       types: {

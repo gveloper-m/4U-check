@@ -276,6 +276,7 @@ const fr = {
       requestsSent: 'Requêtes envoyées',
       totalFindings: 'Résultats',
       noFindings: 'Aucun problème détecté — toutes les entrées testées ont été gérées correctement.',
+      noTargets: "Aucune entrée testable trouvée — les pages explorées ne contenaient ni paramètres d'URL ni formulaires de type recherche (GET) à tester. C'est fréquent sur les sites avec des URL propres et une recherche uniquement en JavaScript.",
       findingsTitle: 'Résultats',
       param: 'Paramètre',
       types: {

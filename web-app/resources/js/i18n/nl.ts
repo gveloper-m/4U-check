@@ -276,6 +276,7 @@ const nl = {
       requestsSent: 'Verstuurde verzoeken',
       totalFindings: 'Bevindingen',
       noFindings: 'Geen problemen gevonden — alle geteste invoer werd veilig verwerkt.',
+      noTargets: 'Er zijn geen fuzzbare invoervelden gevonden — de doorzochte pagina\'s hadden geen URL-parameters en geen zoekachtige (GET-)formulieren om te testen. Dit komt vaak voor bij sites met schone URL\'s en zoeken alleen via JavaScript.',
       findingsTitle: 'Bevindingen',
       param: 'Parameter',
       types: {

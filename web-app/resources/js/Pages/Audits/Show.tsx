@@ -1201,6 +1201,7 @@ export default function AuditShow({ report }: ShowProps) {
                   {(() => {
                     const fuzzSummary  = getObj(fuzz, 'summary');
                     const fuzzFindings = getArr(fuzz, 'findings');
+                    const fuzzTargets  = getNum(fuzz, 'targets_tested') ?? 0;
                     const severityColor = (sev: string) =>
                       sev === 'high' ? 'text-red-400 border-red-500/20 bg-red-500/5'
                       : sev === 'medium' ? 'text-amber-400 border-amber-500/20 bg-amber-500/5'
@@ -1228,7 +1229,9 @@ export default function AuditShow({ report }: ShowProps) {
                         </div>
 
                         {fuzzFindings.length === 0 ? (
-                          <p className="text-sm text-gray-500">{t('show.fuzz.noFindings')}</p>
+                          <p className="text-sm text-gray-500">
+                            {fuzzTargets === 0 ? t('show.fuzz.noTargets') : t('show.fuzz.noFindings')}
+                          </p>
                         ) : (
                           <div>
                             <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">

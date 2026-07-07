@@ -276,6 +276,7 @@ const cs = {
       requestsSent: 'Odeslané požadavky',
       totalFindings: 'Zjištění',
       noFindings: 'Nebyly nalezeny žádné problémy — všechny testované vstupy byly zpracovány bezpečně.',
+      noTargets: 'Nebyly nalezeny žádné vstupy vhodné pro fuzzing — prohledané stránky neobsahovaly žádné URL parametry ani vyhledávací (GET) formuláře k testování. To je běžné u webů s čistými URL a vyhledáváním pouze přes JavaScript.',
       findingsTitle: 'Zjištění',
       param: 'Parametr',
       types: {
