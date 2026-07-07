@@ -2,6 +2,7 @@
 
 namespace App\Traits;
 
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Spatie\Browsershot\Browsershot;
@@ -128,36 +129,67 @@ trait FetchesWebPages
             . sha1($url . '|' . $selector . '|' . microtime(true)) . '.png';
         $absolute = storage_path('app/public/' . $relative);
 
+        // Headless Chrome is memory-hungry and several audit modules can be
+        // capturing screenshots concurrently (different queue workers, same
+        // report). Serialize captures system-wide so we never have more than
+        // one Chrome process running at once — cheap insurance against OOM
+        // on small hosts. Skips gracefully (no screenshot) if the lock can't
+        // be acquired within a reasonable wait rather than hanging the job.
+        $capture = function () use ($url, $selector, $chromePath, $absolute): bool {
+            try {
+                if (! is_dir(dirname($absolute))) {
+                    mkdir(dirname($absolute), 0755, true);
+                }
+
+                $shot = Browsershot::url($url)
+                    ->setChromePath($chromePath)
+                    ->noSandbox()
+                    ->timeout(30)
+                    ->windowSize(1280, 800)
+                    ->addChromiumArguments([
+                        'disable-dev-shm-usage',
+                        'disable-gpu',
+                        'disable-setuid-sandbox',
+                        'disable-extensions',
+                        'disable-background-networking',
+                        'disable-default-apps',
+                        'disable-sync',
+                        'disable-translate',
+                        'mute-audio',
+                        'no-first-run',
+                        'no-zygote',
+                        'renderer-process-limit=1',
+                        'js-flags=--max-old-space-size=256',
+                    ]);
+
+                if ($selector) {
+                    $shot->select($selector);
+                }
+
+                $shot->save($absolute);
+
+                if (! file_exists($absolute)) {
+                    Log::warning('Screenshot capture reported success but no file was written.', ['url' => $url, 'selector' => $selector, 'path' => $absolute]);
+                    return false;
+                }
+
+                return true;
+            } catch (\Throwable $e) {
+                Log::warning('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage(), [
+                    'chrome_path' => $chromePath,
+                    'exception'   => get_class($e),
+                ]);
+                return false;
+            }
+        };
+
         try {
-            if (! is_dir(dirname($absolute))) {
-                mkdir(dirname($absolute), 0755, true);
-            }
-
-            $shot = Browsershot::url($url)
-                ->setChromePath($chromePath)
-                ->noSandbox()
-                ->timeout(30)
-                ->windowSize(1440, 900)
-                ->addChromiumArguments(['disable-dev-shm-usage', 'disable-gpu']);
-
-            if ($selector) {
-                $shot->select($selector);
-            }
-
-            $shot->save($absolute);
-
-            if (! file_exists($absolute)) {
-                Log::warning('Screenshot capture reported success but no file was written.', ['url' => $url, 'selector' => $selector, 'path' => $absolute]);
-                return null;
-            }
-
-            return $relative;
+            $captured = Cache::lock('screenshot-capture', 45)->block(60, $capture);
         } catch (\Throwable $e) {
-            Log::warning('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage(), [
-                'chrome_path' => $chromePath,
-                'exception'   => get_class($e),
-            ]);
+            Log::warning('Screenshot capture skipped: could not acquire the screenshot lock in time (too many concurrent captures).', ['url' => $url]);
             return null;
         }
+
+        return $captured ? $relative : null;
     }
 }
