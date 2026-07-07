@@ -3,6 +3,8 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Spatie\Browsershot\Browsershot;
 
 trait FetchesWebPages
 {
@@ -75,5 +77,78 @@ trait FetchesWebPages
         }
 
         throw $lastException ?? new \Exception("Failed to fetch {$url}");
+    }
+
+    /**
+     * Locate a usable Chrome/Chromium binary for Browsershot, checking the
+     * CHROME_PATH env var (set in the production Docker image) first.
+     */
+    protected function findChromePath(): ?string
+    {
+        if ($env = env('CHROME_PATH')) {
+            return $env;
+        }
+
+        $paths = [
+            '/opt/google/chrome/chrome',
+            '/opt/google/chrome/google-chrome',
+            '/var/www/html/chrome/linux-151.0.7884.0/chrome-linux64/chrome',
+            '/root/.cache/puppeteer/chrome/linux-151.0.7884.0/chrome-linux64/chrome',
+            '/usr/bin/google-chrome-stable',
+            '/usr/bin/google-chrome',
+            '/usr/bin/chromium',
+            '/usr/bin/chromium-browser',
+        ];
+
+        foreach ($paths as $path) {
+            if (file_exists($path) && is_executable($path)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Capture a screenshot of a page — or, when $selector is given, just the
+     * first element matching that CSS selector — and store it on the "public"
+     * disk. Returns the relative path (usable with asset('storage/...') on the
+     * frontend or storage_path('app/public/...') for PDF export) or null if no
+     * Chrome binary is available or the capture failed for any reason.
+     */
+    protected function captureScreenshot(string $url, ?string $selector = null): ?string
+    {
+        $chromePath = $this->findChromePath();
+        if (! $chromePath) {
+            return null;
+        }
+
+        $relative = 'audit-screenshots/' . date('Y/m/d') . '/'
+            . sha1($url . '|' . $selector . '|' . microtime(true)) . '.png';
+        $absolute = storage_path('app/public/' . $relative);
+
+        try {
+            if (! is_dir(dirname($absolute))) {
+                mkdir(dirname($absolute), 0755, true);
+            }
+
+            $shot = Browsershot::url($url)
+                ->setChromePath($chromePath)
+                ->noSandbox()
+                ->timeout(30)
+                ->windowSize(1440, 900)
+                ->addChromiumArguments(['disable-dev-shm-usage', 'disable-gpu']);
+
+            if ($selector) {
+                $shot->select($selector);
+            }
+
+            $shot->save($absolute);
+
+            return file_exists($absolute) ? $relative : null;
+        } catch (\Throwable $e) {
+            Log::debug('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage());
+            return null;
+        }
     }
 }

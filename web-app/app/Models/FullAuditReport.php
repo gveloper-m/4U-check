@@ -25,6 +25,8 @@ class FullAuditReport extends Model
         'broken_resources_result',
         'performance_result',
         'accessibility_result',
+        'fuzz_requested',
+        'fuzz_testing_result',
     ];
 
     protected $casts = [
@@ -37,6 +39,8 @@ class FullAuditReport extends Model
         'broken_resources_result' => 'array',
         'performance_result'      => 'array',
         'accessibility_result'    => 'array',
+        'fuzz_requested'          => 'boolean',
+        'fuzz_testing_result'     => 'array',
     ];
 
     public function user(): BelongsTo

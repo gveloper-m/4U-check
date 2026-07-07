@@ -5,9 +5,12 @@ namespace App\Http\Controllers;
 use DOMDocument;
 use DOMXPath;
 use Illuminate\Support\Facades\Http;
+use App\Traits\FetchesWebPages;
 
 class AccessibilityAuditController extends Controller
 {
+    use FetchesWebPages;
+
     private const TIMEOUT = 20;
 
     private const VAGUE_LINK_TEXT = [
@@ -74,7 +77,7 @@ class AccessibilityAuditController extends Controller
                 'heading_hierarchy' => $this->checkHeadingHierarchy($dom, $xpath),
                 'link_text'         => $this->checkLinkText($dom, $xpath),
                 'landmarks'         => $this->checkLandmarks($dom, $xpath),
-                'color_contrast'    => $this->checkColorContrast($html, $xpath, $dom),
+                'color_contrast'    => $this->checkColorContrast($html, $xpath, $dom, $url),
             ];
 
             $score = $this->computeScore($checks);
@@ -447,7 +450,7 @@ class AccessibilityAuditController extends Controller
 
     // ─── Check 7: Color Contrast ─────────────────────────────────────────────
 
-    private function checkColorContrast(string $html, DOMXPath $xpath, DOMDocument $dom): array
+    private function checkColorContrast(string $html, DOMXPath $xpath, DOMDocument $dom, string $url): array
     {
         $violations = [];
         $pass       = 0;
@@ -515,6 +518,24 @@ class AccessibilityAuditController extends Controller
                 ? $violations
                 : array_map('unserialize', array_keys(array_flip(array_map('serialize', $violations))))
         ), 0, 15);
+
+        // Capture a cropped screenshot of the offending element for a handful of
+        // violations that carry a real CSS selector (stylesheet-sourced only —
+        // inline-style violations don't have one). Capped to limit Chrome launches.
+        $screenshotBudget = 3;
+        foreach ($uniqueViolations as $i => $violation) {
+            if ($screenshotBudget <= 0) {
+                break;
+            }
+            if (empty($violation['selector'])) {
+                continue;
+            }
+            $shot = $this->captureScreenshot($url, $violation['selector']);
+            if ($shot) {
+                $uniqueViolations[$i]['screenshot'] = $shot;
+                $screenshotBudget--;
+            }
+        }
 
         return [
             'status'     => count($violations) === 0 ? 'pass' : (count($violations) <= 2 ? 'warn' : 'fail'),

@@ -30,6 +30,12 @@ class RunAuditorJob implements ShouldQueue
         'accessibility'      => 'accessibility_result',
     ];
 
+    // Opt-in modules — only expected/counted for reports that requested them
+    // (currently just fuzz testing, gated behind full_audit_reports.fuzz_requested).
+    public const OPTIONAL_COLUMN_MAP = [
+        'fuzz_testing' => 'fuzz_testing_result',
+    ];
+
     public function __construct(
         public readonly int    $reportId,
         public readonly string $auditorKey,
@@ -39,7 +45,7 @@ class RunAuditorJob implements ShouldQueue
 
     public function handle(): void
     {
-        $column = self::COLUMN_MAP[$this->auditorKey];
+        $column = (self::COLUMN_MAP + self::OPTIONAL_COLUMN_MAP)[$this->auditorKey];
 
         try {
             $result = app($this->controllerClass)->performAudit($this->pageUrl);
@@ -58,7 +64,7 @@ class RunAuditorJob implements ShouldQueue
     public function failed(\Throwable $_exception): void
     {
         // Write a timeout/error marker so the finalization check can still count this auditor as done.
-        $column = self::COLUMN_MAP[$this->auditorKey];
+        $column = (self::COLUMN_MAP + self::OPTIONAL_COLUMN_MAP)[$this->auditorKey];
         DB::table('full_audit_reports')
             ->where('id', $this->reportId)
             ->whereNull($column)
@@ -80,14 +86,19 @@ class RunAuditorJob implements ShouldQueue
                 return;
             }
 
+            $expectedColumns = self::COLUMN_MAP;
+            if ($record->fuzz_requested ?? false) {
+                $expectedColumns = $expectedColumns + self::OPTIONAL_COLUMN_MAP;
+            }
+
             $doneCount = 0;
-            foreach (self::COLUMN_MAP as $col) {
+            foreach ($expectedColumns as $col) {
                 if ($record->$col !== null) {
                     $doneCount++;
                 }
             }
 
-            if ($doneCount < 7) {
+            if ($doneCount < count($expectedColumns)) {
                 return;
             }
 
@@ -137,6 +148,9 @@ class RunAuditorJob implements ShouldQueue
                             'catalog_integrity'  => json_decode($reportRecord->catalog_result            ?? 'null', true),
                             'marketing_tracking' => json_decode($reportRecord->tracking_result           ?? 'null', true),
                             'accessibility'      => json_decode($reportRecord->accessibility_result      ?? 'null', true),
+                            'fuzz_testing'       => ($reportRecord->fuzz_requested ?? false)
+                                ? json_decode($reportRecord->fuzz_testing_result ?? 'null', true)
+                                : null,
                         ],
                     ], JSON_UNESCAPED_UNICODE),
                 ]);
@@ -247,6 +261,27 @@ class RunAuditorJob implements ShouldQueue
             if (! ($checks['landmarks']['has_lang']  ?? true)) { $score -= 5; $deductions[] = 'Accessibility: missing html lang attribute (-5)'; }
             if (! ($checks['landmarks']['has_main']  ?? true)) { $score -= 3; $deductions[] = 'Accessibility: no <main> landmark (-3)'; }
             if ($csFail   > 2)  { $score -= 5;  $deductions[] = "Accessibility: {$csFail} color contrast violations (-5)"; }
+        }
+
+        // --- Fuzz Testing (optional — only requested for some scans) ---
+        if ($record->fuzz_requested ?? false) {
+            $fuzzRaw = $record->fuzz_testing_result ?? null;
+            $fuzz    = $fuzzRaw !== null ? json_decode($fuzzRaw, true) : null;
+            if ($fuzz && ($fuzz['status'] ?? '') === 'ok') {
+                $summary = $fuzz['summary'] ?? [];
+                $serious = ($summary['reflected_input'] ?? 0) + ($summary['error_disclosure'] ?? 0) + ($summary['server_error'] ?? 0);
+                $slow    = $summary['slow_response'] ?? 0;
+                if ($serious > 0) {
+                    $deduction = min(20, $serious * 8);
+                    $score -= $deduction;
+                    $deductions[] = "Fuzz testing: {$serious} potential input-handling issue(s) found (-{$deduction})";
+                }
+                if ($slow > 0) {
+                    $deduction = min(5, $slow * 2);
+                    $score -= $deduction;
+                    $deductions[] = "Fuzz testing: {$slow} slow-response finding(s) (-{$deduction})";
+                }
+            }
         }
 
         return ['score' => max(0, $score), 'deductions' => $deductions];

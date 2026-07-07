@@ -20,6 +20,8 @@ class BrokenResourceController extends Controller
     private $allLinks = [];
     private $allImages = [];
     private $baseHost = '';
+    private int $screenshotBudget = 6;
+    private array $foundOnScreenshotCache = [];
 
     /**
      * Audit a site for broken links and images across all pages.
@@ -131,6 +133,15 @@ class BrokenResourceController extends Controller
             'executed_at'          => now(),
         ]);
 
+        $topBrokenLinks  = array_slice($brokenLinks,  0, 20);
+        $topBrokenImages = array_slice($brokenImages, 0, 20);
+
+        // Screenshot the page each broken link/image was found on, so the report
+        // can show visual context for where the problem lives (capped across both
+        // lists to avoid launching too many Chrome instances per scan).
+        $this->attachFoundOnScreenshots($topBrokenLinks);
+        $this->attachFoundOnScreenshots($topBrokenImages);
+
         return [
             'site_url'      => $pageUrl,
             'pages_crawled' => $pagesProcessed,
@@ -144,10 +155,39 @@ class BrokenResourceController extends Controller
                 'broken_images_percentage' => count($this->allImages) > 0
                     ? round((count($brokenImages) / count($this->allImages)) * 100, 2) : 0,
             ],
-            'broken_links'  => array_slice($brokenLinks,  0, 20),
-            'broken_images' => array_slice($brokenImages, 0, 20),
+            'broken_links'  => $topBrokenLinks,
+            'broken_images' => $topBrokenImages,
             'executed_at'   => now(),
         ];
+    }
+
+    /**
+     * Attach a screenshot of the page each item was found on. Screenshots are
+     * cached per found_on URL (several broken items often share the same page)
+     * and capped by $this->screenshotBudget across the whole audit run.
+     */
+    private function attachFoundOnScreenshots(array &$items): void
+    {
+        foreach ($items as &$item) {
+            $page = $item['found_on'] ?? null;
+            if (! $page) {
+                continue;
+            }
+
+            if (! array_key_exists($page, $this->foundOnScreenshotCache)) {
+                if ($this->screenshotBudget <= 0) {
+                    $this->foundOnScreenshotCache[$page] = null;
+                    continue;
+                }
+                $this->foundOnScreenshotCache[$page] = $this->captureScreenshot($page);
+                $this->screenshotBudget--;
+            }
+
+            if ($this->foundOnScreenshotCache[$page]) {
+                $item['screenshot'] = $this->foundOnScreenshotCache[$page];
+            }
+        }
+        unset($item);
     }
 
     /**
@@ -267,15 +307,16 @@ class BrokenResourceController extends Controller
         $baseParts = parse_url($baseUrl);
         $baseScheme = $baseParts['scheme'] ?? 'https';
         $baseHost = $baseParts['host'] ?? '';
-        
+        $baseAuthority = $baseHost . (isset($baseParts['port']) ? ':' . $baseParts['port'] : '');
+
         // Handle protocol-relative URLs (//example.com)
         if (str_starts_with($url, '//')) {
             return $baseScheme . ':' . $url;
         }
-        
+
         // Handle root-relative URLs (/path)
         if (str_starts_with($url, '/')) {
-            return $baseScheme . '://' . $baseHost . $url;
+            return $baseScheme . '://' . $baseAuthority . $url;
         }
         
         // Handle relative URLs (../path or ./path)
@@ -290,7 +331,7 @@ class BrokenResourceController extends Controller
         $url = str_replace('./', '', $url);
         $basePath = rtrim($basePath, '/');
         
-        return $baseScheme . '://' . $baseHost . $basePath . '/' . $url;
+        return $baseScheme . '://' . $baseAuthority . $basePath . '/' . $url;
     }
 
     /**

@@ -105,6 +105,7 @@ class PerformanceAuditController extends Controller
         $mobileAvg  = $this->averageMetrics($allMobileMetrics);
 
         $pageAnalysis = $this->analyzePageResources($pageUrl, $encoding, $homepageHtml);
+        $homepageScreenshot = $this->captureScreenshot($pageUrl);
 
         DB::table('performance_audits')->insert([
             'site_url'          => $pageUrl,
@@ -135,6 +136,9 @@ class PerformanceAuditController extends Controller
                 ],
             ],
             'page_analysis' => $pageAnalysis,
+            'screenshots'   => [
+                'homepage' => $homepageScreenshot,
+            ],
             'executed_at' => now(),
         ];
     }
@@ -239,25 +243,26 @@ class PerformanceAuditController extends Controller
         $baseParts = parse_url($baseUrl);
         $baseScheme = $baseParts['scheme'] ?? 'https';
         $baseHost = $baseParts['host'] ?? '';
-        
+        $baseAuthority = $baseHost . (isset($baseParts['port']) ? ':' . $baseParts['port'] : '');
+
         if (str_starts_with($url, '//')) {
             return $baseScheme . ':' . $url;
         }
-        
+
         if (str_starts_with($url, '/')) {
-            return $baseScheme . '://' . $baseHost . $url;
+            return $baseScheme . '://' . $baseAuthority . $url;
         }
-        
+
         $basePath = dirname($baseParts['path'] ?? '');
         while (str_starts_with($url, '../')) {
             $url = substr($url, 3);
             $basePath = dirname($basePath);
         }
-        
+
         $url = str_replace('./', '', $url);
         $basePath = rtrim($basePath, '/');
-        
-        return $baseScheme . '://' . $baseHost . $basePath . '/' . $url;
+
+        return $baseScheme . '://' . $baseAuthority . $basePath . '/' . $url;
     }
 
     /**

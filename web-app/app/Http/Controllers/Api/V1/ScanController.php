@@ -13,6 +13,7 @@ use App\Http\Controllers\TrackingAuditController;
 use App\Http\Controllers\BrokenResourceController;
 use App\Http\Controllers\PerformanceAuditController;
 use App\Http\Controllers\AccessibilityAuditController;
+use App\Http\Controllers\FuzzTestingAuditController;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -50,8 +51,9 @@ class ScanController extends Controller
         }
 
         $validated = $request->validate([
-            'url'  => ['required', 'url', 'max:2048', new PublicUrl],
-            'name' => ['nullable', 'string', 'max:100'],
+            'url'       => ['required', 'url', 'max:2048', new PublicUrl],
+            'name'      => ['nullable', 'string', 'max:100'],
+            'fuzz_test' => ['nullable', 'boolean'],
         ]);
 
         $url  = rtrim($validated['url'], '/');
@@ -72,21 +74,28 @@ class ScanController extends Controller
             }
         }
 
+        $fuzzRequested = $request->boolean('fuzz_test');
+
         $reportId = DB::table('full_audit_reports')->insertGetId([
-            'user_id'     => $user->id,
-            'site_url'    => $url,
-            'name'        => $name,
-            'status'      => 'running',
-            'executed_at' => now(),
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'user_id'        => $user->id,
+            'site_url'       => $url,
+            'name'           => $name,
+            'status'         => 'running',
+            'fuzz_requested' => $fuzzRequested,
+            'executed_at'    => now(),
+            'created_at'     => now(),
+            'updated_at'     => now(),
         ]);
 
         foreach (self::AUDITORS as $key => $controllerClass) {
             RunAuditorJob::dispatch($reportId, $key, $controllerClass, $url);
         }
 
-        return response()->json(['id' => $reportId, 'status' => 'running', 'url' => $url], 202);
+        if ($fuzzRequested) {
+            RunAuditorJob::dispatch($reportId, 'fuzz_testing', FuzzTestingAuditController::class, $url);
+        }
+
+        return response()->json(['id' => $reportId, 'status' => 'running', 'url' => $url, 'fuzz_test' => $fuzzRequested], 202);
     }
 
     public function show(Request $request, int $id): JsonResponse
@@ -166,6 +175,7 @@ class ScanController extends Controller
                 'broken_resources' => $report->broken_resources_result,
                 'performance'      => $report->performance_result,
                 'accessibility'    => $report->accessibility_result,
+                'fuzz_testing'     => $report->fuzz_testing_result,
             ];
 
             foreach ($sections as $module => $data) {
@@ -192,12 +202,13 @@ class ScanController extends Controller
     private function summarize(FullAuditReport $r): array
     {
         return [
-            'id'           => $r->id,
-            'url'          => $r->site_url,
-            'name'         => $r->name,
-            'status'       => $r->status,
-            'health_score' => $r->health_score,
-            'created_at'   => $r->created_at?->toIso8601String(),
+            'id'             => $r->id,
+            'url'            => $r->site_url,
+            'name'           => $r->name,
+            'status'         => $r->status,
+            'health_score'   => $r->health_score,
+            'fuzz_requested' => $r->fuzz_requested,
+            'created_at'     => $r->created_at?->toIso8601String(),
         ];
     }
 
@@ -212,6 +223,7 @@ class ScanController extends Controller
                 'broken_resources' => $r->broken_resources_result,
                 'performance'      => $r->performance_result,
                 'accessibility'    => $r->accessibility_result,
+                'fuzz_testing'     => $r->fuzz_testing_result,
             ],
         ]);
     }

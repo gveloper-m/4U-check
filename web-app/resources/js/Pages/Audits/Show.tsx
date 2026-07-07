@@ -3,6 +3,10 @@ import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { PageProps, FullAuditReport } from '@/types';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import InfoTooltip from '@/Components/InfoTooltip';
+import ScreenshotGallery, { GalleryItem } from '@/Components/ScreenshotGallery';
+import { screenshotUrl } from '@/lib/screenshot';
+import { Image as ImageIcon } from 'lucide-react';
 
 interface StatusResponse {
   status: string;
@@ -32,6 +36,7 @@ import {
   Share2,
   Copy,
   Check,
+  Bug,
 } from 'lucide-react';
 
 interface ShowProps extends PageProps {
@@ -86,28 +91,40 @@ interface SectionProps {
   border: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  help?: string;
 }
 
-function Section({ title, icon: Icon, color, bg, border, children, defaultOpen = false }: SectionProps) {
+function Section({ title, icon: Icon, color, bg, border, children, defaultOpen = false, help }: SectionProps) {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden">
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center justify-between bg-white dark:bg-gray-900 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors"
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen(!open);
+          }
+        }}
+        className="flex w-full items-center justify-between bg-white dark:bg-gray-900 px-5 py-4 text-left hover:bg-gray-50 dark:hover:bg-gray-800/60 transition-colors cursor-pointer select-none"
       >
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-800">
             <Icon className={`h-4 w-4 ${color}`} />
           </div>
-          <span className="font-semibold text-gray-900 dark:text-white">{title}</span>
+          <span className="flex items-center gap-1.5 font-semibold text-gray-900 dark:text-white">
+            {title}
+            {help && <InfoTooltip text={help} align="left" />}
+          </span>
         </div>
         {open ? (
           <ChevronUp className="h-4 w-4 text-gray-600 dark:text-gray-400" />
         ) : (
           <ChevronDown className="h-4 w-4 text-gray-600 dark:text-gray-400" />
         )}
-      </button>
+      </div>
       {open && (
         <div className="border-t border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
           {children}
@@ -131,10 +148,13 @@ function ModuleError({ result }: { result: Record<string, unknown> | undefined |
   return null;
 }
 
-function MetaRow({ label, value, ok }: { label: string; value: React.ReactNode; ok?: boolean }) {
+function MetaRow({ label, value, ok, help }: { label: string; value: React.ReactNode; ok?: boolean; help?: string }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2 border-b border-gray-200 dark:border-gray-800 last:border-0">
-      <span className="text-sm text-gray-600 dark:text-gray-400 shrink-0">{label}</span>
+      <span className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 shrink-0">
+        {label}
+        {help && <InfoTooltip text={help} />}
+      </span>
       <div className="flex items-center gap-1.5 text-right">
         {ok === true && <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-400" />}
         {ok === false && <XCircle className="h-3.5 w-3.5 shrink-0 text-red-400" />}
@@ -220,6 +240,7 @@ export default function AuditShow({ report }: ShowProps) {
   const catalog = report.catalog_result;
   const tracking = report.tracking_result;
   const a11y = report.accessibility_result;
+  const fuzz = report.fuzz_testing_result;
 
   // SEO helpers
   const seoMeta = getObj(seo, 'meta_title');
@@ -268,6 +289,56 @@ export default function AuditShow({ report }: ShowProps) {
   const trackGa4 = getObj(trackScripts, 'ga4');
   const trackFb  = getObj(trackScripts, 'facebook_pixel');
   const trackTt  = getObj(trackScripts, 'tiktok_pixel');
+
+  // Screenshot gallery — visual evidence captured during the scan
+  const perfScreenshots = getObj(perf, 'screenshots');
+  const homepageScreenshot = perfScreenshots && typeof perfScreenshots['homepage'] === 'string' ? String(perfScreenshots['homepage']) : null;
+  const a11yChecksForGallery = getObj(a11y, 'checks');
+  const contrastForGallery = getObj(a11yChecksForGallery, 'color_contrast');
+
+  const galleryItems: GalleryItem[] = [];
+  if (homepageScreenshot) {
+    const src = screenshotUrl(homepageScreenshot);
+    if (src) {
+      galleryItems.push({ src, caption: t('show.gallery.homepage'), code: report.site_url, badge: t('show.gallery.badgeOverview') });
+    }
+  }
+  brokenLinks.forEach((link) => {
+    const l = link as Record<string, unknown>;
+    const src = typeof l.screenshot === 'string' ? screenshotUrl(l.screenshot) : null;
+    if (src) {
+      galleryItems.push({
+        src,
+        caption: String(l.url ?? ''),
+        code: l.found_on ? `${t('show.broken.foundOn')}: ${String(l.found_on)}` : undefined,
+        badge: t('show.gallery.badgeBrokenLink'),
+      });
+    }
+  });
+  brokenImages.forEach((img) => {
+    const im = img as Record<string, unknown>;
+    const src = typeof im.screenshot === 'string' ? screenshotUrl(im.screenshot) : null;
+    if (src) {
+      galleryItems.push({
+        src,
+        caption: String(im.url ?? ''),
+        code: im.found_on ? `${t('show.broken.foundOn')}: ${String(im.found_on)}` : undefined,
+        badge: t('show.gallery.badgeBrokenImage'),
+      });
+    }
+  });
+  getArr(contrastForGallery, 'violations').forEach((v) => {
+    const vv = v as Record<string, unknown>;
+    const src = typeof vv.screenshot === 'string' ? screenshotUrl(vv.screenshot) : null;
+    if (src) {
+      galleryItems.push({
+        src,
+        caption: t('show.accessibility.colorContrast'),
+        code: vv.selector ? String(vv.selector) : undefined,
+        badge: t('show.gallery.badgeContrast'),
+      });
+    }
+  });
 
   const user = (usePage().props as PageProps).auth.user;
   const isAgency = user?.is_agency === true;
@@ -431,6 +502,7 @@ export default function AuditShow({ report }: ShowProps) {
                 { key: 'catalog_integrity',  label: t('show.sections.catalog') },
                 { key: 'marketing_tracking', label: t('show.sections.tracking') },
                 { key: 'accessibility',      label: t('show.sections.accessibility') },
+                ...(report.fuzz_requested ? [{ key: 'fuzz_testing', label: t('show.sections.fuzz') }] : []),
               ].map(({ key, label }) => {
                 const done = progress?.auditors?.[key] === 'done';
                 return (
@@ -463,6 +535,21 @@ export default function AuditShow({ report }: ShowProps) {
           </div>
         )}
 
+        {/* Screenshot gallery */}
+        {galleryItems.length > 0 && (
+          <Section
+            title={t('show.gallery.title')}
+            icon={ImageIcon}
+            color="text-fuchsia-400"
+            bg="bg-fuchsia-500/10"
+            border="border-fuchsia-500/20"
+            defaultOpen={true}
+            help={t('explain.gallery')}
+          >
+            <ScreenshotGallery items={galleryItems} />
+          </Section>
+        )}
+
         {/* Audit sections */}
         <div className="space-y-3">
           {/* SEO & Schema */}
@@ -473,41 +560,49 @@ export default function AuditShow({ report }: ShowProps) {
             bg="bg-violet-500/10"
             border="border-violet-500/20"
             defaultOpen={true}
+            help={t('explain.sections.seo')}
           >
             {seo ? (
               <div className="divide-y divide-gray-800">
                 <MetaRow
                   label={t('show.seo.metaTitle')}
+                  help={t('explain.seo.metaTitle')}
                   value={getStr(seoMeta, 'status')}
                   ok={getStr(seoMeta, 'status') === 'OK'}
                 />
                 <MetaRow
                   label={t('show.seo.metaDesc')}
+                  help={t('explain.seo.metaDesc')}
                   value={getStr(seoDesc, 'status')}
                   ok={getStr(seoDesc, 'status') === 'OK'}
                 />
                 <MetaRow
                   label={t('show.seo.h1')}
+                  help={t('explain.seo.h1')}
                   value={`${getNum(seoH1, 'count') ?? '?'} (${getStr(seoH1, 'status')})`}
                   ok={getStr(seoH1, 'status') === 'OK'}
                 />
                 <MetaRow
                   label={t('show.seo.canonical')}
+                  help={t('explain.seo.canonical')}
                   value={getStr(seoCanonical, 'status')}
                   ok={getStr(seoCanonical, 'status') === 'OK'}
                 />
                 <MetaRow
                   label={t('show.seo.schema')}
-                  value={getBool(seoSchema, 'has_valid_schema') ? 'Valid' : 'Missing/Invalid'}
+                  help={t('explain.seo.schema')}
+                  value={getBool(seoSchema, 'has_valid_schema') ? t('common.valid') : t('common.invalid')}
                   ok={getBool(seoSchema, 'has_valid_schema') ?? undefined}
                 />
                 <MetaRow
                   label={t('show.seo.og')}
+                  help={t('explain.seo.og')}
                   value={getStr(seoOg, 'status')}
                   ok={getStr(seoOg, 'status') === 'OK'}
                 />
                 <MetaRow
                   label={t('show.seo.images')}
+                  help={t('explain.seo.images')}
                   value={seoAlt
                     ? `${getNum(seoAlt, 'missing_alt') ?? 0} missing / ${getNum(seoAlt, 'total_images') ?? '?'} total`
                     : t('common.na')}
@@ -515,12 +610,14 @@ export default function AuditShow({ report }: ShowProps) {
                 />
                 <MetaRow
                   label={t('show.seo.robots')}
-                  value={getBool(seoRobots, 'exists') === true ? 'Found' : getBool(seoRobots, 'exists') === false ? 'Missing' : t('common.na')}
+                  help={t('explain.seo.robots')}
+                  value={getBool(seoRobots, 'exists') === true ? t('common.found') : getBool(seoRobots, 'exists') === false ? t('common.missing') : t('common.na')}
                   ok={getBool(seoRobots, 'exists') ?? undefined}
                 />
                 <MetaRow
                   label={t('show.seo.sitemap')}
-                  value={getBool(seoSitemap, 'exists') === true ? 'Found' : getBool(seoSitemap, 'exists') === false ? 'Missing' : t('common.na')}
+                  help={t('explain.seo.sitemap')}
+                  value={getBool(seoSitemap, 'exists') === true ? t('common.found') : getBool(seoSitemap, 'exists') === false ? t('common.missing') : t('common.na')}
                   ok={getBool(seoSitemap, 'exists') ?? undefined}
                 />
               </div>
@@ -536,65 +633,75 @@ export default function AuditShow({ report }: ShowProps) {
             color="text-blue-400"
             bg="bg-blue-500/10"
             border="border-blue-500/20"
+            help={t('explain.sections.security')}
           >
             {sec ? (
               <div className="divide-y divide-gray-800">
                 {/* SSL */}
                 <MetaRow
                   label={t('show.security.ssl')}
+                  help={t('explain.security.ssl')}
                   value={
                     getBool(secSsl, 'ssl_valid')
-                      ? `Valid — ${getStr(secSsl, 'ssl_issuer')} (${getNum(secSsl, 'ssl_days_left')} days left, expires ${getStr(secSsl, 'ssl_expiry')})`
-                      : getStr(secSsl, 'error') || 'N/A'
+                      ? `${t('common.valid')} — ${getStr(secSsl, 'ssl_issuer')} (${getNum(secSsl, 'ssl_days_left')} days left, expires ${getStr(secSsl, 'ssl_expiry')})`
+                      : getStr(secSsl, 'error') || t('common.na')
                   }
                   ok={getBool(secSsl, 'ssl_valid') ?? undefined}
                 />
                 {/* HTTPS redirect */}
                 <MetaRow
-                  label="HTTPS Redirect"
-                  value={getBool(secRedirect, 'redirects_to_https') === true ? 'Yes' : getBool(secRedirect, 'redirects_to_https') === false ? 'No' : 'N/A'}
+                  label={t('show.security.redirect')}
+                  help={t('explain.security.httpsRedirect')}
+                  value={getBool(secRedirect, 'redirects_to_https') === true ? t('common.yes') : getBool(secRedirect, 'redirects_to_https') === false ? t('common.no') : t('common.na')}
                   ok={getBool(secRedirect, 'redirects_to_https') ?? undefined}
                 />
                 {/* Mixed content */}
                 <MetaRow
                   label={t('show.security.mixed')}
-                  value={getBool(secMixed, 'has_mixed_content') ? 'Detected' : 'None'}
+                  help={t('explain.security.mixed')}
+                  value={getBool(secMixed, 'has_mixed_content') ? t('common.detected') : t('common.none')}
                   ok={getBool(secMixed, 'has_mixed_content') === false}
                 />
                 {/* Security headers — headers_present only contains headers that ARE present */}
                 <MetaRow
-                  label="HSTS"
+                  label={t('show.security.hsts')}
+                  help={t('explain.security.hsts')}
                   value={hasKey(secHdrsPresent, 'Strict-Transport-Security')
                     ? String(secHdrsPresent!['Strict-Transport-Security'])
-                    : 'Missing'}
+                    : t('common.missing')}
                   ok={hasKey(secHdrsPresent, 'Strict-Transport-Security')}
                 />
                 <MetaRow
-                  label="CSP"
-                  value={hasKey(secHdrsPresent, 'Content-Security-Policy') ? 'Present' : 'Missing'}
+                  label={t('show.security.csp')}
+                  help={t('explain.security.csp')}
+                  value={hasKey(secHdrsPresent, 'Content-Security-Policy') ? t('common.present') : t('common.missing')}
                   ok={hasKey(secHdrsPresent, 'Content-Security-Policy')}
                 />
                 <MetaRow
-                  label="X-Frame-Options"
+                  label={t('show.security.xFrameOptions')}
+                  help={t('explain.security.xFrameOptions')}
                   value={hasKey(secHdrsPresent, 'X-Frame-Options')
                     ? String(secHdrsPresent!['X-Frame-Options'])
-                    : 'Missing'}
+                    : t('common.missing')}
                   ok={hasKey(secHdrsPresent, 'X-Frame-Options')}
                 />
                 {/* DNS */}
                 <MetaRow
-                  label="SPF"
-                  value={getBool(secDns, 'spf_record_exists') ? getStr(secDns, 'spf_record') : 'Missing'}
+                  label={t('show.security.spf')}
+                  help={t('explain.security.spf')}
+                  value={getBool(secDns, 'spf_record_exists') ? getStr(secDns, 'spf_record') : t('common.missing')}
                   ok={getBool(secDns, 'spf_record_exists') ?? undefined}
                 />
                 <MetaRow
-                  label="DMARC"
-                  value={getBool(secDns, 'dmarc_record_exists') ? 'Present' : 'Missing'}
+                  label={t('show.security.dmarc')}
+                  help={t('explain.security.dmarc')}
+                  value={getBool(secDns, 'dmarc_record_exists') ? t('common.present') : t('common.missing')}
                   ok={getBool(secDns, 'dmarc_record_exists') ?? undefined}
                 />
                 <MetaRow
-                  label="DKIM"
-                  value={getBool(secDns, 'dkim_found') ? `Found (selector: ${getStr(secDns, 'dkim_selector')})` : 'Not found'}
+                  label={t('show.security.dkim')}
+                  help={t('explain.security.dkim')}
+                  value={getBool(secDns, 'dkim_found') ? t('show.security.dkimFound', { selector: getStr(secDns, 'dkim_selector') }) : t('show.security.dkimNotFound')}
                   ok={getBool(secDns, 'dkim_found') ?? undefined}
                 />
               </div>
@@ -610,50 +717,58 @@ export default function AuditShow({ report }: ShowProps) {
             color="text-emerald-400"
             bg="bg-emerald-500/10"
             border="border-emerald-500/20"
+            help={t('explain.sections.performance')}
           >
             {perf ? (
               <div className="space-y-2">
                 <ModuleError result={perf} />
                 <div className="divide-y divide-gray-800">
-                <MetaRow label={t('show.performance.pages')} value={perfPages ?? t('common.na')} />
+                <MetaRow label={t('show.performance.pages')} help={t('explain.performance.pages')} value={perfPages ?? t('common.na')} />
                 <MetaRow
                   label={t('show.performance.ttfb')}
+                  help={t('explain.performance.ttfb')}
                   value={perfTtfb !== null ? `${perfTtfb} ms` : t('common.na')}
                   ok={perfTtfb !== null ? perfTtfb < 800 : undefined}
                 />
                 <MetaRow
                   label={`${t('show.performance.fcp')} (Desktop)`}
+                  help={t('explain.performance.fcp')}
                   value={perfFcp !== null ? `${perfFcp} ms` : t('common.na')}
                   ok={perfFcp !== null ? perfFcp < 1800 : undefined}
                 />
                 {perfMobile && getNum(perfMobile, 'fcp_ms') !== null && (
                   <MetaRow
                     label={`${t('show.performance.fcp')} (Mobile)`}
+                    help={t('explain.performance.fcp')}
                     value={`${getNum(perfMobile, 'fcp_ms')} ms`}
                     ok={(getNum(perfMobile, 'fcp_ms') ?? 9999) < 1800}
                   />
                 )}
                 <MetaRow
                   label={`${t('show.performance.lcp')} (Desktop)`}
+                  help={t('explain.performance.lcp')}
                   value={perfLcp !== null ? `${perfLcp} ms` : t('common.na')}
                   ok={perfLcp !== null ? perfLcp < 2500 : undefined}
                 />
                 {perfMobile && getNum(perfMobile, 'lcp_ms') !== null && (
                   <MetaRow
                     label={`${t('show.performance.lcp')} (Mobile)`}
+                    help={t('explain.performance.lcp')}
                     value={`${getNum(perfMobile, 'lcp_ms')} ms`}
                     ok={(getNum(perfMobile, 'lcp_ms') ?? 9999) < 2500}
                   />
                 )}
                 <MetaRow
                   label={t('show.performance.compression')}
+                  help={t('explain.performance.compression')}
                   value={perfCompression === true ? t('show.performance.enabled') : perfCompression === false ? t('show.performance.disabled') : t('common.na')}
                   ok={perfCompression ?? undefined}
                 />
                 {perfPageAnalysis && (getArr(perfPageAnalysis, 'render_blocking_scripts').length + getArr(perfPageAnalysis, 'render_blocking_styles').length) > 0 && (
                   <MetaRow
-                    label="Render Blocking"
-                    value={`${getNum(perfPageAnalysis, 'total_render_blocking') ?? 0} resources`}
+                    label={t('show.performance.renderBlocking')}
+                    help={t('explain.performance.renderBlocking')}
+                    value={`${getNum(perfPageAnalysis, 'total_render_blocking') ?? 0} ${t('show.performance.resources')}`}
                     ok={getNum(perfPageAnalysis, 'total_render_blocking') === 0}
                   />
                 )}
@@ -671,6 +786,7 @@ export default function AuditShow({ report }: ShowProps) {
             color="text-red-400"
             bg="bg-red-500/10"
             border="border-red-500/20"
+            help={t('explain.sections.broken')}
           >
             {broken ? (
               <div className="space-y-4">
@@ -678,10 +794,12 @@ export default function AuditShow({ report }: ShowProps) {
                 <div className="divide-y divide-gray-800">
                   <MetaRow
                     label={t('show.broken.totalLinks')}
+                    help={t('explain.broken.totalLinks')}
                     value={getNum(brokenSummary, 'total_links_checked') ?? t('common.na')}
                   />
                   <MetaRow
                     label={t('show.broken.brokenLinks')}
+                    help={t('explain.broken.brokenLinks')}
                     value={(() => {
                       const count = getNum(brokenSummary, 'broken_links_count');
                       const total = getNum(brokenSummary, 'total_links_checked');
@@ -693,10 +811,12 @@ export default function AuditShow({ report }: ShowProps) {
                   />
                   <MetaRow
                     label={t('show.broken.totalImages')}
+                    help={t('explain.broken.totalImages')}
                     value={getNum(brokenSummary, 'total_images_checked') ?? t('common.na')}
                   />
                   <MetaRow
                     label={t('show.broken.brokenImages')}
+                    help={t('explain.broken.brokenImages')}
                     value={getNum(brokenSummary, 'broken_images_count') ?? t('common.na')}
                     ok={(getNum(brokenSummary, 'broken_images_count') ?? 1) === 0}
                   />
@@ -704,8 +824,9 @@ export default function AuditShow({ report }: ShowProps) {
 
                 {brokenLinks.length > 0 && (
                   <div>
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('show.broken.topBroken')} ({brokenLinks.length})
+                      <InfoTooltip text={t('explain.broken.brokenLinks')} align="left" />
                     </p>
                     <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
                       {brokenLinks.map((link, i) => {
@@ -722,7 +843,7 @@ export default function AuditShow({ report }: ShowProps) {
                             </div>
                             {l.found_on != null && (
                               <p className="mt-1 text-xs text-gray-600 break-all">
-                                Found on: <span className="text-gray-500">{String(l.found_on)}</span>
+                                {t('show.broken.foundOn')}: <span className="text-gray-500">{String(l.found_on)}</span>
                               </p>
                             )}
                           </div>
@@ -734,8 +855,9 @@ export default function AuditShow({ report }: ShowProps) {
 
                 {brokenImages.length > 0 && (
                   <div>
-                    <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
                       {t('show.broken.brokenImages')} ({brokenImages.length})
+                      <InfoTooltip text={t('explain.broken.brokenImages')} align="left" />
                     </p>
                     <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
                       {brokenImages.map((img, i) => {
@@ -752,7 +874,7 @@ export default function AuditShow({ report }: ShowProps) {
                             </div>
                             {im.found_on != null && (
                               <p className="mt-1 text-xs text-gray-600 break-all">
-                                Found on: <span className="text-gray-500">{String(im.found_on)}</span>
+                                {t('show.broken.foundOn')}: <span className="text-gray-500">{String(im.found_on)}</span>
                               </p>
                             )}
                           </div>
@@ -774,33 +896,38 @@ export default function AuditShow({ report }: ShowProps) {
             color="text-amber-400"
             bg="bg-amber-500/10"
             border="border-amber-500/20"
+            help={t('explain.sections.catalog')}
           >
             {catalog ? (
               <div className="space-y-2">
                 <ModuleError result={catalog} />
                 <div className="divide-y divide-gray-800">
-                <MetaRow label={t('show.catalog.crawled')} value={getNum(catalog, 'pages_crawled') ?? t('common.na')} />
-                <MetaRow label="Product Pages Found" value={getNum(catalog, 'product_pages_found') ?? t('common.na')} />
-                <MetaRow label={t('show.catalog.products')} value={getNum(catalog, 'products_audited') ?? t('common.na')} />
+                <MetaRow label={t('show.catalog.crawled')} help={t('explain.catalog.crawled')} value={getNum(catalog, 'pages_crawled') ?? t('common.na')} />
+                <MetaRow label={t('show.catalog.productPages')} help={t('explain.catalog.productPages')} value={getNum(catalog, 'product_pages_found') ?? t('common.na')} />
+                <MetaRow label={t('show.catalog.products')} help={t('explain.catalog.products')} value={getNum(catalog, 'products_audited') ?? t('common.na')} />
                 <MetaRow
                   label={t('show.catalog.broken')}
+                  help={t('explain.catalog.broken')}
                   value={getNum(catalog, 'broken_products_count') ?? t('common.na')}
                   ok={(getNum(catalog, 'broken_products_count') ?? 1) === 0}
                 />
                 <MetaRow
                   label={t('show.catalog.pct')}
+                  help={t('explain.catalog.pct')}
                   value={catalogBrokenPct !== null ? `${catalogBrokenPct}%` : t('common.na')}
                   ok={catalogBrokenPct !== null ? catalogBrokenPct === 0 : undefined}
                 />
                 {catalogResults.length > 0 && (
                   <>
                     <MetaRow
-                      label="Price Issues"
+                      label={t('show.catalog.priceIssues')}
+                      help={t('explain.catalog.priceIssues')}
                       value={catalogPriceIssues}
                       ok={catalogPriceIssues === 0}
                     />
                     <MetaRow
-                      label="Stock Mismatches"
+                      label={t('show.catalog.stockMismatches')}
+                      help={t('explain.catalog.stockMismatches')}
                       value={catalogStockMismatches}
                       ok={catalogStockMismatches === 0}
                     />
@@ -820,6 +947,7 @@ export default function AuditShow({ report }: ShowProps) {
             color="text-pink-400"
             bg="bg-pink-500/10"
             border="border-pink-500/20"
+            help={t('explain.sections.tracking')}
           >
             {tracking ? (
               <div className="space-y-2">
@@ -827,28 +955,31 @@ export default function AuditShow({ report }: ShowProps) {
                 <div className="divide-y divide-gray-800">
                 <MetaRow
                   label={t('show.tracking.ga4')}
+                  help={t('explain.tracking.ga4')}
                   value={(() => {
                     if (!trackGa4) return t('common.na');
                     const ids = getArr(trackGa4, 'ids');
-                    return getBool(trackGa4, 'detected') ? `Yes${ids.length ? ` (${ids.join(', ')})` : ''}` : 'Not detected';
+                    return getBool(trackGa4, 'detected') ? `${t('common.yes')}${ids.length ? ` (${ids.join(', ')})` : ''}` : t('common.notDetected');
                   })()}
                   ok={getBool(trackGa4, 'detected') ?? undefined}
                 />
                 <MetaRow
                   label={t('show.tracking.fb')}
+                  help={t('explain.tracking.fb')}
                   value={(() => {
                     if (!trackFb) return t('common.na');
                     const ids = getArr(trackFb, 'ids');
-                    return getBool(trackFb, 'detected') ? `Yes${ids.length ? ` (${ids.join(', ')})` : ''}` : 'Not detected';
+                    return getBool(trackFb, 'detected') ? `${t('common.yes')}${ids.length ? ` (${ids.join(', ')})` : ''}` : t('common.notDetected');
                   })()}
                   ok={getBool(trackFb, 'detected') ?? undefined}
                 />
                 <MetaRow
                   label={t('show.tracking.tt')}
+                  help={t('explain.tracking.tt')}
                   value={(() => {
                     if (!trackTt) return t('common.na');
                     const ids = getArr(trackTt, 'ids');
-                    return getBool(trackTt, 'detected') ? `Yes${ids.length ? ` (${ids.join(', ')})` : ''}` : 'Not detected';
+                    return getBool(trackTt, 'detected') ? `${t('common.yes')}${ids.length ? ` (${ids.join(', ')})` : ''}` : t('common.notDetected');
                   })()}
                   ok={getBool(trackTt, 'detected') ?? undefined}
                 />
@@ -866,6 +997,7 @@ export default function AuditShow({ report }: ShowProps) {
             color="text-cyan-400"
             bg="bg-cyan-500/10"
             border="border-cyan-500/20"
+            help={t('explain.sections.accessibility')}
           >
             {a11y ? (
               <div className="space-y-4">
@@ -887,7 +1019,10 @@ export default function AuditShow({ report }: ShowProps) {
                     <>
                       {score !== null && (
                         <div className="flex items-center gap-3 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-4 py-3">
-                          <span className="text-sm font-medium text-cyan-300">{t('show.accessibility.score')}</span>
+                          <span className="flex items-center gap-1.5 text-sm font-medium text-cyan-300">
+                            {t('show.accessibility.score')}
+                            <InfoTooltip text={t('explain.accessibility.score')} align="left" />
+                          </span>
                           <span className={`text-lg font-bold ${score >= 80 ? 'text-emerald-400' : score >= 50 ? 'text-amber-400' : 'text-red-400'}`}>{score}/100</span>
                         </div>
                       )}
@@ -896,52 +1031,61 @@ export default function AuditShow({ report }: ShowProps) {
                         {/* Form labels */}
                         <MetaRow
                           label={t('show.accessibility.formLabels')}
+                          help={t('explain.accessibility.formLabels')}
                           value={formLbl ? `${getNum(formLbl,'pass') ?? 0} pass, ${getNum(formLbl,'fail') ?? 0} fail` : t('common.na')}
                           ok={statusOk(getStr(formLbl, 'status'))}
                         />
                         {/* Image alt */}
                         <MetaRow
                           label={t('show.accessibility.imageAlt')}
+                          help={t('explain.accessibility.imageAlt')}
                           value={imgAlt ? `${getNum(imgAlt,'missing_count') ?? 0} missing of ${getNum(imgAlt,'total') ?? '?'}` : t('common.na')}
                           ok={statusOk(getStr(imgAlt, 'status'))}
                         />
                         {/* ARIA */}
                         <MetaRow
                           label={t('show.accessibility.ariaLabels')}
+                          help={t('explain.accessibility.ariaLabels')}
                           value={ariaLbl ? `${getNum(ariaLbl,'fail') ?? 0} violation(s)` : t('common.na')}
                           ok={statusOk(getStr(ariaLbl, 'status'))}
                         />
                         {/* Heading hierarchy */}
                         <MetaRow
                           label={t('show.accessibility.headings')}
+                          help={t('explain.accessibility.headings')}
                           value={headings ? `${getNum(headings,'total_headings') ?? 0} headings, ${getArr(headings,'issues').length} issue(s)` : t('common.na')}
                           ok={statusOk(getStr(headings, 'status'))}
                         />
                         {/* Link text */}
                         <MetaRow
                           label={t('show.accessibility.linkText')}
+                          help={t('explain.accessibility.linkText')}
                           value={linkTxt ? `${getNum(linkTxt,'fail') ?? 0} vague link(s)` : t('common.na')}
                           ok={statusOk(getStr(linkTxt, 'status'))}
                         />
                         {/* Landmarks */}
                         <MetaRow
                           label={t('show.accessibility.langAttr')}
-                          value={lmarks ? (getBool(lmarks,'has_lang') ? getStr(lmarks,'lang') : 'Missing') : t('common.na')}
+                          help={t('explain.accessibility.langAttr')}
+                          value={lmarks ? (getBool(lmarks,'has_lang') ? getStr(lmarks,'lang') : t('common.missing')) : t('common.na')}
                           ok={getBool(lmarks,'has_lang') ?? undefined}
                         />
                         <MetaRow
                           label={t('show.accessibility.mainLandmark')}
-                          value={lmarks ? (getBool(lmarks,'has_main') ? 'Present' : 'Missing') : t('common.na')}
+                          help={t('explain.accessibility.mainLandmark')}
+                          value={lmarks ? (getBool(lmarks,'has_main') ? t('common.present') : t('common.missing')) : t('common.na')}
                           ok={getBool(lmarks,'has_main') ?? undefined}
                         />
                         <MetaRow
                           label={t('show.accessibility.skipNav')}
-                          value={lmarks ? (getBool(lmarks,'has_skip_nav') ? 'Found' : 'Not found') : t('common.na')}
+                          help={t('explain.accessibility.skipNav')}
+                          value={lmarks ? (getBool(lmarks,'has_skip_nav') ? t('common.found') : t('common.notFound')) : t('common.na')}
                           ok={getBool(lmarks,'has_skip_nav') ?? undefined}
                         />
                         {/* Color contrast */}
                         <MetaRow
                           label={t('show.accessibility.colorContrast')}
+                          help={t('explain.accessibility.colorContrast')}
                           value={contrast ? `${getNum(contrast,'fail') ?? 0} violation(s) found` : t('common.na')}
                           ok={statusOk(getStr(contrast, 'status'))}
                         />
@@ -950,7 +1094,10 @@ export default function AuditShow({ report }: ShowProps) {
                       {/* Heading issues */}
                       {getArr(headings, 'issues').length > 0 && (
                         <div>
-                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.headingIssues')}</p>
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('show.accessibility.headingIssues')}
+                            <InfoTooltip text={t('explain.accessibility.headings')} align="left" />
+                          </p>
                           <div className="space-y-1">
                             {getArr(headings, 'issues').map((issue, i) => (
                               <div key={i} className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-300">
@@ -965,7 +1112,10 @@ export default function AuditShow({ report }: ShowProps) {
                       {/* Form label violations */}
                       {getArr(formLbl, 'violations').length > 0 && (
                         <div>
-                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.unlabeledInputs')} ({getArr(formLbl,'violations').length})</p>
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('show.accessibility.unlabeledInputs')} ({getArr(formLbl,'violations').length})
+                            <InfoTooltip text={t('explain.accessibility.formLabels')} align="left" />
+                          </p>
                           <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
                             {getArr(formLbl, 'violations').map((v, i) => {
                               const vv = v as Record<string,unknown>;
@@ -983,7 +1133,10 @@ export default function AuditShow({ report }: ShowProps) {
                       {/* ARIA violations */}
                       {getArr(ariaLbl, 'violations').length > 0 && (
                         <div>
-                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.ariaViolations')} ({getArr(ariaLbl,'violations').length})</p>
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('show.accessibility.ariaViolations')} ({getArr(ariaLbl,'violations').length})
+                            <InfoTooltip text={t('explain.accessibility.ariaLabels')} align="left" />
+                          </p>
                           <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
                             {getArr(ariaLbl, 'violations').map((v, i) => {
                               const vv = v as Record<string,unknown>;
@@ -1001,7 +1154,10 @@ export default function AuditShow({ report }: ShowProps) {
                       {/* Color contrast violations */}
                       {getArr(contrast, 'violations').length > 0 && (
                         <div>
-                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{t('show.accessibility.contrastViolations')} ({getArr(contrast,'violations').length})</p>
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('show.accessibility.contrastViolations')} ({getArr(contrast,'violations').length})
+                            <InfoTooltip text={t('explain.accessibility.colorContrast')} align="left" />
+                          </p>
                           {contrast && <p className="mb-2 text-xs text-gray-600">{getStr(contrast,'note')}</p>}
                           <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
                             {getArr(contrast, 'violations').map((v, i) => {
@@ -1028,6 +1184,86 @@ export default function AuditShow({ report }: ShowProps) {
               <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
           </Section>
+
+          {/* Fuzz Testing (opt-in) */}
+          {report.fuzz_requested && (
+            <Section
+              title={t('show.sections.fuzz')}
+              icon={Bug}
+              color="text-orange-400"
+              bg="bg-orange-500/10"
+              border="border-orange-500/20"
+              help={t('explain.fuzz.section')}
+            >
+              {fuzz ? (
+                <div className="space-y-4">
+                  <ModuleError result={fuzz} />
+                  {(() => {
+                    const fuzzSummary  = getObj(fuzz, 'summary');
+                    const fuzzFindings = getArr(fuzz, 'findings');
+                    const severityColor = (sev: string) =>
+                      sev === 'high' ? 'text-red-400 border-red-500/20 bg-red-500/5'
+                      : sev === 'medium' ? 'text-amber-400 border-amber-500/20 bg-amber-500/5'
+                      : 'text-gray-400 border-gray-500/20 bg-gray-500/5';
+
+                    return (
+                      <>
+                        <div className="divide-y divide-gray-800">
+                          <MetaRow
+                            label={t('show.fuzz.targetsTested')}
+                            help={t('explain.fuzz.targetsTested')}
+                            value={getNum(fuzz, 'targets_tested') ?? t('common.na')}
+                          />
+                          <MetaRow
+                            label={t('show.fuzz.requestsSent')}
+                            help={t('explain.fuzz.requestsSent')}
+                            value={getNum(fuzz, 'requests_sent') ?? t('common.na')}
+                          />
+                          <MetaRow
+                            label={t('show.fuzz.totalFindings')}
+                            help={t('explain.fuzz.totalFindings')}
+                            value={getNum(fuzzSummary, 'total_findings') ?? 0}
+                            ok={(getNum(fuzzSummary, 'total_findings') ?? 0) === 0}
+                          />
+                        </div>
+
+                        {fuzzFindings.length === 0 ? (
+                          <p className="text-sm text-gray-500">{t('show.fuzz.noFindings')}</p>
+                        ) : (
+                          <div>
+                            <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                              {t('show.fuzz.findingsTitle')} ({fuzzFindings.length})
+                              <InfoTooltip text={t('explain.fuzz.findings')} align="left" />
+                            </p>
+                            <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
+                              {fuzzFindings.map((finding, i) => {
+                                const f = finding as Record<string, unknown>;
+                                return (
+                                  <div key={i} className={`px-3 py-2.5 border-l-2 ${severityColor(String(f.severity ?? ''))}`}>
+                                    <div className="flex items-center justify-between gap-3">
+                                      <span className="text-xs font-semibold">{t(`show.fuzz.types.${String(f.type ?? '')}`, String(f.type ?? ''))}</span>
+                                      <span className="shrink-0 rounded bg-black/10 px-1.5 py-0.5 font-mono text-[10px] text-gray-500">{String(f.status_code ?? '')}</span>
+                                    </div>
+                                    <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{String(f.evidence ?? '')}</p>
+                                    <p className="mt-1 break-all font-mono text-[11px] text-gray-500">
+                                      {t('show.fuzz.param')}: <span className="text-gray-700 dark:text-gray-300">{String(f.param ?? '')}</span>
+                                    </p>
+                                    <p className="mt-0.5 break-all font-mono text-[11px] text-gray-500">{String(f.url ?? '')}</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">{t('show.noData')}</p>
+              )}
+            </Section>
+          )}
         </div>
       </div>
     </AppLayout>

@@ -1,6 +1,6 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
-import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star, XCircle, X, Accessibility, Bot, HelpCircle, Terminal, Server } from 'lucide-react';
+import { Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download, ArrowRight, CheckCircle2, Star, XCircle, X, Accessibility, Bot, HelpCircle, Terminal, Server, Bug } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import CookieBanner from '@/Components/CookieBanner';
 import { useEffect, useState } from 'react';
@@ -30,6 +30,7 @@ export default function Welcome({ auth }: PageProps) {
     { icon: ShoppingCart, title: t('welcome.features.ecommerce.title'), desc: t('welcome.features.ecommerce.desc'), color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
     { icon: Tag, title: t('welcome.features.tracking.title'), desc: t('welcome.features.tracking.desc'), color: 'text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/20' },
     { icon: Accessibility, title: t('welcome.features.accessibility.title'), desc: t('welcome.features.accessibility.desc'), color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/20' },
+    { icon: Bug, title: t('welcome.features.fuzz.title'), desc: t('welcome.features.fuzz.desc'), color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
   ];
 
   const planFeatures = t('welcome.planFeatures', { returnObjects: true }) as string[];

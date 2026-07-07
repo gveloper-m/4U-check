@@ -33,6 +33,8 @@ export interface FullAuditReport {
     broken_resources_result?: Record<string, unknown>;
     performance_result?: Record<string, unknown>;
     accessibility_result?: Record<string, unknown>;
+    fuzz_requested?: boolean;
+    fuzz_testing_result?: Record<string, unknown>;
     created_at: string;
     updated_at: string;
 }

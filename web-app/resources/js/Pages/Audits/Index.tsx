@@ -5,8 +5,9 @@ import { FormEventHandler } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search, CheckCircle2, XCircle, Loader2, ExternalLink, FileDown,
-  Trash2, ChevronLeft, ChevronRight, Infinity, Zap, Globe,
+  Trash2, ChevronLeft, ChevronRight, Infinity, Zap, Globe, Bug,
 } from 'lucide-react';
+import InfoTooltip from '@/Components/InfoTooltip';
 
 interface SiteData {
   id: number;
@@ -68,6 +69,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
   const { data, setData, post, processing, errors, reset } = useForm({
     site_url: '',
     name: '',
+    fuzz_test: false,
     _hp: '',
   });
 
@@ -233,6 +235,23 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                 )}
               </div>
             </div>
+            <label className="flex items-start gap-2.5 rounded-lg border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/40 px-3.5 py-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={data.fuzz_test}
+                onChange={(e) => setData('fuzz_test', e.target.checked)}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-violet-600 focus:ring-violet-500"
+              />
+              <span className="text-sm text-gray-700 dark:text-gray-300">
+                <span className="flex items-center gap-1.5 font-medium text-gray-900 dark:text-white">
+                  <Bug className="h-3.5 w-3.5 text-violet-500" />
+                  {t('audits.fuzzTest')}
+                  <InfoTooltip text={t('audits.fuzzTestHelp')} align="left" />
+                </span>
+                <span className="mt-0.5 block text-xs text-gray-500">{t('audits.fuzzTestSub')}</span>
+              </span>
+            </label>
+
             <div className="flex items-center justify-end">
               <button
                 type="submit"

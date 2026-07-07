@@ -8,7 +8,7 @@ import {
     ArrowRight, CheckCircle2, XCircle, X, Accessibility, Bot, HelpCircle,
     Terminal, Server, AlertTriangle, Globe, FileText, Calendar, Activity,
     ShoppingBag, BarChart2, Loader2, Mail, History, LayoutDashboard, Building2,
-    ChevronDown, ChevronUp, Code, Key,
+    ChevronDown, ChevronUp, Code, Key, Bug,
 } from 'lucide-react';
 
 type ModuleResult = Record<string, unknown> | null;
@@ -175,6 +175,7 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
         { icon: ShoppingCart, title: t('welcome.features.ecommerce.title'),      desc: t('welcome.features.ecommerce.desc'),      color: 'text-amber-400',   bg: 'bg-amber-500/10',   border: 'border-amber-500/20'   },
         { icon: Tag,          title: t('welcome.features.tracking.title'),       desc: t('welcome.features.tracking.desc'),       color: 'text-pink-400',    bg: 'bg-pink-500/10',    border: 'border-pink-500/20'    },
         { icon: Accessibility,title: t('welcome.features.accessibility.title'),  desc: t('welcome.features.accessibility.desc'),  color: 'text-teal-400',    bg: 'bg-teal-500/10',    border: 'border-teal-500/20'    },
+        { icon: Bug,          title: t('welcome.features.fuzz.title'),           desc: t('welcome.features.fuzz.desc'),           color: 'text-orange-400',  bg: 'bg-orange-500/10',  border: 'border-orange-500/20'  },
     ];
 
     const planFeatures = t('welcome.planFeatures', { returnObjects: true }) as string[];

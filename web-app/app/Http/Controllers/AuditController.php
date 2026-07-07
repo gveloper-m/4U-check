@@ -70,8 +70,9 @@ class AuditController extends Controller
         }
 
         $validated = $request->validate([
-            'site_url' => ['required', 'url', new PublicUrl],
-            'name'     => 'nullable|string|max:255',
+            'site_url'  => ['required', 'url', new PublicUrl],
+            'name'      => 'nullable|string|max:255',
+            'fuzz_test' => 'nullable|boolean',
         ]);
 
         // Enforce site restriction: only allow scanning registered sites (if user has any)
@@ -89,18 +90,25 @@ class AuditController extends Controller
             }
         }
 
+        $fuzzRequested = $request->boolean('fuzz_test');
+
         $reportId = DB::table('full_audit_reports')->insertGetId([
-            'user_id'     => auth()->id(),
-            'name'        => $validated['name'] ?? null,
-            'site_url'    => $validated['site_url'],
-            'status'      => 'running',
-            'executed_at' => now(),
-            'created_at'  => now(),
-            'updated_at'  => now(),
+            'user_id'        => auth()->id(),
+            'name'           => $validated['name'] ?? null,
+            'site_url'       => $validated['site_url'],
+            'status'         => 'running',
+            'fuzz_requested' => $fuzzRequested,
+            'executed_at'    => now(),
+            'created_at'     => now(),
+            'updated_at'     => now(),
         ]);
 
         foreach (self::AUDITORS as $key => $controllerClass) {
             RunAuditorJob::dispatch($reportId, $key, $controllerClass, $validated['site_url']);
+        }
+
+        if ($fuzzRequested) {
+            RunAuditorJob::dispatch($reportId, 'fuzz_testing', FuzzTestingAuditController::class, $validated['site_url']);
         }
 
         return redirect()->route('audits.show', $reportId);
@@ -130,13 +138,19 @@ class AuditController extends Controller
         $doneCount = 0;
         $progress  = [];
 
-        foreach (RunAuditorJob::COLUMN_MAP as $key => $col) {
+        $expectedColumns = RunAuditorJob::COLUMN_MAP;
+        if ($record->fuzz_requested ?? false) {
+            $expectedColumns = $expectedColumns + RunAuditorJob::OPTIONAL_COLUMN_MAP;
+        }
+
+        foreach ($expectedColumns as $key => $col) {
             $isDone          = $record->$col !== null;
             $progress[$key]  = $isDone ? 'done' : 'running';
             if ($isDone) $doneCount++;
         }
 
-        if ($doneCount === 7 && $record->status !== 'completed') {
+        $total = count($expectedColumns);
+        if ($doneCount === $total && $record->status !== 'completed') {
             DB::table('full_audit_reports')->where('id', $report->id)->update([
                 'status'     => 'completed',
                 'updated_at' => now(),
@@ -148,7 +162,7 @@ class AuditController extends Controller
             'status'   => $record->status,
             'progress' => [
                 'completed' => $doneCount,
-                'total'     => 7,
+                'total'     => $total,
                 'auditors'  => $progress,
             ],
         ]);

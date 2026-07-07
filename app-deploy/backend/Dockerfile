@@ -45,6 +45,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libicu-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Chromium environment (auto-detected by Browsershot-based controllers). Must be
+# set before `npm install puppeteer` below so its postinstall script skips
+# downloading a bundled Chromium — we always point Browsershot at system chromium.
+ENV CHROME_PATH=/usr/bin/chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install -j$(nproc) \
@@ -117,10 +124,11 @@ RUN mkdir -p \
 # Create public/storage symlink pointing at the named-volume path
 RUN ln -sfn /var/www/html/storage/app/public public/storage
 
-# Chromium environment (auto-detected by PerformanceAuditController)
-ENV CHROME_PATH=/usr/bin/chromium
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
+# Install the `puppeteer` npm package Browsershot's internal Node script requires
+# at runtime (it drives it against system chromium via CHROME_PATH above, not its
+# own bundled download). Installed directly by name — not via `npm ci` on the
+# full package.json — since none of the frontend build tooling is needed here.
+RUN npm install puppeteer@^23.0.0 --no-save --omit=dev --no-audit --no-fund
 
 EXPOSE 9000
 
