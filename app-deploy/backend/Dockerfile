@@ -125,12 +125,19 @@ RUN mkdir -p \
 RUN ln -sfn /var/www/html/storage/app/public public/storage
 
 # Install the `puppeteer` npm package Browsershot's internal Node script
-# requires at runtime, and let it download its own Chrome-for-Testing build
-# (cached under /root/.cache/puppeteer) rather than skipping the download —
-# see the note above on why we don't use the distro chromium binary.
-# Installed directly by name — not via `npm ci` on the full package.json —
-# since none of the frontend build tooling is needed here.
+# requires at runtime. Installed directly by name — not via `npm ci` on the
+# full package.json — since none of the frontend build tooling is needed here.
 RUN npm install puppeteer@^23.0.0 --no-save --omit=dev --no-audit --no-fund --legacy-peer-deps
+
+# Explicitly download Puppeteer's own Chrome-for-Testing build (cached under
+# /root/.cache/puppeteer) — see the note above on why we don't use the distro
+# chromium binary. Deliberately NOT relying on puppeteer's postinstall hook
+# to do this: web-app/.npmrc sets `ignore-scripts=true` (intentional, blocks
+# arbitrary postinstall scripts from npm dependencies as a supply-chain
+# safeguard) and that .npmrc is copied into this image, so the hook silently
+# never fires here. Calling the CLI directly sidesteps that entirely and was
+# confirmed to work.
+RUN npx puppeteer browsers install chrome
 
 EXPOSE 9000
 
