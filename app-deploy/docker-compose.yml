@@ -68,10 +68,6 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    environment:
-      CHROME_PATH: /usr/bin/chromium
-      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
-      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/127.0.0.1/9000' 2>/dev/null || exit 1"]
       interval: 15s
@@ -94,10 +90,6 @@ services:
         condition: service_healthy
     env_file:
       - .env
-    environment:
-      CHROME_PATH: /usr/bin/chromium
-      PUPPETEER_SKIP_CHROMIUM_DOWNLOAD: "true"
-      PUPPETEER_EXECUTABLE_PATH: /usr/bin/chromium
 
   # ── Laravel Scheduler ─────────────────────────────────────────────────────
   scheduler:

@@ -23,8 +23,15 @@ LABEL maintainer="4uTest <admin@4utest.gr>"
 LABEL description="4uTest Laravel backend - PHP 8.3 FPM with Chromium"
 
 # Install system dependencies, Chromium and Node.js
+#
+# NOTE on chromium: we install the distro package purely for the shared
+# libraries it pulls in (libnss3, libgtk, etc.) that any Chrome build needs
+# at runtime. We do NOT run this binary directly — Debian bookworm's
+# packaged chromium was found to crash on launch (SIGTRAP, immediately, no
+# usable error) on this host's kernel. Browsershot instead drives Puppeteer's
+# own downloaded Chrome-for-Testing build (see the `npm install puppeteer`
+# step near the bottom of this file), which launches correctly.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    # Chromium for Browsershot performance audits
     chromium \
     # Node.js runtime (used by Browsershot internals)
     nodejs \
@@ -44,13 +51,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxml2-dev \
     libicu-dev \
     && rm -rf /var/lib/apt/lists/*
-
-# Chromium environment (auto-detected by Browsershot-based controllers). Must be
-# set before `npm install puppeteer` below so its postinstall script skips
-# downloading a bundled Chromium — we always point Browsershot at system chromium.
-ENV CHROME_PATH=/usr/bin/chromium
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 # Install PHP extensions
 RUN docker-php-ext-configure gd --with-jpeg --with-webp \
@@ -124,10 +124,12 @@ RUN mkdir -p \
 # Create public/storage symlink pointing at the named-volume path
 RUN ln -sfn /var/www/html/storage/app/public public/storage
 
-# Install the `puppeteer` npm package Browsershot's internal Node script requires
-# at runtime (it drives it against system chromium via CHROME_PATH above, not its
-# own bundled download). Installed directly by name — not via `npm ci` on the
-# full package.json — since none of the frontend build tooling is needed here.
+# Install the `puppeteer` npm package Browsershot's internal Node script
+# requires at runtime, and let it download its own Chrome-for-Testing build
+# (cached under /root/.cache/puppeteer) rather than skipping the download —
+# see the note above on why we don't use the distro chromium binary.
+# Installed directly by name — not via `npm ci` on the full package.json —
+# since none of the frontend build tooling is needed here.
 RUN npm install puppeteer@^23.0.0 --no-save --omit=dev --no-audit --no-fund --legacy-peer-deps
 
 EXPOSE 9000

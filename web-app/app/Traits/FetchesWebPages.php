@@ -81,11 +81,27 @@ trait FetchesWebPages
     }
 
     /**
-     * Locate a usable Chrome/Chromium binary for Browsershot, checking the
-     * CHROME_PATH env var (set in the production Docker image) first.
+     * Locate a usable Chrome/Chromium binary for Browsershot.
+     *
+     * Prefers Puppeteer's own downloaded Chrome-for-Testing build (cached
+     * under ~/.cache/puppeteer, resolved dynamically since the exact cached
+     * version changes whenever `npm install puppeteer` updates it) over any
+     * distro-packaged browser. This is deliberate: Debian bookworm's
+     * `chromium` package was found to crash on launch (SIGTRAP, no usable
+     * error) on some hosts' kernels, while Puppeteer's pinned build launches
+     * correctly — it's built/tested specifically against the DevTools
+     * protocol version Browsershot's internals speak.
      */
     protected function findChromePath(): ?string
     {
+        foreach ($this->puppeteerCacheHomes() as $home) {
+            $matches = glob("{$home}/.cache/puppeteer/chrome/*/chrome-linux64/chrome") ?: [];
+            if (! empty($matches)) {
+                rsort($matches); // newest cached version first, if more than one
+                return $matches[0];
+            }
+        }
+
         if ($env = env('CHROME_PATH')) {
             return $env;
         }
@@ -93,8 +109,6 @@ trait FetchesWebPages
         $paths = [
             '/opt/google/chrome/chrome',
             '/opt/google/chrome/google-chrome',
-            '/var/www/html/chrome/linux-151.0.7884.0/chrome-linux64/chrome',
-            '/root/.cache/puppeteer/chrome/linux-151.0.7884.0/chrome-linux64/chrome',
             '/usr/bin/google-chrome-stable',
             '/usr/bin/google-chrome',
             '/usr/bin/chromium',
@@ -108,6 +122,20 @@ trait FetchesWebPages
         }
 
         return null;
+    }
+
+    /**
+     * Candidate HOME directories to check for a Puppeteer Chrome cache —
+     * covers running as root (Docker default here) and as www-data (in case
+     * the container ever drops privileges).
+     */
+    private function puppeteerCacheHomes(): array
+    {
+        return array_unique(array_filter([
+            getenv('HOME') ?: null,
+            '/root',
+            '/var/www',
+        ]));
     }
 
     /**
@@ -133,18 +161,25 @@ trait FetchesWebPages
         // capturing screenshots concurrently (different queue workers, same
         // report). Serialize captures system-wide so we never have more than
         // one Chrome process running at once — cheap insurance against OOM
-        // on small hosts. Skips gracefully (no screenshot) if the lock can't
-        // be acquired within a reasonable wait rather than hanging the job.
-        $capture = function () use ($url, $selector, $chromePath, $absolute): bool {
-            try {
-                if (! is_dir(dirname($absolute))) {
-                    mkdir(dirname($absolute), 0755, true);
-                }
+        // on small hosts.
+        //
+        // The lock attempt is intentionally NON-BLOCKING: a single audit
+        // module can need up to ~6 screenshots, all running inside one
+        // queued job with a hard 600s timeout. Waiting on a contended lock
+        // (even a "modest" 30-60s per shot) can easily push the job past
+        // its own timeout, which kills it with zero results — far worse
+        // than just skipping a screenshot. If Chrome is already busy
+        // capturing something else, we skip immediately rather than queue.
+        try {
+            if (! is_dir(dirname($absolute))) {
+                mkdir(dirname($absolute), 0755, true);
+            }
 
+            $captured = Cache::lock('screenshot-capture', 25)->get(function () use ($url, $selector, $chromePath, $absolute): bool {
                 $shot = Browsershot::url($url)
                     ->setChromePath($chromePath)
                     ->noSandbox()
-                    ->timeout(30)
+                    ->timeout(20)
                     ->windowSize(1280, 800)
                     ->addChromiumArguments([
                         'disable-dev-shm-usage',
@@ -168,28 +203,21 @@ trait FetchesWebPages
 
                 $shot->save($absolute);
 
-                if (! file_exists($absolute)) {
-                    Log::warning('Screenshot capture reported success but no file was written.', ['url' => $url, 'selector' => $selector, 'path' => $absolute]);
-                    return false;
-                }
-
-                return true;
-            } catch (\Throwable $e) {
-                Log::warning('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage(), [
-                    'chrome_path' => $chromePath,
-                    'exception'   => get_class($e),
-                ]);
-                return false;
-            }
-        };
-
-        try {
-            $captured = Cache::lock('screenshot-capture', 45)->block(60, $capture);
+                return file_exists($absolute);
+            });
         } catch (\Throwable $e) {
-            Log::warning('Screenshot capture skipped: could not acquire the screenshot lock in time (too many concurrent captures).', ['url' => $url]);
+            Log::warning('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage(), [
+                'chrome_path' => $chromePath,
+                'exception'   => get_class($e),
+            ]);
             return null;
         }
 
-        return $captured ? $relative : null;
+        if ($captured === null || $captured === false) {
+            Log::warning('Screenshot capture skipped or failed for ' . $url . ($selector ? " [{$selector}]" : '') . ' — Chrome was busy with another capture, or the file was not written.');
+            return null;
+        }
+
+        return $relative;
     }
 }

@@ -477,32 +477,6 @@ class PerformanceAuditController extends Controller
      *
      * @return string|null
      */
-    private function findChromePath(): ?string
-    {
-        if ($env = env('CHROME_PATH')) {
-            return $env;
-        }
-
-        $paths = [
-            '/opt/google/chrome/chrome',
-            '/opt/google/chrome/google-chrome',
-            '/var/www/html/chrome/linux-151.0.7884.0/chrome-linux64/chrome',
-            '/root/.cache/puppeteer/chrome/linux-151.0.7884.0/chrome-linux64/chrome',
-            '/usr/bin/google-chrome-stable',
-            '/usr/bin/google-chrome',
-            '/usr/bin/chromium',
-            '/usr/bin/chromium-browser',
-        ];
-
-        foreach ($paths as $path) {
-            if (file_exists($path) && is_executable($path)) {
-                return $path;
-            }
-        }
-
-        return null;
-    }
-
     /**
      * Get JavaScript to extract performance metrics.
      *
