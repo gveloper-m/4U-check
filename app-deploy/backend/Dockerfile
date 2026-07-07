@@ -128,7 +128,7 @@ RUN ln -sfn /var/www/html/storage/app/public public/storage
 # at runtime (it drives it against system chromium via CHROME_PATH above, not its
 # own bundled download). Installed directly by name — not via `npm ci` on the
 # full package.json — since none of the frontend build tooling is needed here.
-RUN npm install puppeteer@^23.0.0 --no-save --omit=dev --no-audit --no-fund
+RUN npm install puppeteer@^23.0.0 --no-save --omit=dev --no-audit --no-fund --legacy-peer-deps
 
 EXPOSE 9000
 
