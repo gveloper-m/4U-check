@@ -34,6 +34,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'notify_payment',
         'notify_monthly_report',
         'notify_renewal_reminder',
+        'withdrawal_consent_at',
+        'withdrawal_consent_version',
     ];
 
     protected $hidden = [
@@ -44,9 +46,10 @@ class User extends Authenticatable implements MustVerifyEmail
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password'          => 'hashed',
-            'trial_ends_at'     => 'datetime',
+            'email_verified_at'      => 'datetime',
+            'password'               => 'hashed',
+            'trial_ends_at'          => 'datetime',
+            'withdrawal_consent_at'  => 'datetime',
             'is_unlimited'             => 'boolean',
             'is_admin'                 => 'boolean',
             'is_agency'                => 'boolean',

@@ -76,7 +76,7 @@ const FAQS = [
   },
   {
     q: 'Do you offer refunds?',
-    a: 'Under EU Directive 2011/83/EU you have a 14-day right of withdrawal. However, by subscribing and actively using the service (running audits or downloading reports), you expressly request immediate performance and the right of withdrawal is waived once the service has been accessed. If you have not used the service, contact us within 14 days for a full refund. See our Refund Policy for full details.',
+    a: 'Under EU Directive 2011/83/EU you have a 14-day right of withdrawal. If you confirm at checkout that you want immediate access and then withdraw within 14 days, you get a refund minus a proportionate amount for the days already used — not zero, and not the full amount. If you have not requested immediate access or not used the service, you get a full refund. See our Refund Policy for the exact calculation.',
   },
   {
     q: 'Is there a free trial?',

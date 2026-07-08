@@ -422,6 +422,8 @@ const de = {
     upgradeSub: 'Vollständigen Zugang zu allen Audit-Funktionen erhalten.',
     perMonth: '/Monat',
     subscribeBtn: 'Jetzt abonnieren',
+    withdrawalConsent: 'Ich möchte, dass 4uTest den Dienst sofort bereitstellt. Mir ist bewusst, dass mir bei einem Widerruf innerhalb der 14-Tage-Frist nur ein anteiliger Betrag für den nicht genutzten Teil meines Abonnements erstattet wird.',
+    withdrawalConsentRequired: 'Bitte bestätigen Sie dies vor dem Abonnieren.',
     nofees: 'Keine Einrichtungsgebühren. Jederzeit kündbar.',
     features: [
       '30 Scans/Monat pro registrierter Website',

@@ -422,6 +422,8 @@ const es = {
     upgradeSub: 'Obtenga acceso completo a todas las funciones de auditoría.',
     perMonth: '/mes',
     subscribeBtn: 'Suscribirse ahora',
+    withdrawalConsent: 'Quiero que 4uTest comience a prestar el servicio de inmediato. Entiendo que si me retracto dentro del plazo de 14 días, solo se me reembolsará un importe proporcional a la parte no utilizada de mi suscripción.',
+    withdrawalConsentRequired: 'Por favor confirma esto antes de suscribirte.',
     nofees: 'Sin tarifas de configuración. Cancela en cualquier momento.',
     features: [
       '30 análisis/mes por sitio registrado',

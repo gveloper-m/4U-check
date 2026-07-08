@@ -422,6 +422,8 @@ const nl = {
     upgradeSub: 'Volledige toegang tot alle auditfuncties.',
     perMonth: '/maand',
     subscribeBtn: 'Nu abonneren',
+    withdrawalConsent: 'Ik wil dat 4uTest de dienst onmiddellijk begint te leveren. Ik begrijp dat als ik binnen de termijn van 14 dagen herroep, ik alleen een evenredig bedrag terugkrijg voor het ongebruikte deel van mijn abonnement.',
+    withdrawalConsentRequired: 'Bevestig dit voordat u zich abonneert.',
     nofees: 'Geen installatiekosten. Op elk moment opzegbaar.',
     features: [
       '30 scans/maand per geregistreerde website',

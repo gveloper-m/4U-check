@@ -63,19 +63,32 @@ class BillingController extends Controller
         ]);
     }
 
+    // Bump when the withdrawal-consent notice's wording changes materially,
+    // so a stored withdrawal_consent_version always reflects what that user
+    // actually agreed to at the time — never edit past subscribers' consent
+    // retroactively by reusing an old version string for new copy.
+    private const WITHDRAWAL_CONSENT_VERSION = 'v1-2026-07';
+
     public function subscribe(Request $request): \Illuminate\Http\JsonResponse
     {
         $validated = $request->validate([
-            'plan'         => 'required|in:monthly,yearly',
-            'company_name' => 'nullable|string|max:255',
-            'vat_number'   => 'nullable|string|max:50',
+            'plan'               => 'required|in:monthly,yearly',
+            'company_name'       => 'nullable|string|max:255',
+            'vat_number'         => 'nullable|string|max:50',
+            // EU Directive 2011/83/EU Art. 16(a)/14(3): the withdrawal-right
+            // waiver for immediate performance is only valid if we can show
+            // the consumer actually gave this consent — "accepted" requires
+            // the checkbox to be checked, not merely present.
+            'withdrawal_consent' => 'required|accepted',
         ]);
 
         $user = $request->user();
 
         $user->forceFill([
-            'company_name' => $validated['company_name'] ?? $user->company_name,
-            'vat_number'   => $validated['vat_number']   ?? null,
+            'company_name'               => $validated['company_name'] ?? $user->company_name,
+            'vat_number'                 => $validated['vat_number']   ?? null,
+            'withdrawal_consent_at'      => now(),
+            'withdrawal_consent_version' => self::WITHDRAWAL_CONSENT_VERSION,
         ])->save();
 
         // Ensure a Paddle customer record exists in our DB before checkout opens,

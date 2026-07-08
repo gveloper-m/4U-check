@@ -422,6 +422,8 @@ const cs = {
     upgradeSub: 'Získejte plný přístup ke všem auditním funkcím.',
     perMonth: '/měsíc',
     subscribeBtn: 'Předplatit nyní',
+    withdrawalConsent: 'Chci, aby 4uTest začal poskytovat službu okamžitě. Rozumím, že pokud odstoupím od smlouvy během 14denní lhůty, bude mi vrácena pouze poměrná částka za nevyužitou část předplatného.',
+    withdrawalConsentRequired: 'Před předplacením to prosím potvrďte.',
     nofees: 'Žádné poplatky za nastavení. Zrušení kdykoli.',
     features: [
       '30 skenů/měsíc na registrovaný web',

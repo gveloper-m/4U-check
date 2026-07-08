@@ -428,6 +428,8 @@ const en = {
     twoMonthsFree: '2 months free',
     bestValue: 'Best value — pay for 10, get 12 months',
     subscribeBtn: 'Subscribe Now',
+    withdrawalConsent: 'I want 4uTest to start providing the service immediately. I understand that if I withdraw within the 14-day period, I will only be refunded a proportionate amount for the unused part of my subscription.',
+    withdrawalConsentRequired: 'Please confirm this before subscribing.',
     nofees: 'No setup fees. Cancel anytime.',
     features: [
       '30 scans/month per registered site',

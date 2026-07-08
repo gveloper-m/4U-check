@@ -117,10 +117,11 @@ export default function BillingIndex({
     });
   }, [paddleConfig?.token]);
 
-  const subscribeForm = useForm<{ plan: 'monthly' | 'yearly'; company_name: string; vat_number: string }>({
+  const subscribeForm = useForm<{ plan: 'monthly' | 'yearly'; company_name: string; vat_number: string; withdrawal_consent: boolean }>({
     plan: 'monthly',
     company_name: company_name ?? '',
     vat_number: vat_number ?? '',
+    withdrawal_consent: false,
   });
 
   const [subscribing, setSubscribing] = useState(false);
@@ -137,12 +138,17 @@ export default function BillingIndex({
 
   const handleSubscribe: FormEventHandler = async (e) => {
     e.preventDefault();
+    if (!subscribeForm.data.withdrawal_consent) {
+      subscribeForm.setError('withdrawal_consent', t('billing.withdrawalConsentRequired'));
+      return;
+    }
     setSubscribing(true);
     try {
       const response = await axios.post('/billing/subscribe', {
         plan: subscribeForm.data.plan,
         company_name: subscribeForm.data.company_name || null,
         vat_number: subscribeForm.data.vat_number || null,
+        withdrawal_consent: subscribeForm.data.withdrawal_consent,
       });
       const priceId: string = response.data.price_id;
       paddleRef.current?.Checkout.open({
@@ -343,9 +349,21 @@ export default function BillingIndex({
                         />
                       </div>
                     </div>
+                    <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={subscribeForm.data.withdrawal_consent}
+                        onChange={e => { subscribeForm.setData('withdrawal_consent', e.target.checked); subscribeForm.clearErrors('withdrawal_consent'); }}
+                        className="mt-0.5 accent-violet-600"
+                      />
+                      <span>{t('billing.withdrawalConsent')}</span>
+                    </label>
+                    {subscribeForm.errors.withdrawal_consent && (
+                      <p className="text-xs text-red-400">{subscribeForm.errors.withdrawal_consent}</p>
+                    )}
                     <button
                       type="submit"
-                      disabled={subscribing}
+                      disabled={subscribing || !subscribeForm.data.withdrawal_consent}
                       className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 py-2.5 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                     >
                       {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
@@ -519,9 +537,22 @@ export default function BillingIndex({
                     </div>
                   </div>
 
+                  <label className="flex items-start gap-2 text-xs text-gray-600 dark:text-gray-400 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={subscribeForm.data.withdrawal_consent}
+                      onChange={e => { subscribeForm.setData('withdrawal_consent', e.target.checked); subscribeForm.clearErrors('withdrawal_consent'); }}
+                      className="mt-0.5 accent-violet-600"
+                    />
+                    <span>{t('billing.withdrawalConsent')}</span>
+                  </label>
+                  {subscribeForm.errors.withdrawal_consent && (
+                    <p className="text-xs text-red-400">{subscribeForm.errors.withdrawal_consent}</p>
+                  )}
+
                   <button
                     type="submit"
-                    disabled={subscribing}
+                    disabled={subscribing || !subscribeForm.data.withdrawal_consent}
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-violet-600 py-3 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                   >
                     {subscribing ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}

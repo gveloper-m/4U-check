@@ -12,7 +12,7 @@ function UL({ children }: { children: React.ReactNode }) {
     return <ul className="mb-3 list-disc pl-5 space-y-1 text-sm text-gray-600 dark:text-gray-400">{children}</ul>;
 }
 
-const EFFECTIVE_DATE = '3 July 2026';
+const EFFECTIVE_DATE = '9 July 2026';
 const CONTACT_EMAIL  = 'legal@4utest.com';
 const SERVICE_URL    = 'https://4utest.com';
 
@@ -96,14 +96,18 @@ export default function Terms() {
             <H2>6. Right of Withdrawal and Refunds</H2>
             <P>
                 Under EU Directive 2011/83/EU, consumers have a 14-day right of withdrawal for distance contracts.
-                However, by completing registration and initiating your first scan, you expressly request
-                immediate performance of the digital service and acknowledge that the right of withdrawal
-                is waived once the service has begun. This waiver is without prejudice to our voluntary
-                refund policy set out at <Link href="/refund" className="text-violet-400 hover:underline">4utest.com/refund</Link>.
+                4utest is provided as an ongoing digital service (dashboard access, scheduled scans, account
+                management), which falls under Article 16(a) and Article 14(3) of the Directive rather than the
+                "digital content" exception in Article 16(m). When you subscribe, you are asked to expressly
+                confirm that you want the service to start immediately, before checkout can proceed. If you
+                withdraw within the 14-day period after giving that confirmation, you will be refunded the
+                amount paid minus a proportionate deduction for the period of service already provided — not a
+                full refund, and not a zero refund. The exact wording and calculation method are set out at
+                {' '}<Link href="/refund" className="text-violet-400 hover:underline">4utest.com/refund</Link>.
             </P>
             <P>
-                Our voluntary refund policy is more generous than the statutory minimum and is described in full
-                on the Refund Policy page. Refund requests must be submitted via the form at
+                Beyond the statutory 14-day period, refunds are granted at our discretion as a voluntary policy,
+                described in full on the Refund Policy page. Refund requests can be submitted via the form at
                 {' '}<Link href="/refund" className="text-violet-400 hover:underline">4utest.com/refund</Link>.
             </P>
 

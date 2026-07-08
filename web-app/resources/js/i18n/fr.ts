@@ -422,6 +422,8 @@ const fr = {
     upgradeSub: 'Obtenez un accès complet à toutes les fonctionnalités d\'audit.',
     perMonth: '/mois',
     subscribeBtn: 'S\'abonner maintenant',
+    withdrawalConsent: "Je souhaite que 4uTest commence à fournir le service immédiatement. Je comprends qu'en cas de rétractation dans le délai de 14 jours, je ne serai remboursé que d'un montant proportionnel à la partie non utilisée de mon abonnement.",
+    withdrawalConsentRequired: "Veuillez confirmer ceci avant de vous abonner.",
     nofees: 'Pas de frais d\'installation. Annulable à tout moment.',
     features: [
       '30 analyses/mois par site enregistré',

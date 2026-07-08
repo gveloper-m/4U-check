@@ -68,7 +68,9 @@ Route::get('/scan/{uuid}/status', [GuestScanController::class, 'status'])
 Route::get('/terms',   fn () => Inertia::render('Terms'))->name('terms');
 Route::get('/privacy', fn () => Inertia::render('Privacy'))->name('privacy');
 Route::get('/refund',  fn () => Inertia::render('Refund'))->name('refund');
-Route::post('/refund/request', [\App\Http\Controllers\RefundRequestController::class, 'store'])->name('refund.request');
+Route::post('/refund/request', [\App\Http\Controllers\RefundRequestController::class, 'store'])
+    ->middleware('throttle:5,1')
+    ->name('refund.request');
 Route::get('/pricing', fn () => Inertia::render('Pricing'))->name('pricing');
 Route::post('/cookie-consent', [CookieConsentController::class, 'store'])->name('cookie-consent.store');
 
