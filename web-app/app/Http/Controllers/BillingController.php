@@ -8,7 +8,6 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Laravel\Paddle\Cashier;
 use Symfony\Component\HttpFoundation\Response;
 use Inertia\Inertia;
 use Inertia\Response as InertiaResponse;
@@ -118,16 +117,14 @@ class BillingController extends Controller
         abort_if($subscription->ends_at, 422, 'Subscription is already scheduled for cancellation.');
 
         try {
-            $effectiveAt = now()->addHours(24)->toIso8601String();
-            $data = Cashier::api('POST', "subscriptions/{$subscription->paddle_id}/cancel", [
-                'effective_from' => $effectiveAt,
-            ])->json('data');
-
-            $endsAt = $data['scheduled_change']['effective_at'] ?? $effectiveAt;
-            $subscription->forceFill([
-                'status'  => $data['status'] ?? $subscription->status,
-                'ends_at' => \Carbon\Carbon::parse($endsAt, 'UTC'),
-            ])->save();
+            // Cancel at the end of the current billing period, not immediately —
+            // this is what Refund.tsx, Terms.tsx, and the Pricing FAQ all promise
+            // ("access until the end of the current billing period"). The
+            // Cashier Paddle package's own cancel() sends
+            // effective_from: 'next_billing_period' and updates ends_at from
+            // Paddle's response — previously this hand-rolled a 24-hour cutoff
+            // instead, contradicting every public-facing description of cancellation.
+            $subscription->cancel();
         } catch (\Exception $e) {
             Log::error('[Paddle] Cancel subscription error', [
                 'user_id' => $user->id,
@@ -136,7 +133,7 @@ class BillingController extends Controller
             return back()->with('error', 'Could not cancel subscription. Please try again or contact support.');
         }
 
-        return back()->with('success', 'Subscription cancelled. You have 24 hours of access remaining.');
+        return back()->with('success', 'Subscription cancelled. You will keep access until the end of your current billing period.');
     }
 
     public function addSite(Request $request): RedirectResponse

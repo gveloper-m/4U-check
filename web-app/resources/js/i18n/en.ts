@@ -412,7 +412,7 @@ const en = {
     manageSub: 'Update payment method, download invoices, or cancel.',
     cancelBtn: 'Cancel Subscription',
     cancelTitle: 'Cancel your subscription?',
-    cancelBody: 'You will keep full access for 24 hours, then your subscription ends.',
+    cancelBody: 'You will keep full access until the end of your current billing period, then your subscription ends.',
     cancelRefundNote: 'If you would like a refund, please visit our',
     cancelRefundLink: 'refund page',
     cancelConfirm: 'Yes, Cancel',

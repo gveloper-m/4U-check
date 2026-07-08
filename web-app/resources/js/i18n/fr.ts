@@ -412,7 +412,7 @@ const fr = {
     manageSub: 'Mettre à jour le mode de paiement, télécharger les factures ou annuler.',
     cancelBtn: 'Annuler l\'abonnement',
     cancelTitle: 'Annuler votre abonnement ?',
-    cancelBody: 'Vous conserverez un accès complet pendant 24 heures, puis votre abonnement prendra fin.',
+    cancelBody: "Vous conserverez un accès complet jusqu'à la fin de votre période de facturation en cours, puis votre abonnement prendra fin.",
     cancelRefundNote: 'Si vous souhaitez un remboursement, consultez notre',
     cancelRefundLink: 'page de remboursement',
     cancelConfirm: 'Oui, annuler',

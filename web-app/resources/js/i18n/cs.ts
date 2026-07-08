@@ -412,7 +412,7 @@ const cs = {
     manageSub: 'Aktualizujte platební metodu, stáhněte faktury nebo zrušte.',
     cancelBtn: 'Zrušit předplatné',
     cancelTitle: 'Zrušit předplatné?',
-    cancelBody: 'Budete mít plný přístup po dobu 24 hodin, poté vaše předplatné skončí.',
+    cancelBody: 'Plný přístup si zachováte do konce aktuálního fakturačního období, poté vaše předplatné skončí.',
     cancelRefundNote: 'Pokud chcete vrátit peníze, navštivte naši',
     cancelRefundLink: 'stránku vrácení peněz',
     cancelConfirm: 'Ano, zrušit',

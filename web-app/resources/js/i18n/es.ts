@@ -412,7 +412,7 @@ const es = {
     manageSub: 'Actualizar método de pago, descargar facturas o cancelar.',
     cancelBtn: 'Cancelar suscripción',
     cancelTitle: '¿Cancelar tu suscripción?',
-    cancelBody: 'Tendrás acceso completo durante 24 horas, luego tu suscripción finalizará.',
+    cancelBody: 'Mantendrás acceso completo hasta el final de tu período de facturación actual, luego tu suscripción finalizará.',
     cancelRefundNote: 'Si deseas un reembolso, visita nuestra',
     cancelRefundLink: 'página de reembolsos',
     cancelConfirm: 'Sí, cancelar',

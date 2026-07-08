@@ -412,7 +412,7 @@ const nl = {
     manageSub: 'Betaalmethode bijwerken, facturen downloaden of opzeggen.',
     cancelBtn: 'Abonnement opzeggen',
     cancelTitle: 'Abonnement opzeggen?',
-    cancelBody: 'U behoudt volledige toegang gedurende 24 uur, daarna eindigt uw abonnement.',
+    cancelBody: 'U behoudt volledige toegang tot het einde van uw huidige factureringsperiode, daarna eindigt uw abonnement.',
     cancelRefundNote: 'Als u een terugbetaling wilt, bezoek dan onze',
     cancelRefundLink: 'terugbetalingspagina',
     cancelConfirm: 'Ja, opzeggen',

@@ -412,7 +412,7 @@ const de = {
     manageSub: 'Zahlungsmethode aktualisieren, Rechnungen herunterladen oder kündigen.',
     cancelBtn: 'Abonnement kündigen',
     cancelTitle: 'Abonnement kündigen?',
-    cancelBody: 'Sie behalten vollen Zugang für 24 Stunden, danach endet Ihr Abonnement.',
+    cancelBody: 'Sie behalten vollen Zugang bis zum Ende Ihres aktuellen Abrechnungszeitraums, danach endet Ihr Abonnement.',
     cancelRefundNote: 'Wenn Sie eine Rückerstattung wünschen, besuchen Sie bitte unsere',
     cancelRefundLink: 'Rückerstattungsseite',
     cancelConfirm: 'Ja, kündigen',
