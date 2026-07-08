@@ -272,6 +272,18 @@ const el = {
       badgeBrokenImage: 'Κατεστραμμένη εικόνα',
       badgeContrast: 'Αντίθεση',
     },
+    fixWithAi: {
+      title: 'Διόρθωση με AI',
+      cta: 'Διόρθωση με AI',
+      setupHint: 'Συνδέστε έναν agent AI στον server σας ώστε το Claude Code να διορθώσει απευθείας αυτά τα προβλήματα.',
+      onlineHint: 'Ο AI agent σας είναι συνδεδεμένος. Συγχρονίστε αυτή τη σάρωση ώστε το Claude Code να ξέρει ακριβώς τι να διορθώσει.',
+      syncCta: 'Συγχρονισμός με AI Agent',
+      syncedHint: 'Συγχρονίστηκε — πείτε στο Claude Code να το διορθώσει',
+      claudePrompt: 'Έλεγξε τον έλεγχο 4uTest μου και διόρθωσε τα κύρια προβλήματα.',
+      offlineTitle: 'Ο AI Agent είναι εκτός σύνδεσης',
+      offlineHint: 'Ο AI agent σας δεν ανταποκρίνεται. Επανασυνδέστε τον για να συνεχίσει η αυτόματη διόρθωση.',
+      reconnectCta: 'Επανασύνδεση',
+    },
     fuzz: {
       targetsTested: 'Είσοδοι που Ελέγχθηκαν',
       requestsSent: 'Αιτήματα που Στάλθηκαν',

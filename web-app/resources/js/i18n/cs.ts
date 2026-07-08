@@ -272,6 +272,18 @@ const cs = {
       badgeBrokenImage: 'Nefunkční obrázek',
       badgeContrast: 'Kontrast',
     },
+    fixWithAi: {
+      title: 'Opravit pomocí AI',
+      cta: 'Opravit pomocí AI',
+      setupHint: 'Připojte AI agenta k vašemu serveru, aby Claude Code mohl tyto problémy opravit přímo.',
+      onlineHint: 'Váš AI agent je připojen. Synchronizujte tuto kontrolu, aby Claude Code přesně věděl, co opravit.',
+      syncCta: 'Synchronizovat s AI agentem',
+      syncedHint: 'Synchronizováno — řekněte Claude Code, aby to opravil',
+      claudePrompt: 'Zkontroluj můj 4uTest audit a oprav hlavní problémy.',
+      offlineTitle: 'AI agent offline',
+      offlineHint: 'Váš AI agent neodpovídá. Znovu se připojte, aby mohl dál automaticky opravovat problémy.',
+      reconnectCta: 'Připojit znovu',
+    },
     fuzz: {
       targetsTested: 'Testované vstupy',
       requestsSent: 'Odeslané požadavky',

@@ -272,6 +272,18 @@ const es = {
       badgeBrokenImage: 'Imagen rota',
       badgeContrast: 'Contraste',
     },
+    fixWithAi: {
+      title: 'Arreglar con IA',
+      cta: 'Arreglar con IA',
+      setupHint: 'Conecta un agente de IA a tu servidor para que Claude Code corrija estos problemas directamente.',
+      onlineHint: 'Tu agente de IA está conectado. Sincroniza este escaneo para que Claude Code sepa exactamente qué corregir.',
+      syncCta: 'Sincronizar con el agente de IA',
+      syncedHint: 'Sincronizado — dile a Claude Code que lo corrija',
+      claudePrompt: 'Revisa mi auditoría de 4uTest y corrige los principales problemas.',
+      offlineTitle: 'Agente de IA sin conexión',
+      offlineHint: 'Tu agente de IA no responde. Reconéctalo para seguir corrigiendo problemas automáticamente.',
+      reconnectCta: 'Reconectar',
+    },
     fuzz: {
       targetsTested: 'Entradas Probadas',
       requestsSent: 'Solicitudes Enviadas',

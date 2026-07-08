@@ -14,7 +14,7 @@ use phpseclib3\Crypt\PublicKeyLoader;
 
 class McpAgentController extends Controller
 {
-    public function index(): InertiaResponse
+    public function index(Request $request): InertiaResponse
     {
         $user  = auth()->user();
         $sites = $user->monitoredSites()->orderBy('is_primary', 'desc')->get();
@@ -36,6 +36,14 @@ class McpAgentController extends Controller
                 ] : null,
             ]);
 
+        // Deep-link support: arriving from the "Fix with AI" button on an
+        // audit results page can pass ?site_id=&from_report= to pre-focus
+        // this page on that site's agent (or its create flow).
+        $focusSiteId = $request->integer('site_id') ?: null;
+        if ($focusSiteId && ! $sites->contains('id', $focusSiteId)) {
+            $focusSiteId = null; // ignore ids that aren't this user's site
+        }
+
         return Inertia::render('Agent/Index', [
             'agents' => $agents,
             'sites'  => $sites->map(fn($s) => [
@@ -44,6 +52,8 @@ class McpAgentController extends Controller
                 'is_primary' => $s->is_primary,
                 'has_agent'  => McpAgent::where('monitored_site_id', $s->id)->exists(),
             ])->values(),
+            'focusSiteId'  => $focusSiteId,
+            'fromReportId' => $request->integer('from_report') ?: null,
         ]);
     }
 
@@ -227,7 +237,7 @@ BASH;
         return back()->with('success', 'Token regenerated. Update your .env on the server.');
     }
 
-    public function sync(McpAgent $agent): RedirectResponse
+    public function sync(Request $request, McpAgent $agent): RedirectResponse
     {
         abort_unless($agent->user_id === auth()->id(), 403);
 
@@ -235,27 +245,43 @@ BASH;
             return back()->with('error', 'Agent has no linked site — nothing to sync.');
         }
 
-        // Find latest completed report for this site
-        $report = FullAuditReport::where('user_id', auth()->id())
-            ->where('site_url', $agent->monitoredSite->url)
-            ->where('status', 'completed')
-            ->latest()
-            ->first();
+        $requestedReportId = $request->integer('report_id') ?: null;
 
-        if (! $report) {
-            return back()->with('error', 'No completed scan found for this site. Run a scan first.');
+        if ($requestedReportId) {
+            // Sync the specific report the user was looking at (e.g. from the
+            // "Fix with AI" button on an audit results page) rather than
+            // whatever happens to be the newest scan for the site.
+            $report = FullAuditReport::where('id', $requestedReportId)
+                ->where('user_id', auth()->id())
+                ->where('status', 'completed')
+                ->first();
+
+            if (! $report) {
+                return back()->with('error', 'That report was not found or is not yours to sync.');
+            }
+        } else {
+            // Find latest completed report for this site
+            $report = FullAuditReport::where('user_id', auth()->id())
+                ->where('site_url', $agent->monitoredSite->url)
+                ->where('status', 'completed')
+                ->latest()
+                ->first();
+
+            if (! $report) {
+                return back()->with('error', 'No completed scan found for this site. Run a scan first.');
+            }
         }
 
         $agent->update(['latest_report_json' => $this->buildReportPayload($report)]);
 
-        return back()->with('success', 'Latest scan queued for the agent. It will be delivered on the next heartbeat (within 60 s).');
+        return back()->with('success', 'Scan queued for the agent. It will be delivered on the next heartbeat (within 60 s).');
     }
 
     private function buildReportPayload(FullAuditReport $report): string
     {
         return json_encode([
             'report_id'    => $report->id,
-            'url'          => $report->url,
+            'url'          => $report->site_url,
             'health_score' => $report->health_score,
             'status'       => $report->status,
             'scanned_at'   => $report->updated_at?->toIso8601String(),

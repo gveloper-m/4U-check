@@ -52,6 +52,7 @@ DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── FastMCP ───────────────────────────────────────────────────────────────────
 from mcp.server.fastmcp import FastMCP
+from mcp.server.transport_security import TransportSecuritySettings
 
 mcp = FastMCP(
     name="4uTest Agent",
@@ -61,6 +62,18 @@ mcp = FastMCP(
         "latest website audit report from 4uTest, and create backups before "
         "making changes. Always call create_session_backup before editing files."
     ),
+    # Must bind 0.0.0.0, not the SDK's 127.0.0.1 default — this runs inside a
+    # Docker container reached via a published port from a remote Claude Code
+    # client, not from localhost. As of mcp>=1.10 these are constructor
+    # kwargs, not FastMCP.run() kwargs (that call signature changed upstream).
+    host=os.getenv("MCP_BIND_HOST", "0.0.0.0"),
+    port=PORT,
+    # The SDK's default DNS-rebinding protection only allowlists
+    # localhost/127.0.0.1/::1 Host headers, which would reject every real
+    # deployment (clients connect via the server's public IP/domain). This
+    # server has no browser/cookie-based session to protect against DNS
+    # rebinding in the first place, so it's safe to disable here.
+    transport_security=TransportSecuritySettings(enable_dns_rebinding_protection=False),
 )
 
 
@@ -421,5 +434,6 @@ if __name__ == "__main__":
     # Start daily backup scheduler
     _start_scheduler()
 
-    # Run MCP server with SSE transport
-    mcp.run(transport="sse", host="0.0.0.0", port=PORT)
+    # Run MCP server with SSE transport (host/port are configured on the
+    # FastMCP(...) constructor above, not accepted here)
+    mcp.run(transport="sse")

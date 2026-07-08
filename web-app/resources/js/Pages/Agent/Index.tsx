@@ -18,6 +18,8 @@ interface Agent {
 interface Props extends PageProps {
   agents: Agent[];
   sites: Site[];
+  focusSiteId?: number | null;
+  fromReportId?: number | null;
 }
 
 function timeAgo(iso: string | null): string {
@@ -316,9 +318,15 @@ function SetupInstructions({ agentId }: { agentId?: number }) {
   );
 }
 
-export default function AgentIndex({ agents, sites, auth }: Props) {
-  const [showCreate, setShowCreate] = useState(false);
-  const form = useForm({ name: '', monitored_site_id: '' });
+export default function AgentIndex({ agents, sites, auth, focusSiteId, fromReportId }: Props) {
+  const focusedSite = focusSiteId ? sites.find(s => s.id === focusSiteId) : undefined;
+  const focusedAgent = focusSiteId ? agents.find(a => a.site?.id === focusSiteId) : undefined;
+
+  const [showCreate, setShowCreate] = useState(() => Boolean(focusedSite && !focusedSite.has_agent));
+  const form = useForm({
+    name: focusedSite ? `${focusedSite.url} Agent` : '',
+    monitored_site_id: focusedSite ? String(focusedSite.id) : '',
+  });
 
   const availableSites = sites.filter(s => !s.has_agent);
 
@@ -333,7 +341,7 @@ export default function AgentIndex({ agents, sites, auth }: Props) {
   const regenerate  = (id: number) => router.post(route('agent.regenerate', id));
   const sync        = (id: number) => router.post(route('agent.sync', id));
 
-  const firstAgent = agents[0];
+  const firstAgent = focusedAgent ?? agents[0];
   const firstToken = firstAgent?.token;
 
   return (
@@ -341,6 +349,21 @@ export default function AgentIndex({ agents, sites, auth }: Props) {
       <Head title="MCP Agent" />
 
       <div className="max-w-3xl mx-auto space-y-6">
+        {fromReportId && (
+          <a
+            href={route('audits.show', fromReportId)}
+            className="inline-flex items-center gap-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
+          >
+            ← Back to report
+          </a>
+        )}
+
+        {focusedSite && (
+          <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 text-sm text-violet-700 dark:text-violet-300">
+            Setting up AI auto-fix for <strong>{focusedSite.url}</strong>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>

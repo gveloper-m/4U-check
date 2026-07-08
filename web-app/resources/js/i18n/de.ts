@@ -272,6 +272,18 @@ const de = {
       badgeBrokenImage: 'Defektes Bild',
       badgeContrast: 'Kontrast',
     },
+    fixWithAi: {
+      title: 'Mit KI beheben',
+      cta: 'Mit KI beheben',
+      setupHint: 'Verbinden Sie einen KI-Agenten mit Ihrem Server, damit Claude Code diese Probleme direkt beheben kann.',
+      onlineHint: 'Ihr KI-Agent ist verbunden. Synchronisieren Sie diesen Scan, damit Claude Code genau weiß, was zu beheben ist.',
+      syncCta: 'Mit KI-Agent synchronisieren',
+      syncedHint: 'Synchronisiert — sagen Sie Claude Code, es soll beheben',
+      claudePrompt: 'Prüfe meinen 4uTest-Audit und behebe die wichtigsten Probleme.',
+      offlineTitle: 'KI-Agent offline',
+      offlineHint: 'Ihr KI-Agent antwortet nicht. Verbinden Sie ihn erneut, um weiterhin automatisch Probleme zu beheben.',
+      reconnectCta: 'Erneut verbinden',
+    },
     fuzz: {
       targetsTested: 'Getestete Eingaben',
       requestsSent: 'Gesendete Anfragen',

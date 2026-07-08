@@ -37,10 +37,15 @@ import {
   Copy,
   Check,
   Bug,
+  Bot,
+  WifiOff,
+  RefreshCw,
 } from 'lucide-react';
 
 interface ShowProps extends PageProps {
   report: FullAuditReport;
+  matchedSiteId?: number | null;
+  siteAgent?: { id: number; is_online: boolean } | null;
 }
 
 function healthColor(score?: number): string {
@@ -203,7 +208,151 @@ function hasKey(obj: Record<string, unknown> | null | undefined, key: string): b
   return !!obj && Object.prototype.hasOwnProperty.call(obj, key);
 }
 
-export default function AuditShow({ report }: ShowProps) {
+function FixWithAiCard({
+  variant, siteAgent, matchedSiteId, reportId, t,
+}: {
+  variant: 'compact' | 'banner';
+  siteAgent: { id: number; is_online: boolean } | null | undefined;
+  matchedSiteId: number | null | undefined;
+  reportId: number;
+  t: (key: string) => string;
+}) {
+  const [syncState, setSyncState] = useState<'idle' | 'syncing' | 'done'>('idle');
+  const [copied, setCopied] = useState(false);
+  const claudePrompt = t('show.fixWithAi.claudePrompt');
+
+  const setupHref = matchedSiteId
+    ? `/agent?site_id=${matchedSiteId}&from_report=${reportId}`
+    : `/agent?from_report=${reportId}`;
+  const reconnectHref = `/agent?site_id=${matchedSiteId ?? ''}`;
+
+  const copyPrompt = () => {
+    navigator.clipboard.writeText(claudePrompt);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const doSync = () => {
+    if (!siteAgent) return;
+    setSyncState('syncing');
+    router.post(`/agent/${siteAgent.id}/sync`, { report_id: reportId }, {
+      preserveScroll: true,
+      preserveState: true,
+      onSuccess: () => setSyncState('done'),
+      onError: () => setSyncState('idle'),
+    });
+  };
+
+  // State A — no agent registered yet for this site
+  if (!siteAgent) {
+    if (variant === 'compact') {
+      return (
+        <Link href={setupHref} className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-500 transition-colors">
+          <Bot className="h-4 w-4" /> {t('show.fixWithAi.cta')}
+        </Link>
+      );
+    }
+    return (
+      <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-5">
+        <div className="flex items-center gap-3 flex-wrap justify-between">
+          <div className="flex items-center gap-3">
+            <Bot className="h-5 w-5 text-violet-400 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">{t('show.fixWithAi.title')}</p>
+              <p className="text-xs text-violet-600/80 dark:text-violet-400/80">{t('show.fixWithAi.setupHint')}</p>
+            </div>
+          </div>
+          <Link href={setupHref} className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 transition-colors shrink-0">
+            <Bot className="h-4 w-4" /> {t('show.fixWithAi.cta')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // State C — agent registered but offline
+  if (!siteAgent.is_online) {
+    if (variant === 'compact') {
+      return (
+        <Link href={reconnectHref} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-500/20 transition-colors">
+          <WifiOff className="h-4 w-4" /> {t('show.fixWithAi.offlineTitle')}
+        </Link>
+      );
+    }
+    return (
+      <div className="rounded-xl border border-amber-400/30 bg-amber-500/5 p-5">
+        <div className="flex items-center gap-3 flex-wrap justify-between">
+          <div className="flex items-center gap-3">
+            <WifiOff className="h-5 w-5 text-amber-500 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">{t('show.fixWithAi.offlineTitle')}</p>
+              <p className="text-xs text-amber-600/80 dark:text-amber-500/80">{t('show.fixWithAi.offlineHint')}</p>
+            </div>
+          </div>
+          <Link href={reconnectHref} className="inline-flex items-center gap-1.5 rounded-lg border border-amber-400/40 px-4 py-2 text-sm font-medium text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 transition-colors shrink-0">
+            {t('show.fixWithAi.reconnectCta')}
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // State B — agent online, already synced this session
+  if (syncState === 'done') {
+    if (variant === 'compact') {
+      return (
+        <button onClick={copyPrompt} className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-400/40 bg-emerald-500/10 px-3 py-2 text-sm font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/20 transition-colors">
+          {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />} {t('show.fixWithAi.syncedHint')}
+        </button>
+      );
+    }
+    return (
+      <div className="rounded-xl border border-emerald-400/30 bg-emerald-500/5 p-5 space-y-3">
+        <div className="flex items-center gap-3">
+          <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
+          <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">{t('show.fixWithAi.syncedHint')}</p>
+        </div>
+        <div className="flex items-center gap-2 rounded-lg bg-gray-900 border border-gray-700 px-3 py-2">
+          <code className="flex-1 text-xs font-mono text-gray-300">{claudePrompt}</code>
+          <button onClick={copyPrompt} className="flex items-center gap-1 rounded px-2 py-1 text-xs text-gray-400 hover:text-gray-200 transition-colors">
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // State B — agent online, not yet synced this session
+  if (variant === 'compact') {
+    return (
+      <button onClick={doSync} disabled={syncState === 'syncing'}
+        className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-3 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50 transition-colors">
+        {syncState === 'syncing' ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+        {t('show.fixWithAi.syncCta')}
+      </button>
+    );
+  }
+  return (
+    <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-5">
+      <div className="flex items-center gap-3 flex-wrap justify-between">
+        <div className="flex items-center gap-3">
+          <Bot className="h-5 w-5 text-violet-400 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-violet-700 dark:text-violet-300">{t('show.fixWithAi.title')}</p>
+            <p className="text-xs text-violet-600/80 dark:text-violet-400/80">{t('show.fixWithAi.onlineHint')}</p>
+          </div>
+        </div>
+        <button onClick={doSync} disabled={syncState === 'syncing'}
+          className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500 disabled:opacity-50 transition-colors shrink-0">
+          {syncState === 'syncing' ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Bot className="h-4 w-4" />}
+          {t('show.fixWithAi.syncCta')}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProps) {
   const { t } = useTranslation();
   const [progress, setProgress] = useState<StatusResponse['progress'] | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -426,6 +575,7 @@ export default function AuditShow({ report }: ShowProps) {
           {/* Export buttons */}
           {report.status === 'completed' && (
             <div className="flex items-center gap-2 shrink-0">
+              <FixWithAiCard variant="compact" siteAgent={siteAgent} matchedSiteId={matchedSiteId} reportId={report.id} t={t} />
               <a
                 href={`/audits/${report.id}/export/pdf`}
                 className="inline-flex items-center gap-1.5 rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:border-gray-600 hover:text-gray-900 dark:hover:text-white transition-colors"
@@ -549,6 +699,11 @@ export default function AuditShow({ report }: ShowProps) {
               ))}
             </ul>
           </div>
+        )}
+
+        {/* Fix with AI banner — natural next step right after seeing what's wrong */}
+        {report.status === 'completed' && report.score_deductions && report.score_deductions.length > 0 && (
+          <FixWithAiCard variant="banner" siteAgent={siteAgent} matchedSiteId={matchedSiteId} reportId={report.id} t={t} />
         )}
 
         {/* Screenshot gallery */}

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\RunAuditorJob;
 use App\Models\FullAuditReport;
+use App\Models\McpAgent;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use App\Rules\PublicUrl;
@@ -124,7 +125,28 @@ class AuditController extends Controller
             abort_unless($report->user_id === $user->id, 403);
         }
 
-        return Inertia::render('Audits/Show', ['report' => $report]);
+        // Does the report's site already have an MCP agent registered, so the
+        // "Fix with AI" CTA can link straight into it instead of a cold setup
+        // flow? Reports have no FK to monitored_sites, only a raw site_url,
+        // so match by host — same normalization MonitoredSite::getHostAttribute()
+        // already uses.
+        $owner       = $report->user;
+        $reportHost  = strtolower((string) parse_url($report->site_url, PHP_URL_HOST));
+        $matchedSite = $owner
+            ? $owner->monitoredSites->first(fn ($s) => strtolower($s->host) === $reportHost)
+            : null;
+        $mcpAgent = $matchedSite
+            ? McpAgent::where('monitored_site_id', $matchedSite->id)->first()
+            : null;
+
+        return Inertia::render('Audits/Show', [
+            'report'       => $report,
+            'matchedSiteId' => $matchedSite?->id,
+            'siteAgent'    => $mcpAgent ? [
+                'id'        => $mcpAgent->id,
+                'is_online' => $mcpAgent->isOnline(),
+            ] : null,
+        ]);
     }
 
     /**

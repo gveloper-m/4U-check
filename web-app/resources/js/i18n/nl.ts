@@ -272,6 +272,18 @@ const nl = {
       badgeBrokenImage: 'Gebroken afbeelding',
       badgeContrast: 'Contrast',
     },
+    fixWithAi: {
+      title: 'Oplossen met AI',
+      cta: 'Oplossen met AI',
+      setupHint: 'Verbind een AI-agent met uw server zodat Claude Code deze problemen direct kan oplossen.',
+      onlineHint: 'Uw AI-agent is verbonden. Synchroniseer deze scan zodat Claude Code precies weet wat er opgelost moet worden.',
+      syncCta: 'Synchroniseren met AI-agent',
+      syncedHint: 'Gesynchroniseerd — vraag Claude Code om het op te lossen',
+      claudePrompt: 'Controleer mijn 4uTest-audit en los de belangrijkste problemen op.',
+      offlineTitle: 'AI-agent offline',
+      offlineHint: 'Uw AI-agent reageert niet. Maak opnieuw verbinding om problemen automatisch te blijven oplossen.',
+      reconnectCta: 'Opnieuw verbinden',
+    },
     fuzz: {
       targetsTested: 'Geteste invoervelden',
       requestsSent: 'Verstuurde verzoeken',
