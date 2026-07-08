@@ -53,7 +53,11 @@ class BrokenResourceController extends Controller
         $queue          = [$pageUrl];
         $pagesProcessed = 0;
         $deadline       = microtime(true) + 210; // hard 3.5-minute budget
-        $maxPages       = 60;
+        // The deadline above is the real governor of wall-clock time; this
+        // cap just stops the BFS queue from growing unbounded in memory on
+        // very large sites. Raised so mid-size sites get fully crawled
+        // instead of stopping early on link/image checks.
+        $maxPages       = 150;
 
         while (! empty($queue) && $pagesProcessed < $maxPages && microtime(true) < $deadline) {
             // Pull up to 20 unvisited URLs for concurrent fetch

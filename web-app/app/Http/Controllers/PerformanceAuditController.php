@@ -76,8 +76,10 @@ class PerformanceAuditController extends Controller
         $allDesktopMetrics = [];
         $allMobileMetrics  = [];
 
-        // Cap pages to avoid timeout on large sites
-        $pagesToTest = array_slice($pagesToTest, 0, 15);
+        // Cap pages to avoid timeout on large sites. TTFB is a plain HTTP
+        // HEAD request (cheap), so it can cover a much wider slice of the
+        // site than the full Browsershot-based metrics/screenshot pass below.
+        $pagesToTest = array_slice($pagesToTest, 0, 30);
 
         // TTFB: quick HTTP HEAD check across all pages
         foreach ($pagesToTest as $testUrl) {
@@ -87,8 +89,16 @@ class PerformanceAuditController extends Controller
             }
         }
 
-        // Browsershot: only sample the first 3 pages — 98 Chrome instances on a crawled site triggers bot detection
-        foreach (array_slice($pagesToTest, 0, 3) as $testUrl) {
+        // Browsershot: sample the first 8 pages for real metrics + a
+        // full-page screenshot of each. Kept well below $pagesToTest's count
+        // to limit both bot-detection risk (many Chrome hits from one host)
+        // and per-job wall-clock time — each page here costs up to 3 Chrome
+        // launches (desktop metrics, mobile metrics, screenshot), all
+        // serialized system-wide via withChromeLock().
+        $browsershotSample = array_slice($pagesToTest, 0, 8);
+        $pageScreenshots   = [];
+
+        foreach ($browsershotSample as $testUrl) {
             $desktopMetrics = $this->measurePerformanceMetrics($testUrl, 'desktop');
             if ($desktopMetrics['fcp'] !== null) {
                 $allDesktopMetrics[] = $desktopMetrics;
@@ -98,6 +108,11 @@ class PerformanceAuditController extends Controller
             if ($mobileMetrics['fcp'] !== null) {
                 $allMobileMetrics[] = $mobileMetrics;
             }
+
+            $shot = $this->captureScreenshot($testUrl);
+            if ($shot !== null) {
+                $pageScreenshots[] = ['url' => $testUrl, 'screenshot' => $shot];
+            }
         }
 
         $avgTTFB    = ! empty($allTTFB) ? (int) (array_sum($allTTFB) / count($allTTFB)) : null;
@@ -105,7 +120,16 @@ class PerformanceAuditController extends Controller
         $mobileAvg  = $this->averageMetrics($allMobileMetrics);
 
         $pageAnalysis = $this->analyzePageResources($pageUrl, $encoding, $homepageHtml);
-        $homepageScreenshot = $this->captureScreenshot($pageUrl);
+
+        // Keep the legacy "homepage" key pointing at the entry URL's shot
+        // (if it was captured) so existing consumers keep working.
+        $homepageScreenshot = null;
+        foreach ($pageScreenshots as $entry) {
+            if ($entry['url'] === $pageUrl) {
+                $homepageScreenshot = $entry['screenshot'];
+                break;
+            }
+        }
 
         DB::table('performance_audits')->insert([
             'site_url'          => $pageUrl,
@@ -138,6 +162,7 @@ class PerformanceAuditController extends Controller
             'page_analysis' => $pageAnalysis,
             'screenshots'   => [
                 'homepage' => $homepageScreenshot,
+                'pages'    => $pageScreenshots,
             ],
             'executed_at' => now(),
         ];
@@ -299,10 +324,10 @@ class PerformanceAuditController extends Controller
         try {
             // Add small delay to avoid rate limiting
             usleep(random_int(100000, 500000)); // 100-500ms delay
-            
+
             $startTime = microtime(true) * 1000;
             $response = Http::withHeaders($this->browserHeaders())
-                ->timeout(30)
+                ->timeout(12)
                 ->head($url);
             $endTime = microtime(true) * 1000;
 
@@ -313,12 +338,16 @@ class PerformanceAuditController extends Controller
             if (! $chromePath) return null;
             try {
                 $startTime = microtime(true) * 1000;
-                Browsershot::url($url)
-                    ->setChromePath($chromePath)
-                    ->noSandbox()
-                    ->disableImages()
-                    ->timeout(30)
-                    ->bodyHtml();
+                $ok = $this->withChromeLock(function () use ($url, $chromePath): bool {
+                    Browsershot::url($url)
+                        ->setChromePath($chromePath)
+                        ->noSandbox()
+                        ->disableImages()
+                        ->timeout(15)
+                        ->bodyHtml();
+                    return true;
+                });
+                if (! $ok) return null;
                 $endTime = microtime(true) * 1000;
                 return (int)($endTime - $startTime);
             } catch (\Exception $browserError) {
@@ -336,50 +365,56 @@ class PerformanceAuditController extends Controller
      */
     private function measurePerformanceMetrics(string $url, string $viewport = 'desktop'): array
     {
+        $empty = ['fcp' => null, 'lcp' => null, 'cls' => null];
+
         try {
             $chromePath = $this->findChromePath();
-            
+
             if (!$chromePath) {
-                return ['fcp' => null, 'lcp' => null, 'cls' => null];
+                return $empty;
             }
 
             // Viewport dimensions
             [$w, $h] = $viewport === 'mobile' ? [412, 732] : [1920, 1080];
 
-            $browsershot = Browsershot::url($url)
-                ->setChromePath($chromePath)
-                ->timeout(60)
-                ->userAgent($this->randomUserAgent())
-                ->addChromiumArguments([
-                    'no-sandbox',
-                    'disable-dev-shm-usage',
-                    'disable-gpu',
-                    'disable-software-rasterizer',
-                    'disable-extensions',
-                    'disable-blink-features=AutomationControlled',
-                    'lang=en-US,en',
-                ])
-                ->windowSize($w, $h);
+            $result = $this->withChromeLock(function () use ($url, $chromePath, $w, $h): array {
+                $browsershot = Browsershot::url($url)
+                    ->setChromePath($chromePath)
+                    ->timeout(30)
+                    ->userAgent($this->randomUserAgent())
+                    ->addChromiumArguments([
+                        'no-sandbox',
+                        'disable-dev-shm-usage',
+                        'disable-gpu',
+                        'disable-software-rasterizer',
+                        'disable-extensions',
+                        'disable-blink-features=AutomationControlled',
+                        'lang=en-US,en',
+                    ])
+                    ->windowSize($w, $h);
 
-            // Inject JavaScript to extract performance metrics
-            $metricsJson = $browsershot->evaluate($this->getPerformanceScript());
+                // Inject JavaScript to extract performance metrics
+                $metricsJson = $browsershot->evaluate($this->getPerformanceScript());
 
-            if (!empty($metricsJson)) {
-                $metrics = json_decode($metricsJson, true);
-                if (is_array($metrics)) {
-                    return [
-                        'fcp' => $metrics['fcp'] ?? null,
-                        'lcp' => $metrics['lcp'] ?? null,
-                        'cls' => $metrics['cls'] ?? null,
-                    ];
+                if (!empty($metricsJson)) {
+                    $metrics = json_decode($metricsJson, true);
+                    if (is_array($metrics)) {
+                        return [
+                            'fcp' => $metrics['fcp'] ?? null,
+                            'lcp' => $metrics['lcp'] ?? null,
+                            'cls' => $metrics['cls'] ?? null,
+                        ];
+                    }
                 }
-            }
 
-            return ['fcp' => null, 'lcp' => null, 'cls' => null];
+                return ['fcp' => null, 'lcp' => null, 'cls' => null];
+            });
+
+            return $result ?? $empty;
 
         } catch (\Throwable $e) {
             \Log::debug("Performance metrics error for {$viewport} on {$url}: " . $e->getMessage());
-            return ['fcp' => null, 'lcp' => null, 'cls' => null];
+            return $empty;
         }
     }
 

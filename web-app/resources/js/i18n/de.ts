@@ -267,6 +267,7 @@ const de = {
       title: 'Screenshot-Galerie',
       homepage: 'Übersicht der Startseite',
       badgeOverview: 'Übersicht',
+      badgePage: 'Seite',
       badgeBrokenLink: 'Defekter Link',
       badgeBrokenImage: 'Defektes Bild',
       badgeContrast: 'Kontrast',

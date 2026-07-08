@@ -232,15 +232,31 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
 
   // Screenshot gallery — visual evidence captured during the scan
   const perfScreenshots = getObj(perf, 'screenshots');
-  const homepageScreenshot = perfScreenshots && typeof (perfScreenshots as Record<string, unknown>)['homepage'] === 'string'
+  const perfPageShots = getArr(perfScreenshots, 'pages');
+  const legacyHomepageScreenshot = perfScreenshots && typeof (perfScreenshots as Record<string, unknown>)['homepage'] === 'string'
     ? String((perfScreenshots as Record<string, unknown>)['homepage'])
     : null;
   const a11yChecksForGallery = getObj(a11y, 'checks');
   const contrastForGallery = getObj(a11yChecksForGallery, 'color_contrast');
 
   const galleryItems: GalleryItem[] = [];
-  if (homepageScreenshot) {
-    const src = screenshotUrl(homepageScreenshot);
+  if (perfPageShots.length > 0) {
+    perfPageShots.forEach((p) => {
+      const pp = p as Record<string, unknown>;
+      const src = typeof pp.screenshot === 'string' ? screenshotUrl(pp.screenshot) : null;
+      if (!src) return;
+      const pageUrl = String(pp.url ?? report.site_url);
+      const isHomepage = pageUrl === report.site_url;
+      galleryItems.push({
+        src,
+        caption: isHomepage ? t('show.gallery.homepage') : pageUrl,
+        code: pageUrl,
+        badge: isHomepage ? t('show.gallery.badgeOverview') : t('show.gallery.badgePage'),
+      });
+    });
+  } else if (legacyHomepageScreenshot) {
+    // Older reports generated before per-page screenshots existed
+    const src = screenshotUrl(legacyHomepageScreenshot);
     if (src) {
       galleryItems.push({ src, caption: t('show.gallery.homepage'), code: report.site_url, badge: t('show.gallery.badgeOverview') });
     }

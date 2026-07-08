@@ -267,6 +267,7 @@ const en = {
       title: 'Screenshot Gallery',
       homepage: 'Homepage overview',
       badgeOverview: 'Overview',
+      badgePage: 'Page',
       badgeBrokenLink: 'Broken link',
       badgeBrokenImage: 'Broken image',
       badgeContrast: 'Contrast',

@@ -267,6 +267,7 @@ const es = {
       title: 'Galería de capturas',
       homepage: 'Vista general de la página de inicio',
       badgeOverview: 'Vista general',
+      badgePage: 'Página',
       badgeBrokenLink: 'Enlace roto',
       badgeBrokenImage: 'Imagen rota',
       badgeContrast: 'Contraste',

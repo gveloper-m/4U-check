@@ -267,6 +267,7 @@ const cs = {
       title: 'Galerie snímků obrazovky',
       homepage: 'Přehled domovské stránky',
       badgeOverview: 'Přehled',
+      badgePage: 'Stránka',
       badgeBrokenLink: 'Nefunkční odkaz',
       badgeBrokenImage: 'Nefunkční obrázek',
       badgeContrast: 'Kontrast',

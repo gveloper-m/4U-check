@@ -267,6 +267,7 @@ const el = {
       title: 'Συλλογή Στιγμιότυπων',
       homepage: 'Επισκόπηση αρχικής σελίδας',
       badgeOverview: 'Επισκόπηση',
+      badgePage: 'Σελίδα',
       badgeBrokenLink: 'Κατεστραμμένος σύνδεσμος',
       badgeBrokenImage: 'Κατεστραμμένη εικόνα',
       badgeContrast: 'Αντίθεση',

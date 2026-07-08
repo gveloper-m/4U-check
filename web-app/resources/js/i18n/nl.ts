@@ -267,6 +267,7 @@ const nl = {
       title: 'Screenshotgalerij',
       homepage: 'Overzicht homepage',
       badgeOverview: 'Overzicht',
+      badgePage: 'Pagina',
       badgeBrokenLink: 'Gebroken link',
       badgeBrokenImage: 'Gebroken afbeelding',
       badgeContrast: 'Contrast',

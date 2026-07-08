@@ -20,14 +20,34 @@ class PdfScreenshotGallery
     {
         $items = [];
 
-        $homepage = $perf['screenshots']['homepage'] ?? null;
-        if (is_string($homepage) && $path = self::resolve($homepage)) {
-            $items[] = [
-                'path'    => $path,
-                'caption' => 'Homepage overview',
-                'code'    => $siteUrl,
-                'badge'   => 'Overview',
-            ];
+        $pages = $perf['screenshots']['pages'] ?? null;
+        if (is_array($pages) && ! empty($pages)) {
+            foreach ($pages as $page) {
+                if (! is_array($page) || empty($page['screenshot']) || ! is_string($page['screenshot'])) {
+                    continue;
+                }
+                if ($path = self::resolve($page['screenshot'])) {
+                    $pageUrl = (string) ($page['url'] ?? $siteUrl);
+                    $items[] = [
+                        'path'    => $path,
+                        'caption' => $pageUrl === $siteUrl ? 'Homepage overview' : $pageUrl,
+                        'code'    => $pageUrl,
+                        'badge'   => $pageUrl === $siteUrl ? 'Overview' : 'Page',
+                    ];
+                }
+            }
+        } else {
+            // Fall back to the legacy single-homepage shape for older reports
+            // generated before per-page screenshots existed.
+            $homepage = $perf['screenshots']['homepage'] ?? null;
+            if (is_string($homepage) && $path = self::resolve($homepage)) {
+                $items[] = [
+                    'path'    => $path,
+                    'caption' => 'Homepage overview',
+                    'code'    => $siteUrl,
+                    'badge'   => 'Overview',
+                ];
+            }
         }
 
         foreach (($broken['broken_links'] ?? []) as $link) {

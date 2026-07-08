@@ -139,6 +139,27 @@ trait FetchesWebPages
     }
 
     /**
+     * Run a Browsershot-based Chrome launch under a system-wide, non-blocking
+     * lock. Headless Chrome is memory-hungry and, on the 4GB production host,
+     * Horizon can run up to 20 concurrent queue workers — several audit
+     * modules across different reports/users can all want a Chrome instance
+     * at the same moment. Serializing every launch (screenshots AND
+     * performance-metric captures) through one lock keeps at most one Chrome
+     * process alive system-wide, which is cheap insurance against OOM.
+     *
+     * The lock is intentionally NON-BLOCKING: a single audit job has its own
+     * hard 600s timeout, and a single module can now need a dozen-plus Chrome
+     * launches. Waiting out a contended lock repeatedly can push a job past
+     * its own timeout and kill it with zero results — far worse than one
+     * skipped screenshot or metric sample. If Chrome is already busy, $work
+     * is simply not run and this returns null.
+     */
+    protected function withChromeLock(callable $work): mixed
+    {
+        return Cache::lock('chrome-launch', 25)->get($work);
+    }
+
+    /**
      * Capture a screenshot of a page — or, when $selector is given, just the
      * first element matching that CSS selector — and store it on the "public"
      * disk. Returns the relative path (usable with asset('storage/...') on the
@@ -157,25 +178,12 @@ trait FetchesWebPages
             . sha1($url . '|' . $selector . '|' . microtime(true)) . '.png';
         $absolute = storage_path('app/public/' . $relative);
 
-        // Headless Chrome is memory-hungry and several audit modules can be
-        // capturing screenshots concurrently (different queue workers, same
-        // report). Serialize captures system-wide so we never have more than
-        // one Chrome process running at once — cheap insurance against OOM
-        // on small hosts.
-        //
-        // The lock attempt is intentionally NON-BLOCKING: a single audit
-        // module can need up to ~6 screenshots, all running inside one
-        // queued job with a hard 600s timeout. Waiting on a contended lock
-        // (even a "modest" 30-60s per shot) can easily push the job past
-        // its own timeout, which kills it with zero results — far worse
-        // than just skipping a screenshot. If Chrome is already busy
-        // capturing something else, we skip immediately rather than queue.
         try {
             if (! is_dir(dirname($absolute))) {
                 mkdir(dirname($absolute), 0755, true);
             }
 
-            $captured = Cache::lock('screenshot-capture', 25)->get(function () use ($url, $selector, $chromePath, $absolute): bool {
+            $captured = $this->withChromeLock(function () use ($url, $selector, $chromePath, $absolute): bool {
                 $shot = Browsershot::url($url)
                     ->setChromePath($chromePath)
                     ->noSandbox()

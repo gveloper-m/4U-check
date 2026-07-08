@@ -267,6 +267,7 @@ const fr = {
       title: 'Galerie de captures d\'écran',
       homepage: 'Aperçu de la page d\'accueil',
       badgeOverview: 'Aperçu',
+      badgePage: 'Page',
       badgeBrokenLink: 'Lien brisé',
       badgeBrokenImage: 'Image brisée',
       badgeContrast: 'Contraste',

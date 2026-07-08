@@ -46,7 +46,9 @@ class EcommerceCatalogAuditController extends Controller
         $auditResults = [];
         $pagesCrawled = 0;
         $deadline     = microtime(true) + 180; // hard 3-minute budget
-        $maxPages     = 50;
+        // Deadline above governs actual wall-clock time; cap raised so
+        // larger catalogs get fully crawled instead of stopping early.
+        $maxPages     = 120;
 
         while (! empty($queue) && $pagesCrawled < $maxPages && microtime(true) < $deadline) {
             // Pull up to 20 unvisited URLs for concurrent fetch
