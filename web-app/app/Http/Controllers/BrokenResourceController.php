@@ -375,7 +375,12 @@ class BrokenResourceController extends Controller
         foreach (array_chunk($urlList, $batchSize) as $batch) {
             $responses = Http::pool(function ($pool) use ($batch, $timeout) {
                 foreach ($batch as $url) {
-                    $pool->as($url)->timeout($timeout)->withoutRedirecting()->head($url);
+                    // A realistic browser User-Agent is required here, not optional:
+                    // confirmed LinkedIn returns its non-standard 999 "anti-bot" status
+                    // to a request with an empty/missing UA and 200 with one — every
+                    // other HTTP call in this codebase already sets this, this one
+                    // was the one exception.
+                    $pool->as($url)->withHeaders($this->browserHeaders())->timeout($timeout)->withoutRedirecting()->head($url);
                 }
             });
 
@@ -389,12 +394,15 @@ class BrokenResourceController extends Controller
 
                     // If HEAD not allowed, fall back to GET
                     if ($statusCode === 405) {
-                        $response   = Http::timeout($timeout)->withoutRedirecting()->get($url);
+                        $response   = Http::withHeaders($this->browserHeaders())->timeout($timeout)->withoutRedirecting()->get($url);
                         $statusCode = $response->status();
                     }
 
-                    // 403/401/429 = server is alive but blocking our checker — not broken for real users
-                    if ($statusCode === 404 || $statusCode === 410 || $statusCode >= 500) {
+                    // 403/401/429 = server is alive but blocking our checker — not broken for real users.
+                    // Some sites (LinkedIn among them) also return non-standard codes like 999 for the
+                    // same reason — anything outside the real 500-599 server-error range is never a
+                    // genuine "broken" signal, so the upper bound below is deliberate, not just >= 500.
+                    if ($statusCode === 404 || $statusCode === 410 || ($statusCode >= 500 && $statusCode <= 599)) {
                         $brokenResources[] = [
                             'url'         => $url,
                             'status_code' => $statusCode,

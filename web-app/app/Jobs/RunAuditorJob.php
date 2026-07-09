@@ -216,12 +216,12 @@ class RunAuditorJob implements ShouldQueue
         }
 
         // --- Tracking ---
-        $trk = $audits['marketing_tracking'] ?? [];
-        if (($trk['status'] ?? '') === 'ok') {
-            $scripts = $trk['tracking_scripts'] ?? [];
-            if (! ($scripts['ga4']['detected']            ?? false)) { $score -= 5; $deductions[] = 'Tracking: no GA4 detected (-5)'; }
-            if (! ($scripts['facebook_pixel']['detected'] ?? false)) { $score -= 3; $deductions[] = 'Tracking: no Facebook Pixel (-3)'; }
-        }
+        // Deliberately no score deduction here. Whether GA4/Facebook Pixel/TikTok
+        // Pixel are installed is a marketing decision, not a technical health
+        // problem — conflating the two would penalize sites for a legitimate
+        // business choice not to run third-party trackers. The Tracking module's
+        // findings are still shown in full in their own report section; this
+        // health score just doesn't treat "no analytics" as "unhealthy."
 
         // --- Broken Resources ---
         $br = $audits['broken_resources'] ?? [];
