@@ -22,8 +22,8 @@ class BillingController extends Controller
         $siteCount    = $sites->count();
 
         $plan         = $this->currentPlan($user);
-        $basePrice    = $plan === 'yearly' ? 199.99 : 19.99;
-        $extraPrice   = $plan === 'yearly' ? 99.99  : 9.99;
+        $basePrice    = $plan === 'yearly' ? 99.99 : 9.99;
+        $extraPrice   = $plan === 'yearly' ? 49.99 : 4.99;
         $monthlyTotal = $siteCount > 0
             ? $basePrice + max(0, $siteCount - 1) * $extraPrice
             : $basePrice;

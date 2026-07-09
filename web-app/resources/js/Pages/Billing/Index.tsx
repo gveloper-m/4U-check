@@ -216,12 +216,12 @@ export default function BillingIndex({
   const card      = payment_method?.card;
   const brandName = card?.brand ? card.brand.charAt(0).toUpperCase() + card.brand.slice(1) : null;
 
-  const basePrice  = current_plan === 'yearly' ? 199.99 : 19.99;
-  const extraPrice = current_plan === 'yearly' ? 99.99  : 9.99;
+  const basePrice  = current_plan === 'yearly' ? 99.99 : 9.99;
+  const extraPrice = current_plan === 'yearly' ? 49.99 : 4.99;
   const planLabel  = subscribeForm.data.plan === 'yearly' ? t('billing.yearly') : t('billing.monthly');
 
-  const previewBase  = subscribeForm.data.plan === 'yearly' ? 199.99 : 19.99;
-  const previewExtra = subscribeForm.data.plan === 'yearly' ? 99.99  : 9.99;
+  const previewBase  = subscribeForm.data.plan === 'yearly' ? 99.99 : 9.99;
+  const previewExtra = subscribeForm.data.plan === 'yearly' ? 49.99 : 4.99;
 
   return (
     <AppLayout>
@@ -291,14 +291,14 @@ export default function BillingIndex({
                       {
                         key: 'monthly' as const,
                         label: t('billing.monthly'),
-                        price: '€19.99',
+                        price: '€9.99',
                         period: t('billing.perMonth'),
                         note: `${t('billing.exclVat')} · ${t('billing.billedMonthly')}`,
                       },
                       {
                         key: 'yearly' as const,
                         label: t('billing.yearly'),
-                        price: '€199.99',
+                        price: '€99.99',
                         period: t('billing.perYear'),
                         note: `${t('billing.exclVat')} · ${t('billing.twoMonthsFree')}`,
                       },
@@ -455,14 +455,14 @@ export default function BillingIndex({
                     {
                       key: 'monthly' as const,
                       label: t('billing.monthly'),
-                      price: '€19.99',
+                      price: '€9.99',
                       period: t('billing.perMonth'),
                       note: `${t('billing.exclVat')} · ${t('billing.billedMonthly')}`,
                     },
                     {
                       key: 'yearly' as const,
                       label: t('billing.yearly'),
-                      price: '€199.99',
+                      price: '€99.99',
                       period: t('billing.perYear'),
                       note: `${t('billing.exclVat')} · ${t('billing.twoMonthsFree')}`,
                     },
@@ -495,9 +495,9 @@ export default function BillingIndex({
                 <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-4 space-y-1.5">
                   <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t('billing.perSiteTitle')}</p>
                   <p className="text-xs text-gray-500">{t('billing.perSiteBody', {
-                    base: subscribeForm.data.plan === 'yearly' ? '€199.99' : '€19.99',
+                    base: subscribeForm.data.plan === 'yearly' ? '€99.99' : '€9.99',
                     period: subscribeForm.data.plan === 'yearly' ? t('billing.perYear') : t('billing.perMonth'),
-                    extra: subscribeForm.data.plan === 'yearly' ? '€99.99' : '€9.99',
+                    extra: subscribeForm.data.plan === 'yearly' ? '€49.99' : '€4.99',
                   })}</p>
                   <p className="text-xs text-gray-500">{t('billing.perSiteQuota', { scans: 30 })}</p>
                 </div>
@@ -670,8 +670,8 @@ export default function BillingIndex({
               {!is_unlimited && (
                 <div className="grid grid-cols-2 gap-2">
                   {([
-                    { key: 'monthly' as const, label: t('billing.monthly'), price: '€9.99', period: t('billing.perMonth') },
-                    { key: 'yearly'  as const, label: t('billing.yearly'),  price: '€99.99', period: t('billing.perYear'), badge: t('billing.bestValue') },
+                    { key: 'monthly' as const, label: t('billing.monthly'), price: '€4.99', period: t('billing.perMonth') },
+                    { key: 'yearly'  as const, label: t('billing.yearly'),  price: '€49.99', period: t('billing.perYear'), badge: t('billing.bestValue') },
                   ]).map(p => (
                     <button
                       key={p.key}

@@ -296,15 +296,15 @@ Sites are linked to scheduled scans, MCP agents, and audit history.
 
 | Plan | Price | Billing |
 |---|---|---|
-| Pro Monthly | €19.99/month | Monthly recurring |
-| Pro Yearly | €199.99/year | Yearly recurring (≈ 2 months free) |
+| Pro Monthly | €9.99/month | Monthly recurring |
+| Pro Yearly | €99.99/year | Yearly recurring (≈ 2 months free) |
 
 ### Extra Site Add-Ons
 
 | Add-On | Price | Per |
 |---|---|---|
-| Extra Site Monthly | €9.99/month | per additional site |
-| Extra Site Yearly | €99.99/year | per additional site |
+| Extra Site Monthly | €4.99/month | per additional site |
+| Extra Site Yearly | €49.99/year | per additional site |
 
 ### Scan Limits
 
@@ -870,8 +870,8 @@ Create two products:
 
 | Product name | Price | Billing period |
 |---|---|---|
-| 4uTest Pro Monthly | €19.99 | Monthly recurring |
-| 4uTest Pro Yearly | €199.99 | Yearly recurring |
+| 4uTest Pro Monthly | €9.99 | Monthly recurring |
+| 4uTest Pro Yearly | €99.99 | Yearly recurring |
 
 After creating each product, copy the **Price ID** (format: `pri_...`):
 

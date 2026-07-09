@@ -247,7 +247,7 @@ export default function Welcome({ auth }: PageProps) {
               <div className="rounded-2xl border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 p-8 text-left shadow-xl">
                 <p className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-4">{t('welcome.monthly')}</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">€19.99</span>
+                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">€9.99</span>
                   <span className="mb-1 text-gray-600 dark:text-gray-400">{t('welcome.perMonth')}</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">VAT incl. · {t('welcome.includesOneSite')}</p>
@@ -281,7 +281,7 @@ export default function Welcome({ auth }: PageProps) {
                 </div>
                 <p className="text-sm font-medium text-violet-400 mb-4">{t('welcome.yearly')}</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">€199.99</span>
+                  <span className="text-4xl font-extrabold text-gray-900 dark:text-white">€99.99</span>
                   <span className="mb-1 text-gray-600 dark:text-gray-400">{t('welcome.perYear')}</span>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">VAT incl. · {t('welcome.includesOneSite')}</p>

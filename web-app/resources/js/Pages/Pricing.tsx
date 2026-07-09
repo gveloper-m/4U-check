@@ -8,10 +8,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 
-const MONTHLY_PRICE  = 19.99;
-const YEARLY_PRICE   = 199.99;
-const EXTRA_MONTHLY  = 9.99;
-const EXTRA_YEARLY   = 99.99;
+const MONTHLY_PRICE  = 9.99;
+const YEARLY_PRICE   = 99.99;
+const EXTRA_MONTHLY  = 4.99;
+const EXTRA_YEARLY   = 49.99;
 
 const AUDIT_MODULES = [
   { icon: Search,       label: 'SEO Audit',           color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/20',
@@ -46,7 +46,7 @@ const PLAN_FEATURES = [
 const COMPARISON_ROWS = [
   { label: 'Audit modules',          monthly: '7 modules',  yearly: '7 modules' },
   { label: 'Sites included',         monthly: '1',           yearly: '1' },
-  { label: 'Extra sites',            monthly: '€9.99/mo each', yearly: '€99.99/yr each' },
+  { label: 'Extra sites',            monthly: '€4.99/mo each', yearly: '€49.99/yr each' },
   { label: 'Scans per site/month',   monthly: '30',          yearly: '30' },
   { label: 'Scheduled scans',        monthly: true,          yearly: true },
   { label: 'PDF / CSV export',       monthly: true,          yearly: true },
@@ -54,13 +54,13 @@ const COMPARISON_ROWS = [
   { label: 'Historical trends',      monthly: true,          yearly: true },
   { label: 'MCP Agent',               monthly: true,          yearly: true },
   { label: 'Email support',           monthly: true,          yearly: true },
-  { label: 'Savings vs monthly',     monthly: '—',           yearly: '2 months free (~€40)' },
+  { label: 'Savings vs monthly',     monthly: '—',           yearly: '2 months free (~€20)' },
 ];
 
 const FAQS = [
   {
     q: 'What counts as a "site"?',
-    a: 'A site is a root domain or subdomain you register in your account (e.g. example.com or blog.example.com). Your base plan includes one site. You can add additional sites at €9.99/mo or €99.99/yr each.',
+    a: 'A site is a root domain or subdomain you register in your account (e.g. example.com or blog.example.com). Your base plan includes one site. You can add additional sites at €4.99/mo or €49.99/yr each.',
   },
   {
     q: 'How does billing work?',
@@ -223,7 +223,7 @@ export default function Pricing({ auth }: PageProps) {
                   </div>
                   <p className="mt-1 text-xs text-gray-500">VAT incl. · 1 site included</p>
                   {billing === 'yearly' && (
-                    <p className="mt-1 text-xs text-emerald-400 font-medium">≈ €16.67/month · 2 months free</p>
+                    <p className="mt-1 text-xs text-emerald-400 font-medium">≈ €8.33/month · 2 months free</p>
                   )}
 
                   <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
@@ -261,16 +261,16 @@ export default function Pricing({ auth }: PageProps) {
 
                   <div className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">Pro Yearly</div>
                   <div className="flex items-end gap-1 mt-1">
-                    <span className="text-5xl font-extrabold text-gray-900 dark:text-white">€199.99</span>
+                    <span className="text-5xl font-extrabold text-gray-900 dark:text-white">€99.99</span>
                     <span className="mb-1.5 text-gray-500">/year</span>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">VAT incl. · 1 site included</p>
-                  <p className="mt-1 text-xs text-emerald-400 font-medium">≈ €16.67/month · save ~€40 vs monthly</p>
+                  <p className="mt-1 text-xs text-emerald-400 font-medium">≈ €8.33/month · save ~€20 vs monthly</p>
 
                   <div className="mt-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-4 py-3">
                     <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1">Extra sites</p>
                     <p className="text-xs text-gray-500">
-                      <strong className="text-gray-700 dark:text-gray-300">€99.99/year</strong> per additional site (save vs €9.99 × 12 = €119.88).
+                      <strong className="text-gray-700 dark:text-gray-300">€49.99/year</strong> per additional site (save vs €4.99 × 12 = €59.88).
                     </p>
                   </div>
 

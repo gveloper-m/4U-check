@@ -36,8 +36,8 @@ class SendRenewalReminders extends Command
                 $item          = $sub->items()->first();
                 $isYearly      = $yearlyPriceId && $item?->price_id === $yearlyPriceId;
 
-                $plan   = $isYearly ? 'Pro Yearly — €199.99/year' : 'Pro Monthly — €19.99/month';
-                $amount = $isYearly ? '€199.99' : '€19.99';
+                $plan   = $isYearly ? 'Pro Yearly — €99.99/year' : 'Pro Monthly — €9.99/month';
+                $amount = $isYearly ? '€99.99' : '€9.99';
 
                 Mail::to($user->email)->queue(new RenewalReminderMail(
                     user:        $user,
