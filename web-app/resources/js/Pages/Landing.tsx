@@ -3,6 +3,7 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { useTranslation } from 'react-i18next';
 import CookieBanner from '@/Components/CookieBanner';
+import HeroStickman from '@/Components/HeroStickman';
 import {
     Zap, Search, Shield, BarChart3, Link2, ShoppingCart, Tag, Clock, Download,
     ArrowRight, CheckCircle2, XCircle, X, Accessibility, Bot, HelpCircle,
@@ -252,28 +253,37 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                 {/* Hero */}
                 <section className="pt-32 pb-24 px-6">
                     <div className="mx-auto max-w-4xl text-center">
-                        <p className="mb-5 text-sm font-medium text-violet-600 dark:text-violet-400">
-                            {auth.user ? t('welcome.badge') : t('landing.badge')}
-                        </p>
-                        <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl">
-                            {auth.user ? (
-                                <>
-                                    {t('welcome.headline1')}{' '}
-                                    <span className="text-violet-600 dark:text-violet-400">
-                                        {t('welcome.headline2')}
-                                    </span>{' '}
-                                    {t('welcome.headline3')}
-                                </>
-                            ) : (
-                                <>
-                                    {t('landing.headline1')}<br />
-                                    <span className="text-violet-600 dark:text-violet-400">
-                                        {t('landing.headline2')}
-                                    </span>{' '}
-                                    {t('landing.headline3')}
-                                </>
-                            )}
-                        </h1>
+                        {/* Sticky range is scoped to just this wrapper (not the whole hero
+                            block down through the scan form) so the stickman detaches right
+                            after the heading scrolls by, instead of staying stuck long enough
+                            to overlap the form/input further down. */}
+                        <div>
+                            <p className="mb-5 text-sm font-medium text-violet-600 dark:text-violet-400">
+                                {auth.user ? t('welcome.badge') : t('landing.badge')}
+                            </p>
+                            <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 dark:text-white sm:text-6xl lg:text-7xl">
+                                {auth.user ? (
+                                    <>
+                                        {t('welcome.headline1')}{' '}
+                                        <span className="text-violet-600 dark:text-violet-400">
+                                            {t('welcome.headline2')}
+                                        </span>{' '}
+                                        {t('welcome.headline3')}
+                                    </>
+                                ) : (
+                                    <>
+                                        {t('landing.headline1')}<br />
+                                        <span className="text-violet-600 dark:text-violet-400">
+                                            {t('landing.headline2')}
+                                        </span>{' '}
+                                        {t('landing.headline3')}
+                                    </>
+                                )}
+                            </h1>
+
+                            <HeroStickman />
+                        </div>
+
                         <p className="mt-6 text-xl text-gray-600 dark:text-gray-400 max-w-2xl mx-auto leading-relaxed">
                             {auth.user ? t('welcome.sub') : t('landing.sub')}
                         </p>
