@@ -75,39 +75,53 @@
 .prose-blog img { max-width: 100%; border-radius: 0.5rem; margin: 1.5em auto; display: block; }
 
 /* Hero stickman mascot — see resources/js/Components/HeroStickman.tsx.
-   Sticky (not fixed) so it follows scroll only within its own hero
-   section, then detaches naturally rather than floating over every
-   section of the page. */
+   Renders inline under the heading by default; an IntersectionObserver in
+   the component switches it to the --fixed variant (viewport-pinned corner
+   companion) once the heading scrolls out of view, so it keeps following
+   scroll for the rest of the page instead of just detaching. Sized well up
+   from an early version that rendered at 46x90 CSS px — legible on a phone
+   screen, not just in a zoomed-in isolated test. */
 .hero-stickman-track {
-    position: sticky;
-    top: 88px; /* clears the fixed h-16 header + breathing room */
+    position: relative;
     z-index: 1;
-    height: 90px;
+    height: 250px;
     max-width: 56rem; /* matches the hero's max-w-4xl */
     margin: 2.5rem auto 0;
     pointer-events: none;
 }
+.hero-stickman-track--fixed {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 220px;
+    max-width: 220px;
+    height: 250px;
+    margin: 0;
+    transform: scale(0.62);
+    transform-origin: bottom left;
+    z-index: 40; /* below the header (z-50), above regular content */
+}
 .hero-stickman {
     position: absolute;
     bottom: 0;
-    width: 46px;
-    height: 90px;
+    width: 130px;
+    height: 250px;
     animation: hero-stickman-patrol 7s cubic-bezier(0.45, 0, 0.55, 1) infinite;
 }
 @keyframes hero-stickman-patrol {
     0%    { left: 0%;   transform: scaleX(1) translateY(0) scale(1, 1); }
-    6%    { transform: scaleX(1) translateY(-22px) scale(0.95, 1.05); }
+    6%    { transform: scaleX(1) translateY(-60px) scale(0.95, 1.05); }
     12%   { transform: scaleX(1) translateY(0) scale(1.08, 0.92); }
     16%   { transform: scaleX(1) translateY(0) scale(1, 1); }
-    45%   { left: calc(100% - 46px); transform: scaleX(1) translateY(0) scale(1, 1); }
-    46.5% { transform: scaleX(1) translateY(-30px) scale(0.95, 1.05); }
-    50%   { left: calc(100% - 46px); transform: scaleX(-1) translateY(0) scale(1.1, 0.9); }
+    45%   { left: calc(100% - 130px); transform: scaleX(1) translateY(0) scale(1, 1); }
+    46.5% { transform: scaleX(1) translateY(-80px) scale(0.95, 1.05); }
+    50%   { left: calc(100% - 130px); transform: scaleX(-1) translateY(0) scale(1.1, 0.9); }
     52%   { transform: scaleX(-1) translateY(0) scale(1, 1); }
-    58%   { transform: scaleX(-1) translateY(-22px) scale(0.95, 1.05); }
+    58%   { transform: scaleX(-1) translateY(-60px) scale(0.95, 1.05); }
     64%   { transform: scaleX(-1) translateY(0) scale(1.08, 0.92); }
     68%   { transform: scaleX(-1) translateY(0) scale(1, 1); }
     95%   { left: 0%; transform: scaleX(-1) translateY(0) scale(1, 1); }
-    96.5% { transform: scaleX(-1) translateY(-30px) scale(0.95, 1.05); }
+    96.5% { transform: scaleX(-1) translateY(-80px) scale(0.95, 1.05); }
     100%  { left: 0%; transform: scaleX(1) translateY(0) scale(1.1, 0.9); }
 }
 .hero-stickman-limb {
