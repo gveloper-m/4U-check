@@ -70,6 +70,10 @@ class TrackingAuditController extends Controller
             usleep(rand(300000, 700000)); // 0.3–0.7s between batches
 
             foreach ($batch as $url) {
+                if (microtime(true) >= $deadline) {
+                    break;
+                }
+
                 $response = $responses[$url] ?? null;
                 if ($response instanceof \Throwable || ! $response || ! $response->successful()) {
                     $visited[$url] = true;
@@ -78,6 +82,7 @@ class TrackingAuditController extends Controller
 
                 $visited[$url] = true;
                 $htmlContent   = $response->body();
+                $htmlContent   = $this->fetchRenderedIfNeeded($url, $htmlContent);
                 $this->collectedHtml .= $htmlContent;
 
                 $ga4      = $this->detectGA4($htmlContent);

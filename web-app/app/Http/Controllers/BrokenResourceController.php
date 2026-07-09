@@ -81,6 +81,14 @@ class BrokenResourceController extends Controller
             usleep(rand(300000, 700000)); // 0.3–0.7s between batches
 
             foreach ($batch as $url) {
+                // withChromeLock() serializes ALL Chrome usage system-wide, so a
+                // batch full of SPA-shell pages could otherwise render one after
+                // another (up to 20 × ~20s) before the outer while's deadline
+                // check runs again — recheck it here too.
+                if (microtime(true) >= $deadline) {
+                    break;
+                }
+
                 $response = $responses[$url] ?? null;
                 if ($response instanceof \Throwable || ! $response || ! $response->successful()) {
                     $visited[$url] = true;
@@ -89,6 +97,7 @@ class BrokenResourceController extends Controller
 
                 $visited[$url] = true;
                 $htmlContent   = $response->body();
+                $htmlContent   = $this->fetchRenderedIfNeeded($url, $htmlContent);
                 $resources     = $this->extractResources($htmlContent, $url);
 
                 $this->allLinks  = array_merge($this->allLinks,  $resources['links']);

@@ -28,6 +28,7 @@ class SeoSchemaAuditController extends Controller
     public function performAudit(string $pageUrl): array
     {
         $htmlContent = $this->fetchHtml($pageUrl);
+        $htmlContent = $this->fetchRenderedIfNeeded($pageUrl, $htmlContent);
         $crawler     = new Crawler($htmlContent, $pageUrl);
 
         $titleCheck       = $this->checkMetaTitle($crawler);

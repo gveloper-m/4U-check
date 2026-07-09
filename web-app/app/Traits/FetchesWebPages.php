@@ -228,4 +228,113 @@ trait FetchesWebPages
 
         return $relative;
     }
+
+    private const RENDER_FAILED_SENTINEL = '__render_failed__';
+
+    /**
+     * Detect a JavaScript-rendered "empty shell" page (React/Vue/Next/Inertia
+     * without SSR, etc.) — a plain HTTP fetch of such a page returns almost no
+     * visible content because everything is rendered client-side after the
+     * fact. Confirmed on 4utest.com itself: <body> is just
+     * <div id="app" data-page="...">, zero real text.
+     *
+     * <script>/<style>/<noscript>/<template> BLOCKS (not just their tags) are
+     * stripped before counting — SPA shells routinely embed large inline
+     * JSON/JS blobs (state hydration payloads, webpack runtime) whose text
+     * content would otherwise mask exactly the shells this is meant to catch.
+     */
+    protected function looksLikeEmptySpaShell(string $html, int $threshold = 80): bool
+    {
+        $body = preg_match('/<body[^>]*>(.*?)<\/body>/is', $html, $m) ? $m[1] : $html;
+        $body = preg_replace('/<(script|style|noscript|template)\b[^>]*>.*?<\/\1>/is', ' ', $body);
+        $text = trim(preg_replace('/\s+/', ' ', strip_tags($body)));
+
+        return mb_strlen($text) < $threshold;
+    }
+
+    /**
+     * If $rawHtml looks like an empty SPA shell, render $url through headless
+     * Chrome to get the real post-JS document and return that instead —
+     * otherwise return $rawHtml unchanged (the fast, cheap path every
+     * traditional server-rendered site keeps using).
+     *
+     * The rendered result is shared via a short-TTL Redis cache keyed by URL:
+     * every audit dispatches 7 module jobs concurrently with no chaining
+     * (see RunAuditorJob), so several modules can want the same page's
+     * rendered HTML within the same few seconds — only one of them should
+     * actually pay the Chrome cost.
+     */
+    protected function fetchRenderedIfNeeded(string $url, string $rawHtml): string
+    {
+        if (! $this->looksLikeEmptySpaShell($rawHtml)) {
+            return $rawHtml;
+        }
+
+        $cacheKey = 'audit-rendered-html:' . sha1($url);
+        $cached   = Cache::get($cacheKey);
+        if ($cached !== null) {
+            return $cached === self::RENDER_FAILED_SENTINEL ? $rawHtml : $cached;
+        }
+
+        $chromePath = $this->findChromePath();
+        if (! $chromePath) {
+            return $rawHtml;
+        }
+
+        try {
+            $rendered = $this->withChromeLock(function () use ($url, $chromePath): string {
+                return Browsershot::url($url)
+                    ->setChromePath($chromePath)
+                    ->noSandbox()
+                    ->timeout(20)
+                    ->userAgent($this->randomUserAgent())
+                    // Default page.goto() wait is 'load', which fires before a
+                    // React/Vue app's client-side data-fetching/hydration is
+                    // done — capturing right after that can be just as empty
+                    // as the raw HTML. networkidle2 (via false here) waits for
+                    // hydration while still tolerating lingering connections
+                    // (analytics beacons, websockets) that networkidle0 would
+                    // hang on until the timeout.
+                    ->waitUntilNetworkIdle(false)
+                    ->addChromiumArguments([
+                        'disable-dev-shm-usage',
+                        'disable-gpu',
+                        'disable-setuid-sandbox',
+                        'disable-extensions',
+                        'disable-background-networking',
+                        'disable-default-apps',
+                        'disable-sync',
+                        'disable-translate',
+                        'disable-blink-features=AutomationControlled',
+                        'mute-audio',
+                        'no-first-run',
+                        'no-zygote',
+                        'renderer-process-limit=1',
+                        'js-flags=--max-old-space-size=256',
+                    ])
+                    ->bodyHtml(); // despite the name, returns the FULL document (page.content()) — head included
+            });
+        } catch (\Throwable $e) {
+            Log::warning('Rendered-HTML fetch failed for ' . $url . ': ' . $e->getMessage());
+            Cache::put($cacheKey, self::RENDER_FAILED_SENTINEL, 240);
+            return $rawHtml;
+        }
+
+        // null means withChromeLock() found Chrome BUSY (non-blocking lock) —
+        // contention, not failure. Don't cache a failure sentinel for it;
+        // just fall back this once and let the next caller try again.
+        if ($rendered === null || trim($rendered) === '') {
+            return $rawHtml;
+        }
+
+        // Guard against caching 15 minutes of still-useless content (auth
+        // wall, bot-block, genuinely broken JS) as if it were a good render.
+        if ($this->looksLikeEmptySpaShell($rendered, 150)) {
+            Cache::put($cacheKey, self::RENDER_FAILED_SENTINEL, 240);
+            return $rawHtml;
+        }
+
+        Cache::put($cacheKey, $rendered, 900);
+        return $rendered;
+    }
 }

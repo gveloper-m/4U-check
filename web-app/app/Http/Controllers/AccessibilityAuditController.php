@@ -61,7 +61,7 @@ class AccessibilityAuditController extends Controller
                 return $this->errorResult("HTTP {$response->status()}");
             }
 
-            $html = $response->body();
+            $html = $this->fetchRenderedIfNeeded($url, $response->body());
 
             $dom = new DOMDocument();
             libxml_use_internal_errors(true);

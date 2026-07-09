@@ -224,6 +224,8 @@ class PerformanceAuditController extends Controller
             return $pages;
         }
 
+        $htmlContent = $this->fetchRenderedIfNeeded($url, $htmlContent);
+
         try {
             $parsedUrl = parse_url($url);
             $host = $parsedUrl['host'] ?? '';
