@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Instagram, Mail } from 'lucide-react';
 import CookieBanner from '@/Components/CookieBanner';
 
 export default function LegalLayout({ children }: PropsWithChildren) {
@@ -31,10 +31,25 @@ export default function LegalLayout({ children }: PropsWithChildren) {
             <footer className="border-t border-gray-200 dark:border-gray-800 px-6 py-5">
                 <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3">
                     <p className="text-xs text-gray-400">© {year} 4utest. All rights reserved.</p>
-                    <nav className="flex items-center gap-5 text-xs text-gray-400">
+                    <nav className="flex flex-wrap items-center gap-5 text-xs text-gray-400">
                         <Link href="/terms"   className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Terms</Link>
                         <Link href="/privacy" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Privacy</Link>
                         <Link href="/refund"  className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Refunds</Link>
+                        <a
+                            href="mailto:4utestservice@gmail.com"
+                            className="flex items-center gap-1.5 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        >
+                            <Mail className="h-3.5 w-3.5" /> 4utestservice@gmail.com
+                        </a>
+                        <a
+                            href="https://www.instagram.com/4utest_/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label="4uTest on Instagram"
+                            className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                        >
+                            <Instagram className="h-4 w-4" />
+                        </a>
                     </nav>
                 </div>
             </footer>

@@ -3,7 +3,7 @@ import { PageProps } from '@/types';
 import {
   Zap, ArrowRight, CheckCircle2, XCircle, Search, Shield, BarChart3, Link2,
   ShoppingCart, Tag, Accessibility, Clock, Download, Globe, Bot,
-  HelpCircle, ChevronDown, ChevronUp,
+  HelpCircle, ChevronDown, ChevronUp, Mail, Instagram,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
@@ -435,12 +435,27 @@ export default function Pricing({ auth }: PageProps) {
                 </div>
                 <span className="text-sm font-bold text-gray-900 dark:text-white">4u<span className="text-violet-400">test</span></span>
               </div>
-              <div className="flex items-center gap-6 text-xs text-gray-400">
+              <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-gray-400">
                 <Link href="/"        className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Home</Link>
                 <Link href="/blog"    className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Blog</Link>
                 <Link href="/terms"   className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Terms</Link>
                 <Link href="/privacy" className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Privacy</Link>
                 <Link href="/refund"  className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors">Refunds</Link>
+                <a
+                  href="mailto:4utestservice@gmail.com"
+                  className="flex items-center gap-1.5 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <Mail className="h-3.5 w-3.5" /> 4utestservice@gmail.com
+                </a>
+                <a
+                  href="https://www.instagram.com/4utest_/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="4uTest on Instagram"
+                  className="hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                >
+                  <Instagram className="h-4 w-4" />
+                </a>
               </div>
               <p className="text-xs text-gray-500">© {new Date().getFullYear()} 4utest. All rights reserved.</p>
             </div>

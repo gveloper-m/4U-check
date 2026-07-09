@@ -1,6 +1,6 @@
 import { Link } from '@inertiajs/react';
 import { PropsWithChildren } from 'react';
-import { Zap } from 'lucide-react';
+import { Zap, Instagram, Mail } from 'lucide-react';
 import LanguageSwitcher from '@/Components/LanguageSwitcher';
 import ThemeToggle from '@/Components/ThemeToggle';
 import CookieBanner from '@/Components/CookieBanner';
@@ -36,8 +36,25 @@ export default function BlogLayout({ children }: PropsWithChildren) {
                 {children}
             </main>
 
-            <footer className="border-t border-gray-200 dark:border-gray-800 py-6 text-center text-xs text-gray-600">
-                &copy; {new Date().getFullYear()} 4utest. All rights reserved.
+            <footer className="border-t border-gray-200 dark:border-gray-800 py-6 px-4">
+                <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-4 text-xs text-gray-600 dark:text-gray-400">
+                    <span>&copy; {new Date().getFullYear()} 4utest. All rights reserved.</span>
+                    <a
+                        href="mailto:4utestservice@gmail.com"
+                        className="flex items-center gap-1.5 hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                        <Mail className="h-3.5 w-3.5" /> 4utestservice@gmail.com
+                    </a>
+                    <a
+                        href="https://www.instagram.com/4utest_/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label="4uTest on Instagram"
+                        className="hover:text-gray-900 dark:hover:text-white transition-colors"
+                    >
+                        <Instagram className="h-4 w-4" />
+                    </a>
+                </div>
             </footer>
 
             <CookieBanner />
