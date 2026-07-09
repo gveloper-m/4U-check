@@ -65,15 +65,8 @@ RUN docker-php-ext-configure gd --with-jpeg --with-webp \
         pcntl \
         opcache
 
-# Install Redis PHP extension via PECL.
-# channel-update first: PECL occasionally returns "does not have REST
-# dependency information available" for a version that was just published —
-# a transient propagation delay on pecl.php.net's end, not a real problem
-# with the package. Refreshing the channel metadata avoids the build failing
-# on that timing window (confirmed by reproducing it, then confirming this
-# fixes it, in a container matching this exact base image).
-RUN pecl channel-update pecl.php.net \
-    && pecl install redis \
+# Install Redis PHP extension via PECL
+RUN pecl install redis \
     && docker-php-ext-enable redis
 
 # Install Composer 2
