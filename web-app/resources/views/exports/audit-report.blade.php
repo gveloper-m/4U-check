@@ -92,7 +92,7 @@
   <div class="section-header">Score Deductions</div>
   <div class="section-body">
     @foreach($report->score_deductions as $ded)
-      <div class="deduction-item">&#8722; {{ $ded }}</div>
+      <div class="deduction-item">&#8722; {{ \App\Support\Deductions::text($ded) }}</div>
     @endforeach
   </div>
 </div>

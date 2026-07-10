@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import InfoTooltip from '@/Components/InfoTooltip';
 import ScreenshotGallery, { GalleryItem } from '@/Components/ScreenshotGallery';
+import TopFixes from '@/Components/TopFixes';
 import { screenshotUrl } from '@/lib/screenshot';
 import {
   Search,
@@ -360,19 +361,9 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
             </div>
           </div>
 
-          {/* Score deductions */}
+          {/* Score deductions — prioritized "top fixes" list */}
           {report.score_deductions && report.score_deductions.length > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-4 w-4 text-amber-500" />
-                <h3 className="text-sm font-semibold text-amber-700">{t('show.deductionsTitle')}</h3>
-              </div>
-              <ul className="space-y-1">
-                {report.score_deductions.map((d, i) => (
-                  <li key={i} className="text-sm text-amber-700/80">• {d}</li>
-                ))}
-              </ul>
-            </div>
+            <TopFixes deductions={report.score_deductions} t={t} />
           )}
 
           {/* Screenshot gallery */}

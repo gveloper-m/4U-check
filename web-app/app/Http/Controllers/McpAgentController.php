@@ -279,21 +279,24 @@ BASH;
 
     private function buildReportPayload(FullAuditReport $report): string
     {
+        // These columns are cast to 'array' on the model, so the accessor
+        // already returns decoded arrays — json_decode() on them would
+        // TypeError. Use the values directly.
         return json_encode([
             'report_id'    => $report->id,
             'url'          => $report->site_url,
             'health_score' => $report->health_score,
             'status'       => $report->status,
             'scanned_at'   => $report->updated_at?->toIso8601String(),
-            'deductions'   => json_decode($report->score_deductions ?? '[]', true),
+            'deductions'   => $report->score_deductions ?? [],
             'modules'      => [
-                'seo_schema'         => json_decode($report->seo_schema_result         ?? 'null', true),
-                'security'           => json_decode($report->security_result           ?? 'null', true),
-                'performance'        => json_decode($report->performance_result        ?? 'null', true),
-                'broken_resources'   => json_decode($report->broken_resources_result   ?? 'null', true),
-                'catalog_integrity'  => json_decode($report->catalog_result            ?? 'null', true),
-                'marketing_tracking' => json_decode($report->tracking_result           ?? 'null', true),
-                'accessibility'      => json_decode($report->accessibility_result      ?? 'null', true),
+                'seo_schema'         => $report->seo_schema_result,
+                'security'           => $report->security_result,
+                'performance'        => $report->performance_result,
+                'broken_resources'   => $report->broken_resources_result,
+                'catalog_integrity'  => $report->catalog_result,
+                'marketing_tracking' => $report->tracking_result,
+                'accessibility'      => $report->accessibility_result,
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
     }

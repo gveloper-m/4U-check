@@ -25,7 +25,7 @@ export interface FullAuditReport {
     share_uuid?: string | null;
     share_enabled?: boolean;
     health_score?: number;
-    score_deductions?: string[];
+    score_deductions?: import('@/lib/deductions').Deduction[];
     seo_schema_result?: Record<string, unknown>;
     security_result?: Record<string, unknown>;
     catalog_result?: Record<string, unknown>;

@@ -299,7 +299,7 @@ class AuditController extends Controller
             if (is_array($report->score_deductions) && count($report->score_deductions) > 0) {
                 fputcsv($handle, ['SCORE DEDUCTIONS']);
                 foreach ($report->score_deductions as $deduction) {
-                    fputcsv($handle, ['', $deduction]);
+                    fputcsv($handle, ['', \App\Support\Deductions::text($deduction)]);
                 }
                 fputcsv($handle, []);
             }

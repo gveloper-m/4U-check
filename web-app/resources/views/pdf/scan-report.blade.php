@@ -467,7 +467,7 @@
 <div class="deductions">
   <h2>Score Deductions</h2>
   @foreach($deductions as $d)
-    <div class="deduction-item">{{ $d }}</div>
+    <div class="deduction-item">{{ \App\Support\Deductions::text($d) }}</div>
   @endforeach
 </div>
 @else

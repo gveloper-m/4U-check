@@ -84,7 +84,14 @@ class FullAuditReportController extends Controller
         // If all 6 are done and status not yet marked completed, finalize
         if ($doneCount === 6 && $record->status !== 'completed') {
             $audits = $this->buildAuditsArray($record);
-            ['score' => $score, 'deductions' => $ded] = $this->computeHealthScore($audits);
+            $fuzzResult = ($record->fuzz_testing_result ?? null) !== null
+                ? json_decode($record->fuzz_testing_result, true)
+                : null;
+            ['score' => $score, 'deductions' => $ded] = \App\Support\HealthScore::compute(
+                $audits,
+                (bool) ($record->fuzz_requested ?? false),
+                $fuzzResult,
+            );
 
             DB::table('full_audit_reports')->where('id', $id)->update([
                 'status'           => 'completed',
@@ -163,87 +170,5 @@ class FullAuditReportController extends Controller
             $audits[$key] = $raw !== null ? json_decode($raw, true) : ['status' => 'running'];
         }
         return $audits;
-    }
-
-    private function computeHealthScore(array $audits): array
-    {
-        $score      = 100;
-        $deductions = [];
-
-        // SEO checks
-        $seo = $audits['seo_schema'] ?? [];
-        if (($seo['status'] ?? '') === 'ok') {
-            if (($seo['meta_title']['status'] ?? '')       !== 'OK') { $score -= 5;  $deductions[] = 'SEO: bad meta title'; }
-            if (($seo['meta_description']['status'] ?? '') !== 'OK') { $score -= 5;  $deductions[] = 'SEO: bad meta description'; }
-            if (($seo['h1_tags']['status'] ?? '')          !== 'OK') { $score -= 5;  $deductions[] = 'SEO: H1 count issue'; }
-            if (($seo['canonical']['status'] ?? '') === 'MISSING')   { $score -= 3;  $deductions[] = 'SEO: missing canonical'; }
-            if (($seo['canonical']['status'] ?? '') === 'MISMATCH')  { $score -= 5;  $deductions[] = 'SEO: canonical mismatch'; }
-            if (! ($seo['schema_validation']['has_valid_schema'] ?? false)) { $score -= 5; $deductions[] = 'SEO: no structured data'; }
-            if (($seo['open_graph']['status'] ?? '') === 'MISSING')  { $score -= 5;  $deductions[] = 'SEO: missing OG tags'; }
-            if (($seo['image_alt_text']['status'] ?? '') === 'BAD')  { $score -= 5;  $deductions[] = 'SEO: many images missing alt text'; }
-            if (! ($seo['technical_seo']['robots_txt']['exists'] ?? true))  { $score -= 3; $deductions[] = 'SEO: robots.txt missing'; }
-            if (! ($seo['technical_seo']['sitemap_xml']['exists'] ?? true)) { $score -= 3; $deductions[] = 'SEO: sitemap.xml missing'; }
-        }
-
-        // Security checks
-        $sec = $audits['security'] ?? [];
-        if (($sec['status'] ?? '') === 'ok') {
-            if (! ($sec['ssl']['ssl_valid'] ?? false))               { $score -= 20; $deductions[] = 'Security: invalid SSL'; }
-            elseif (($sec['ssl']['ssl_days_left'] ?? 99) <= 30)      { $score -= 10; $deductions[] = 'Security: SSL expiring soon'; }
-            if ($sec['mixed_content']['has_mixed_content'] ?? false)  { $score -= 10; $deductions[] = 'Security: mixed content'; }
-            if (! ($sec['dns_security']['spf_record_exists']   ?? false)) { $score -= 5; $deductions[] = 'Security: no SPF record'; }
-            if (! ($sec['dns_security']['dmarc_record_exists'] ?? false)) { $score -= 5; $deductions[] = 'Security: no DMARC record'; }
-            $hs = $sec['security_headers']['score'] ?? 6;
-            if ($hs <= 2)      { $score -= 10; $deductions[] = 'Security: most security headers missing'; }
-            elseif ($hs <= 4)  { $score -= 5;  $deductions[] = 'Security: some security headers missing'; }
-            if (($sec['https_redirect']['redirects_to_https'] ?? null) === false) { $score -= 5; $deductions[] = 'Security: http:// not redirected to https://'; }
-        }
-
-        // Catalog checks
-        $cat = $audits['catalog_integrity'] ?? [];
-        if (($cat['status'] ?? '') === 'ok' && ($cat['products_audited'] ?? 0) > 0) {
-            $pct = $cat['broken_percentage'] ?? 0;
-            if ($pct > 50)     { $score -= 20; $deductions[] = "Catalog: {$pct}% products broken"; }
-            elseif ($pct > 10) { $score -= 10; $deductions[] = "Catalog: {$pct}% products broken"; }
-            elseif ($pct > 0)  { $score -= 5;  $deductions[] = "Catalog: {$pct}% products broken"; }
-        }
-
-        // Tracking checks
-        $trk = $audits['marketing_tracking'] ?? [];
-        if (($trk['status'] ?? '') === 'ok') {
-            $scripts = $trk['tracking_scripts'] ?? [];
-            if (! ($scripts['ga4']['detected']           ?? false)) { $score -= 5; $deductions[] = 'Tracking: no GA4'; }
-            if (! ($scripts['facebook_pixel']['detected'] ?? false)) { $score -= 3; $deductions[] = 'Tracking: no Facebook Pixel'; }
-        }
-
-        // Broken resources
-        $br = $audits['broken_resources'] ?? [];
-        if (($br['status'] ?? '') === 'ok') {
-            $brokenLinks  = $br['summary']['broken_links_count']  ?? 0;
-            $brokenImages = $br['summary']['broken_images_count'] ?? 0;
-            if ($brokenLinks > 10)    { $score -= 10; $deductions[] = "{$brokenLinks} broken links"; }
-            elseif ($brokenLinks > 0) { $score -= 5;  $deductions[] = "{$brokenLinks} broken links"; }
-            if ($brokenImages > 0)    { $score -= 5;  $deductions[] = "{$brokenImages} broken images"; }
-        }
-
-        // Performance
-        $perf = $audits['performance'] ?? [];
-        if (($perf['status'] ?? '') === 'ok') {
-            $ttfb = $perf['metrics']['ttfb_ms'] ?? null;
-            if ($ttfb !== null) {
-                if ($ttfb > 800)     { $score -= 10; $deductions[] = "Performance: slow TTFB {$ttfb}ms"; }
-                elseif ($ttfb > 400) { $score -= 5;  $deductions[] = "Performance: TTFB {$ttfb}ms"; }
-            }
-            $lcp = $perf['metrics']['desktop']['lcp_ms'] ?? null;
-            if ($lcp !== null) {
-                if ($lcp > 4000)     { $score -= 10; $deductions[] = "Performance: poor LCP {$lcp}ms"; }
-                elseif ($lcp > 2500) { $score -= 5;  $deductions[] = "Performance: needs improvement LCP {$lcp}ms"; }
-            }
-            $pa = $perf['page_analysis'] ?? [];
-            if (! ($pa['compression_enabled'] ?? true)) { $score -= 5; $deductions[] = 'Performance: no gzip/brotli compression'; }
-            if (($pa['total_render_blocking'] ?? 0) > 3) { $score -= 3; $deductions[] = 'Performance: render-blocking resources'; }
-        }
-
-        return ['score' => max(0, $score), 'deductions' => $deductions];
     }
 }

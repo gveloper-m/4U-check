@@ -166,132 +166,14 @@ class RunAuditorJob implements ShouldQueue
             $audits[$key] = $raw !== null ? json_decode($raw, true) : ['status' => 'running'];
         }
 
-        $score      = 100;
-        $deductions = [];
+        $fuzzResult = ($record->fuzz_testing_result ?? null) !== null
+            ? json_decode($record->fuzz_testing_result, true)
+            : null;
 
-        // --- SEO ---
-        $seo = $audits['seo_schema'] ?? [];
-        if (($seo['status'] ?? '') === 'ok') {
-            if (($seo['meta_title']['status'] ?? '')       !== 'OK') { $score -= 5;  $deductions[] = 'SEO: bad meta title (-5)'; }
-            // Meta description is secondary — lower weight; lede paragraph matters more
-            if (($seo['meta_description']['status'] ?? '') === 'MISSING') { $score -= 2; $deductions[] = 'SEO: missing meta description (-2)'; }
-            if (($seo['h1_tags']['status'] ?? '')          !== 'OK') { $score -= 5;  $deductions[] = 'SEO: H1 issue (-5)'; }
-            if (($seo['canonical']['status'] ?? '') === 'MISSING')   { $score -= 3;  $deductions[] = 'SEO: missing canonical (-3)'; }
-            if (($seo['canonical']['status'] ?? '') === 'MISMATCH')  { $score -= 5;  $deductions[] = 'SEO: canonical mismatch (-5)'; }
-            if (! ($seo['schema_validation']['has_valid_schema'] ?? false)) { $score -= 5; $deductions[] = 'SEO: no structured data (-5)'; }
-            if (($seo['open_graph']['status'] ?? '') === 'MISSING')  { $score -= 5;  $deductions[] = 'SEO: missing OG tags (-5)'; }
-            if (($seo['image_alt_text']['status'] ?? '') === 'BAD')  { $score -= 5;  $deductions[] = 'SEO: images missing alt attribute (-5)'; }
-            if (! ($seo['technical_seo']['robots_txt']['exists']  ?? true)) { $score -= 3; $deductions[] = 'SEO: robots.txt missing (-3)'; }
-            if (! ($seo['technical_seo']['sitemap_xml']['exists'] ?? true)) { $score -= 3; $deductions[] = 'SEO: sitemap.xml missing (-3)'; }
-            // New signals
-            if ($seo['robots_directives']['is_noindex'] ?? false)           { $score -= 10; $deductions[] = 'SEO: page is noindexed (-10)'; }
-            if (($seo['page_content']['content_depth'] ?? '') === 'thin')   { $score -= 5;  $deductions[] = 'SEO: thin content (< 300 words) (-5)'; }
-            if (($seo['url_quality']['status'] ?? '') === 'BAD')            { $score -= 3;  $deductions[] = 'SEO: URL slug quality issues (-3)'; }
-            if (\count($seo['heading_structure']['issues'] ?? []) > 1)      { $score -= 3;  $deductions[] = 'SEO: heading structure issues (-3)'; }
-            $internalLinks = $seo['internal_linking']['internal_links'] ?? null;
-            if ($internalLinks !== null && $internalLinks < 2)              { $score -= 3;  $deductions[] = 'SEO: very few internal links (-3)'; }
-        }
-
-        // --- Security ---
-        $sec = $audits['security'] ?? [];
-        if (($sec['status'] ?? '') === 'ok') {
-            if (! ($sec['ssl']['ssl_valid'] ?? false))                                          { $score -= 20; $deductions[] = 'Security: invalid/missing SSL (-20)'; }
-            elseif (($sec['ssl']['ssl_days_left'] ?? 99) <= 30)                                { $score -= 10; $deductions[] = 'Security: SSL expiring soon (-10)'; }
-            if ($sec['mixed_content']['has_mixed_content'] ?? false)                            { $score -= 10; $deductions[] = 'Security: mixed content (-10)'; }
-            if (! ($sec['dns_security']['spf_record_exists']   ?? false))                       { $score -= 5;  $deductions[] = 'Security: no SPF record (-5)'; }
-            if (! ($sec['dns_security']['dmarc_record_exists'] ?? false))                       { $score -= 5;  $deductions[] = 'Security: no DMARC record (-5)'; }
-            $hs = $sec['security_headers']['score'] ?? 6;
-            if ($hs <= 2)     { $score -= 10; $deductions[] = 'Security: most headers missing (-10)'; }
-            elseif ($hs <= 4) { $score -= 5;  $deductions[] = 'Security: some headers missing (-5)'; }
-            if (($sec['https_redirect']['redirects_to_https'] ?? null) === false) { $score -= 5; $deductions[] = 'Security: HTTP not redirected to HTTPS (-5)'; }
-        }
-
-        // --- Catalog ---
-        $cat = $audits['catalog_integrity'] ?? [];
-        if (($cat['status'] ?? '') === 'ok' && ($cat['products_audited'] ?? 0) > 0) {
-            $pct = $cat['broken_percentage'] ?? 0;
-            if ($pct > 50)     { $score -= 20; $deductions[] = "Catalog: {$pct}% products broken (-20)"; }
-            elseif ($pct > 10) { $score -= 10; $deductions[] = "Catalog: {$pct}% products broken (-10)"; }
-            elseif ($pct > 0)  { $score -= 5;  $deductions[] = "Catalog: {$pct}% products broken (-5)"; }
-        }
-
-        // --- Tracking ---
-        // Deliberately no score deduction here. Whether GA4/Facebook Pixel/TikTok
-        // Pixel are installed is a marketing decision, not a technical health
-        // problem — conflating the two would penalize sites for a legitimate
-        // business choice not to run third-party trackers. The Tracking module's
-        // findings are still shown in full in their own report section; this
-        // health score just doesn't treat "no analytics" as "unhealthy."
-
-        // --- Broken Resources ---
-        $br = $audits['broken_resources'] ?? [];
-        if (($br['status'] ?? '') === 'ok') {
-            $brokenLinks  = $br['summary']['broken_links_count']  ?? 0;
-            $brokenImages = $br['summary']['broken_images_count'] ?? 0;
-            if ($brokenLinks > 10)    { $score -= 10; $deductions[] = "{$brokenLinks} broken links (-10)"; }
-            elseif ($brokenLinks > 0) { $score -= 5;  $deductions[] = "{$brokenLinks} broken link(s) (-5)"; }
-            if ($brokenImages > 0)    { $score -= 5;  $deductions[] = "{$brokenImages} broken image(s) (-5)"; }
-        }
-
-        // --- Performance ---
-        $perf = $audits['performance'] ?? [];
-        if (($perf['status'] ?? '') === 'ok') {
-            $ttfb = $perf['metrics']['ttfb_ms'] ?? null;
-            if ($ttfb !== null) {
-                if ($ttfb > 1500)     { $score -= 10; $deductions[] = "Performance: TTFB {$ttfb}ms (very slow) (-10)"; }
-                elseif ($ttfb > 600)  { $score -= 5;  $deductions[] = "Performance: TTFB {$ttfb}ms (slow) (-5)"; }
-            }
-            // Only scored when PerformanceAuditController determined it's actually
-            // worth flagging (page large enough that gzip/brotli would meaningfully
-            // help) — a tiny page skipping compression isn't a health problem.
-            if ($perf['page_analysis']['compression_worth_flagging'] ?? false) { $score -= 5; $deductions[] = 'Performance: compression not enabled (-5)'; }
-            // Same size-gated principle: only same-origin CSS/JS files over 10KB
-            // that still look unminified are ever reported here — a small file
-            // gains nothing from minifying it, so it's never flagged at all.
-            $unminifiedCount = \count($perf['page_analysis']['unminified_assets'] ?? []);
-            if ($unminifiedCount > 0) { $score -= 3; $deductions[] = "Performance: {$unminifiedCount} unminified CSS/JS file(s) over 10KB (-3)"; }
-        }
-
-        // --- Accessibility ---
-        $a11y = $audits['accessibility'] ?? [];
-        if (($a11y['status'] ?? '') === 'ok') {
-            $checks    = $a11y['checks'] ?? [];
-            $formFail  = $checks['form_labels']['fail']        ?? 0;
-            $imgFail   = $checks['image_alt']['missing_count'] ?? 0;
-            $ariaFail  = $checks['aria_labels']['fail']        ?? 0;
-            $hIssues   = \count($checks['heading_hierarchy']['issues'] ?? []);
-            $csFail    = $checks['color_contrast']['fail']     ?? 0;
-
-            if ($formFail > 3)  { $score -= 8;  $deductions[] = "Accessibility: {$formFail} unlabeled form inputs (-8)"; }
-            if ($imgFail  > 5)  { $score -= 5;  $deductions[] = "Accessibility: {$imgFail} images missing alt text (-5)"; }
-            if ($ariaFail > 2)  { $score -= 5;  $deductions[] = "Accessibility: {$ariaFail} elements missing ARIA name (-5)"; }
-            if ($hIssues  > 0)  { $score -= 5;  $deductions[] = 'Accessibility: heading hierarchy issues (-5)'; }
-            if (! ($checks['landmarks']['has_lang']  ?? true)) { $score -= 5; $deductions[] = 'Accessibility: missing html lang attribute (-5)'; }
-            if (! ($checks['landmarks']['has_main']  ?? true)) { $score -= 3; $deductions[] = 'Accessibility: no <main> landmark (-3)'; }
-            if ($csFail   > 2)  { $score -= 5;  $deductions[] = "Accessibility: {$csFail} color contrast violations (-5)"; }
-        }
-
-        // --- Fuzz Testing (optional — only requested for some scans) ---
-        if ($record->fuzz_requested ?? false) {
-            $fuzzRaw = $record->fuzz_testing_result ?? null;
-            $fuzz    = $fuzzRaw !== null ? json_decode($fuzzRaw, true) : null;
-            if ($fuzz && ($fuzz['status'] ?? '') === 'ok') {
-                $summary = $fuzz['summary'] ?? [];
-                $serious = ($summary['reflected_input'] ?? 0) + ($summary['error_disclosure'] ?? 0) + ($summary['server_error'] ?? 0);
-                $slow    = $summary['slow_response'] ?? 0;
-                if ($serious > 0) {
-                    $deduction = min(20, $serious * 8);
-                    $score -= $deduction;
-                    $deductions[] = "Fuzz testing: {$serious} potential input-handling issue(s) found (-{$deduction})";
-                }
-                if ($slow > 0) {
-                    $deduction = min(5, $slow * 2);
-                    $score -= $deduction;
-                    $deductions[] = "Fuzz testing: {$slow} slow-response finding(s) (-{$deduction})";
-                }
-            }
-        }
-
-        return ['score' => max(0, $score), 'deductions' => $deductions];
+        return \App\Support\HealthScore::compute(
+            $audits,
+            (bool) ($record->fuzz_requested ?? false),
+            $fuzzResult,
+        );
     }
 }

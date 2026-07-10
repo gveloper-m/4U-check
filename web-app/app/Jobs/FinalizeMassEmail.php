@@ -57,8 +57,13 @@ class FinalizeMassEmail implements ShouldQueue
         $deductions = json_decode($audit->score_deductions ?? '[]', true) ?: [];
         $shareUrl   = config('app.url') . '/shared/' . $audit->share_uuid;
 
-        // Top 5 most impactful deductions (they already contain the point values)
-        $topIssues = array_slice($deductions, 0, 5);
+        // Top 5 most impactful deductions. HealthScore now stores them sorted
+        // by impact and as structured objects; render each to display text
+        // (handles both the new object shape and legacy string rows).
+        $topIssues = array_map(
+            fn ($d) => \App\Support\Deductions::text($d),
+            array_slice($deductions, 0, 5),
+        );
 
         $contact->update(['status' => 'sending']);
 
