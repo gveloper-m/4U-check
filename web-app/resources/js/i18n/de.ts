@@ -222,6 +222,8 @@ const de = {
       compressionNotNeeded: 'bei einer so kleinen Seite nicht der Mühe wert',
       renderBlocking: 'Rendering-Blockierung',
       resources: 'Ressourcen',
+      minification: 'Minifizierung',
+      filesOver10kb: 'Datei(en) über 10KB nicht minifiziert',
     },
     broken: {
       totalLinks: 'Geprüfte Links',
@@ -348,6 +350,7 @@ const de = {
       lcp: 'Largest Contentful Paint — wie lange es dauert, bis das größte sichtbare Element vollständig geladen ist. Unter 2,5 s gilt als gut. Dies ist ein Google Core Web Vital.',
       compression: 'Ob Ihr Server Antworten komprimiert (z. B. gzip/Brotli), bevor er sie sendet — das verringert die Ladezeit.',
       renderBlocking: 'Skripte oder Stylesheets, die vollständig geladen sein müssen, bevor die Seite mit dem Rendern beginnen kann, was die wahrgenommene Ladezeit verlangsamt.',
+      minification: 'Ob bei Ihren eigenen CSS/JS-Dateien Leerzeichen und Kommentare entfernt wurden, um die Übertragungsgröße zu verringern. Wird nur bei Dateien über 10KB geprüft — kleinere Dateien profitieren nicht von der Minifizierung.',
     },
     broken: {
       totalLinks: 'Die Gesamtzahl der auf Ihrer Website gefundenen und geprüften Links.',

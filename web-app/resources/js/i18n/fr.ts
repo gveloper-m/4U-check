@@ -222,6 +222,8 @@ const fr = {
       compressionNotNeeded: "ne vaut pas la peine pour une page aussi petite",
       renderBlocking: 'Blocage du rendu',
       resources: 'ressources',
+      minification: 'Minification',
+      filesOver10kb: "fichier(s) de plus de 10 Ko non minifiés",
     },
     broken: {
       totalLinks: 'Total des liens vérifiés',
@@ -348,6 +350,7 @@ const fr = {
       lcp: 'Largest Contentful Paint — le temps avant que le plus grand élément visible ne termine son chargement. Moins de 2,5 s est considéré comme bon. C\'est un Core Web Vital de Google.',
       compression: 'Indique si votre serveur compresse les réponses (ex. gzip/Brotli) avant de les envoyer, ce qui réduit le temps de chargement.',
       renderBlocking: 'Scripts ou feuilles de style qui doivent se charger entièrement avant que la page puisse commencer à s\'afficher, ralentissant le temps de chargement perçu.',
+      minification: "Indique si vos propres fichiers CSS/JS ont les espaces et commentaires supprimés pour réduire la taille de transfert. Vérifié uniquement pour les fichiers de plus de 10 Ko — les fichiers plus petits ne gagnent rien à être minifiés.",
     },
     broken: {
       totalLinks: 'Le nombre total de liens trouvés et vérifiés sur votre site.',

@@ -222,6 +222,8 @@ const cs = {
       compressionNotNeeded: 'u tak malé stránky se nevyplatí',
       renderBlocking: 'Blokování vykreslování',
       resources: 'zdrojů',
+      minification: 'Minifikace',
+      filesOver10kb: 'soubor(y) nad 10KB bez minifikace',
     },
     broken: {
       totalLinks: 'Celkem zkontrolovaných odkazů',
@@ -348,6 +350,7 @@ const cs = {
       lcp: 'Largest Contentful Paint — jak dlouho trvá, než se dokončí načtení největšího viditelného prvku. Méně než 2,5 s se považuje za dobré. Jde o Core Web Vital Googlu.',
       compression: 'Zda váš server komprimuje odpovědi (např. gzip/Brotli) před odesláním, což zkracuje dobu načítání.',
       renderBlocking: 'Skripty nebo styly, které se musí zcela načíst, než se stránka může začít vykreslovat, což zpomaluje vnímanou dobu načítání.',
+      minification: 'Zda máte u vlastních CSS/JS souborů odstraněné mezery a komentáře kvůli menší velikosti přenosu. Kontrolováno pouze u souborů nad 10KB — menší soubory z minifikace nic nezískají.',
     },
     broken: {
       totalLinks: 'Celkový počet odkazů nalezených a zkontrolovaných na vašem webu.',

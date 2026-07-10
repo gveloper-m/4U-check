@@ -452,6 +452,9 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     {perfPageAnalysis && (getArr(perfPageAnalysis, 'render_blocking_scripts').length + getArr(perfPageAnalysis, 'render_blocking_styles').length) > 0 && (
                       <MetaRow label={t('show.performance.renderBlocking')} help={t('explain.performance.renderBlocking')} value={`${getNum(perfPageAnalysis, 'total_render_blocking') ?? 0} ${t('show.performance.resources')}`} ok={getNum(perfPageAnalysis, 'total_render_blocking') === 0} />
                     )}
+                    {perfPageAnalysis && getArr(perfPageAnalysis, 'unminified_assets').length > 0 && (
+                      <MetaRow label={t('show.performance.minification')} help={t('explain.performance.minification')} value={`${getArr(perfPageAnalysis, 'unminified_assets').length} ${t('show.performance.filesOver10kb')}`} ok={false} />
+                    )}
                   </div>
                 </div>
               ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t('show.noData')}</p>}

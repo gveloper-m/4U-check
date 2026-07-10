@@ -270,12 +270,23 @@
       </tr>
       <tr>
         <td>Compression</td>
-        <td colspan="2"><span class="pill {{ ($perf['page_analysis']['compression_enabled'] ?? false) ? 'pill-green' : 'pill-red' }}">{{ ($perf['page_analysis']['compression_enabled'] ?? false) ? 'Enabled' : 'Disabled' }}</span></td>
+        <td colspan="2">
+          @php $compressionMatters = $perf['page_analysis']['compression_worth_flagging'] ?? false; @endphp
+          <span class="pill {{ ($perf['page_analysis']['compression_enabled'] ?? false) ? 'pill-green' : ($compressionMatters ? 'pill-red' : 'pill-green') }}">
+            {{ ($perf['page_analysis']['compression_enabled'] ?? false) ? 'Enabled' : ($compressionMatters ? 'Disabled' : 'Disabled — not needed for a page this small') }}
+          </span>
+        </td>
       </tr>
       <tr>
         <td>Render-blocking resources</td>
         <td colspan="2">{{ $perf['page_analysis']['total_render_blocking'] ?? 0 }}</td>
       </tr>
+      @if(!empty($perf['page_analysis']['unminified_assets']))
+      <tr>
+        <td>Minification</td>
+        <td colspan="2"><span class="pill pill-red">{{ count($perf['page_analysis']['unminified_assets']) }} file(s) over 10KB not minified</span></td>
+      </tr>
+      @endif
     </table>
   </div>
 </div>

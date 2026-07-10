@@ -950,6 +950,14 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                     ok={getNum(perfPageAnalysis, 'total_render_blocking') === 0}
                   />
                 )}
+                {perfPageAnalysis && getArr(perfPageAnalysis, 'unminified_assets').length > 0 && (
+                  <MetaRow
+                    label={t('show.performance.minification')}
+                    help={t('explain.performance.minification')}
+                    value={`${getArr(perfPageAnalysis, 'unminified_assets').length} ${t('show.performance.filesOver10kb')}`}
+                    ok={false}
+                  />
+                )}
                 </div>
               </div>
             ) : (

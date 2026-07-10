@@ -245,6 +245,11 @@ class RunAuditorJob implements ShouldQueue
             // worth flagging (page large enough that gzip/brotli would meaningfully
             // help) — a tiny page skipping compression isn't a health problem.
             if ($perf['page_analysis']['compression_worth_flagging'] ?? false) { $score -= 5; $deductions[] = 'Performance: compression not enabled (-5)'; }
+            // Same size-gated principle: only same-origin CSS/JS files over 10KB
+            // that still look unminified are ever reported here — a small file
+            // gains nothing from minifying it, so it's never flagged at all.
+            $unminifiedCount = \count($perf['page_analysis']['unminified_assets'] ?? []);
+            if ($unminifiedCount > 0) { $score -= 3; $deductions[] = "Performance: {$unminifiedCount} unminified CSS/JS file(s) over 10KB (-3)"; }
         }
 
         // --- Accessibility ---

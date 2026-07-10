@@ -222,6 +222,8 @@ const nl = {
       compressionNotNeeded: 'niet de moeite waard voor zo\'n kleine pagina',
       renderBlocking: 'Render-blokkering',
       resources: 'resources',
+      minification: 'Minificatie',
+      filesOver10kb: 'bestand(en) boven 10KB niet geminificeerd',
     },
     broken: {
       totalLinks: 'Totaal gecontroleerde links',
@@ -348,6 +350,7 @@ const nl = {
       lcp: 'Largest Contentful Paint — hoe lang het duurt voordat het grootste zichtbare element klaar is met laden. Onder 2,5 s wordt als goed beschouwd. Dit is een Google Core Web Vital.',
       compression: 'Of uw server reacties comprimeert (bijv. gzip/Brotli) voordat deze worden verstuurd, wat de laadtijd verkort.',
       renderBlocking: 'Scripts of stylesheets die volledig moeten laden voordat de pagina kan beginnen met renderen, wat de waargenomen laadtijd vertraagt.',
+      minification: 'Of uw eigen CSS/JS-bestanden witruimte en commentaar hebben verwijderd om de overdrachtsgrootte te verkleinen. Wordt alleen gecontroleerd voor bestanden boven 10KB — kleinere bestanden hebben niets aan minificatie.',
     },
     broken: {
       totalLinks: 'Het totale aantal links dat op uw site is gevonden en gecontroleerd.',

@@ -301,15 +301,23 @@
       @endif
       <tr>
         <td>Compression (Gzip/Brotli)</td>
-        <td class="{{ ($pageAnalysis['compression_enabled'] ?? false) ? 'ok' : 'bad' }}">
-          {{ ($pageAnalysis['compression_enabled'] ?? false) ? 'Enabled' : 'Not Enabled' }}
+        <td class="{{ ($pageAnalysis['compression_enabled'] ?? false) ? 'ok' : (($pageAnalysis['compression_worth_flagging'] ?? false) ? 'bad' : 'ok') }}">
+          {{ ($pageAnalysis['compression_enabled'] ?? false) ? 'Enabled' : (($pageAnalysis['compression_worth_flagging'] ?? false) ? 'Not Enabled' : 'Not enabled — not needed for a page this small') }}
         </td>
       </tr>
-      @if(isset($pageAnalysis['render_blocking_resources']))
+      @if(isset($pageAnalysis['total_render_blocking']))
       <tr>
         <td>Render-Blocking Resources</td>
-        <td class="{{ $pageAnalysis['render_blocking_resources'] == 0 ? 'ok' : 'warn' }}">
-          {{ $pageAnalysis['render_blocking_resources'] }}
+        <td class="{{ $pageAnalysis['total_render_blocking'] == 0 ? 'ok' : 'warn' }}">
+          {{ $pageAnalysis['total_render_blocking'] }}
+        </td>
+      </tr>
+      @endif
+      @if(!empty($pageAnalysis['unminified_assets']))
+      <tr>
+        <td>Minification</td>
+        <td class="bad">
+          {{ count($pageAnalysis['unminified_assets']) }} file(s) over 10KB not minified
         </td>
       </tr>
       @endif

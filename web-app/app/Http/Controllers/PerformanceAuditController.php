@@ -430,6 +430,8 @@ class PerformanceAuditController extends Controller
             'render_blocking_scripts'    => [],
             'render_blocking_styles'     => [],
             'total_render_blocking'      => 0,
+            'unminified_assets'          => [],
+            'assets_checked'             => 0,
             'issues'                     => [],
         ];
 
@@ -513,11 +515,102 @@ class PerformanceAuditController extends Controller
                 $result['issues'][] = "{$n} render-blocking stylesheets — consider inlining critical CSS";
             }
 
+            $minification = $this->checkAssetMinification($html, $url);
+            $result['unminified_assets'] = $minification['unminified_assets'];
+            $result['assets_checked']    = $minification['assets_checked'];
+            if (! empty($minification['unminified_assets'])) {
+                $n = count($minification['unminified_assets']);
+                $result['issues'][] = "{$n} unminified CSS/JS file(s) over 10KB — minifying would meaningfully reduce transfer size";
+            }
+
         } catch (\Throwable $e) {
             $result['issues'][] = 'Page analysis error: ' . $e->getMessage();
         }
 
         return $result;
+    }
+
+    /**
+     * Flag same-origin CSS/JS files that are both large enough for
+     * minification to matter AND appear unminified. Below the size
+     * threshold, minifying saves a negligible number of bytes and just
+     * makes the source harder to debug — not a real issue, so those files
+     * are never even fetched for this check. Third-party assets (CDNs,
+     * analytics, fonts) are skipped too since the site owner doesn't
+     * control them.
+     */
+    private function checkAssetMinification(string $html, string $baseUrl): array
+    {
+        $unminified          = [];
+        $checked             = 0;
+        $sizeThresholdBytes  = 10 * 1024; // 10KB — below this, minification is not worth flagging
+        $maxAssetsToCheck    = 6;         // bound extra HTTP requests this adds to the audit
+        $baseHost            = parse_url($baseUrl, PHP_URL_HOST) ?? '';
+
+        try {
+            preg_match_all('/<script[^>]+src=["\']([^"\']+)["\']/i', $html, $scriptMatches);
+            preg_match_all('/<link[^>]+rel=["\']stylesheet["\'][^>]*href=["\']([^"\']+)["\']/i', $html, $styleMatches1);
+            preg_match_all('/<link[^>]+href=["\']([^"\']+)["\'][^>]*rel=["\']stylesheet["\']/i', $html, $styleMatches2);
+
+            $urls = array_unique(array_merge($scriptMatches[1] ?? [], $styleMatches1[1] ?? [], $styleMatches2[1] ?? []));
+
+            foreach ($urls as $assetUrl) {
+                if ($checked >= $maxAssetsToCheck) {
+                    break;
+                }
+
+                $absolute = $this->makeAbsoluteUrl($assetUrl, $baseUrl);
+                if ((parse_url($absolute, PHP_URL_HOST) ?? '') !== $baseHost) {
+                    continue; // third-party asset — not something the site owner can minify
+                }
+
+                try {
+                    $resp = Http::withHeaders($this->browserHeaders())->timeout(10)->get($absolute);
+                    if (! $resp->successful()) {
+                        continue;
+                    }
+                } catch (\Throwable $e) {
+                    continue; // a failed fetch here isn't a minification finding — skip, don't fail the whole check
+                }
+
+                $content = $resp->body();
+                $sizeBytes = strlen($content);
+                $checked++;
+
+                if ($sizeBytes > $sizeThresholdBytes && ! $this->looksMinified($content)) {
+                    $path = parse_url($absolute, PHP_URL_PATH) ?? '';
+                    $unminified[] = [
+                        'url'     => $absolute,
+                        'size_kb' => round($sizeBytes / 1024, 1),
+                        'type'    => str_ends_with(strtolower($path), '.css') ? 'css' : 'js',
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            // Minification is a nice-to-have finding — never worth failing the
+            // whole performance analysis over.
+        }
+
+        return ['unminified_assets' => $unminified, 'assets_checked' => $checked];
+    }
+
+    /**
+     * Heuristic, not a real minifier diff: minified output is characteristically
+     * one giant line (or a few very long ones) with sparse newlines; formatted
+     * source has many short lines. Either signal alone is enough to call it
+     * minified — false positives here just mean skipping a real finding, not
+     * penalizing a site that doesn't deserve it.
+     */
+    private function looksMinified(string $content): bool
+    {
+        $length = strlen($content);
+        if ($length === 0) {
+            return true;
+        }
+        $newlineCount = substr_count($content, "\n");
+        $avgLineLength = $length / max(1, $newlineCount + 1);
+
+        return $avgLineLength > 300 || $newlineCount < ($length / 2000);
     }
 
     /**

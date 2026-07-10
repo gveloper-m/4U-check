@@ -222,6 +222,8 @@ const en = {
       compressionNotNeeded: 'not worth enabling for a page this small',
       renderBlocking: 'Render Blocking',
       resources: 'resources',
+      minification: 'Minification',
+      filesOver10kb: 'file(s) over 10KB not minified',
     },
     broken: {
       totalLinks: 'Total Links Checked',
@@ -348,6 +350,7 @@ const en = {
       lcp: 'Largest Contentful Paint — how long until the largest visible element finishes loading. Under 2.5s is considered good. This is a Google Core Web Vital.',
       compression: 'Whether your server compresses responses (e.g. gzip/Brotli) before sending them, which reduces load time.',
       renderBlocking: 'Scripts or stylesheets that must fully load before the page can start rendering, slowing down the perceived load time.',
+      minification: 'Whether your own CSS/JS files have whitespace and comments stripped out to reduce transfer size. Only checked for files over 10KB — smaller files gain nothing from minifying.',
     },
     broken: {
       totalLinks: 'The total number of links found and checked across your site.',
