@@ -78,6 +78,30 @@ Route::post('/cookie-consent', [CookieConsentController::class, 'store'])->name(
 Route::get('/blog', [BlogController::class, 'index'])->name('blog.index');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
 
+// Free single-purpose tools (public, no auth required) — each runs exactly
+// one of the 7 audit modules synchronously via performAudit(), no queue.
+Route::get('/tools/{tool}', [\App\Http\Controllers\FreeToolController::class, 'show'])
+    ->where('tool', '[a-z-]+')
+    ->name('tools.show');
+Route::post('/tools/{tool}/scan', [\App\Http\Controllers\FreeToolController::class, 'scan'])
+    ->where('tool', '[a-z-]+')
+    ->middleware('throttle:5,1')
+    ->name('tools.scan');
+
+// Platform/framework-specific landing pages and comparison/checklist pages
+Route::get('/accessibility-checker/{platform}', [\App\Http\Controllers\MarketingPageController::class, 'accessibilityPlatform'])
+    ->where('platform', '[a-z-]+')
+    ->name('marketing.accessibility-platform');
+Route::get('/performance-auditor/{framework}', [\App\Http\Controllers\MarketingPageController::class, 'performanceFramework'])
+    ->where('framework', '[a-z-]+')
+    ->name('marketing.performance-framework');
+Route::get('/compare/{slug}', [\App\Http\Controllers\MarketingPageController::class, 'compare'])
+    ->where('slug', '[a-z0-9-]+')
+    ->name('marketing.compare');
+Route::get('/checklist/{industry}', [\App\Http\Controllers\MarketingPageController::class, 'checklist'])
+    ->where('industry', '[a-z-]+')
+    ->name('marketing.checklist');
+
 // Auth (Breeze handles: /login, /register, /forgot-password, /reset-password)
 require __DIR__.'/auth.php';
 

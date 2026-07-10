@@ -32,6 +32,51 @@
         <priority>0.4</priority>
     </url>
 
+    {{-- Free single-purpose tools --}}
+    @foreach (['broken-link-checker', 'schema-validator', 'core-web-vitals-test', 'security-headers-checker', 'tracking-pixel-checker', 'accessibility-checker', 'ecommerce-catalog-checker'] as $tool)
+    <url>
+        <loc>{{ url('/tools/' . $tool) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    @endforeach
+
+    {{-- Accessibility checker per platform --}}
+    @foreach (['wordpress', 'shopify', 'webflow', 'wix'] as $platform)
+    <url>
+        <loc>{{ url('/accessibility-checker/' . $platform) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    @endforeach
+
+    {{-- Performance auditor per framework --}}
+    @foreach (['nextjs', 'wordpress', 'shopify', 'react'] as $framework)
+    <url>
+        <loc>{{ url('/performance-auditor/' . $framework) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    @endforeach
+
+    {{-- Comparison pages --}}
+    @foreach (['4utest-vs-google-pagespeed', '4utest-vs-gtmetrix', '4utest-vs-ahrefs-site-audit'] as $slug)
+    <url>
+        <loc>{{ url('/compare/' . $slug) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+    @endforeach
+
+    {{-- Industry checklists --}}
+    @foreach (['ecommerce', 'saas', 'agencies'] as $industry)
+    <url>
+        <loc>{{ url('/checklist/' . $industry) }}</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.6</priority>
+    </url>
+    @endforeach
+
     {{-- Blog posts --}}
     @foreach ($posts as $post)
     <url>
