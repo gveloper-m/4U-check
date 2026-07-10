@@ -9,6 +9,13 @@ class MistralBlogService
     private const API_URL = 'https://api.mistral.ai/v1/chat/completions';
     private const MODEL   = 'mistral-large-latest';
 
+    private BlogCoverImageService $coverImageService;
+
+    public function __construct(?BlogCoverImageService $coverImageService = null)
+    {
+        $this->coverImageService = $coverImageService ?? new BlogCoverImageService();
+    }
+
     private static array $LANG_NAMES = [
         'en' => 'English',
         'el' => 'Greek',
@@ -80,17 +87,27 @@ class MistralBlogService
             }
         }
 
-        $required = ['title', 'slug', 'meta_description', 'excerpt', 'content', 'featured_image', 'best_publish_day', 'best_publish_hour_utc'];
+        $required = ['title', 'slug', 'meta_description', 'excerpt', 'content', 'best_publish_day', 'best_publish_hour_utc'];
         foreach ($required as $key) {
             if (empty($data[$key])) {
                 throw new \RuntimeException("Mistral response missing required field: {$key}");
             }
         }
 
-        // Add unique lock parameters so loremflickr serves a distinct photo for each image,
-        // even when the AI reuses the same keyword combination across articles.
-        $data['featured_image'] = $this->lockFlickrUrl($data['featured_image']);
-        $data['content']        = preg_replace_callback(
+        // The featured/cover image is generated locally instead of asking the
+        // LLM for one. LoremFlickr's photo pool for abstract B2B keywords
+        // (the only kind this topic domain produces — "seo", "analytics",
+        // "audit") is shallow enough that most articles ended up with the
+        // same handful of stock photos regardless of the per-URL lock param.
+        // A branded, title-derived cover never repeats and never depends on
+        // a third party's inventory.
+        $data['featured_image'] = $this->coverImageService->generate($data['title'], $data['slug']);
+
+        // In-content images stay on loremflickr (still useful supplementary
+        // photography), just with a fresh lock param per image so the AI
+        // reusing a keyword pair across articles doesn't serve the exact
+        // same photo each time.
+        $data['content'] = preg_replace_callback(
             '~(https://loremflickr\.com/[^\s"\'<>]+)~i',
             fn($m) => $this->lockFlickrUrl($m[1]),
             $data['content']
@@ -121,7 +138,7 @@ Requirements:
 - Meta description: exactly 150–160 characters, includes the primary keyword, subtle value proposition
 - Use proper HTML tags only: h2, h3, p, ul, ol, li, strong, em, img
 - Structure: intro → 3-5 main sections with h2 headings → practical takeaways → conclusion
-- Include exactly 3 images using this URL pattern: https://loremflickr.com/1200/630/keyword1,keyword2 — place each after a section heading as an <img> tag with descriptive alt text. CRITICAL: every image MUST use a completely different keyword pair that reflects THAT section's specific subtopic. Never repeat the same keyword combination. Example for an SEO article: img1="seo,search" img2="developer,code" img3="analytics,dashboard".
+- Include exactly 3 images using this URL pattern: https://loremflickr.com/1200/630/keyword1,keyword2 — place each after a section heading as an <img> tag with descriptive alt text. CRITICAL: use concrete, physical, photographable nouns, not abstract concepts — LoremFlickr matches real Flickr photos, so abstract pairs like "seo,search" or "analytics,dashboard" return a shallow, repetitive pool. Prefer things a camera could actually photograph: "laptop,office", "server,datacenter", "keyboard,typing", "padlock,security", "team,meeting", "warehouse,shipping". Every image MUST use a completely different pair reflecting THAT section's specific subtopic — never repeat a combination.
 - Near the end (second-to-last paragraph), naturally mention 4uTest in one sentence as a useful free tool — not promotional, just helpful context. Example: "Tools like [4uTest](https://4utest.io) automate this entire audit process, scanning your site across all these dimensions in minutes and giving you an actionable health score."
 - Do NOT say "In conclusion" or "In summary" — end with a strong final thought
 - The writing must feel authored by a senior web professional, not AI-generated
@@ -133,7 +150,6 @@ Respond with a single JSON object (no markdown, no explanation) using exactly th
   meta_description      — exactly 150–160 chars, includes primary keyword
   excerpt               — 2–3 sentence teaser for the blog listing page
   content               — full HTML article body, min 1400 words, using only h2 h3 p ul ol li strong em img tags
-  featured_image        — use this exact pattern: https://loremflickr.com/1200/630/keyword1,keyword2 (2–3 relevant English keywords, comma-separated, no spaces)
   best_publish_day      — optimal lowercase weekday (monday–friday) for maximum organic engagement
   best_publish_hour_utc — integer 7–11 (morning UTC = European business hours 9–13)
 
