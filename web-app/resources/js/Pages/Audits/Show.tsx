@@ -1003,7 +1003,13 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                   <MetaRow
                     label={t('show.broken.brokenImages')}
                     help={t('explain.broken.brokenImages')}
-                    value={getNum(brokenSummary, 'broken_images_count') ?? t('common.na')}
+                    value={(() => {
+                      const count = getNum(brokenSummary, 'broken_images_count');
+                      const total = getNum(brokenSummary, 'total_images_checked');
+                      if (count === null) return t('common.na');
+                      if (total && total > 0) return `${count} (${Math.round((count / total) * 100)}%)`;
+                      return String(count);
+                    })()}
                     ok={(getNum(brokenSummary, 'broken_images_count') ?? 1) === 0}
                   />
                 </div>

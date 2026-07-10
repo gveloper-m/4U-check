@@ -462,115 +462,124 @@ export default function Landing({ alreadyScanned }: { alreadyScanned: boolean })
                                     const trackFb   = go(trackScripts, 'facebook_pixel');
                                     const trackTt   = go(trackScripts, 'tiktok_pixel');
                                     const trackGtm  = go(trackScripts, 'google_tag_manager');
+                                    const trackIds  = (o: ModuleResult) => (ga(o, 'ids') as string[]).join(', ');
 
-                                    const a11yForms   = gn(a11y, 'unlabelled_inputs');
-                                    const a11yAlt     = gn(a11y, 'images_missing_alt');
-                                    const a11yContrast= gn(a11y, 'contrast_violations');
-                                    const a11yLang    = gb(a11y, 'has_lang_attribute');
-                                    const a11yMain    = gb(a11y, 'has_main_landmark');
+                                    const catResults        = ga(cat, 'results') as Record<string, unknown>[];
+                                    const catPriceIssues    = catResults.filter(r => r.has_price_error === true).length;
+                                    const catStockMismatch  = catResults.filter(r => r.stock_mismatch === true).length;
+
+                                    const a11yChecks   = go(a11y, 'checks');
+                                    const a11yForms    = gn(go(a11yChecks, 'form_labels'), 'fail');
+                                    const a11yAlt      = gn(go(a11yChecks, 'image_alt'), 'missing_count');
+                                    const a11yContrast = gn(go(a11yChecks, 'color_contrast'), 'fail');
+                                    const a11yLang     = gb(go(a11yChecks, 'landmarks'), 'has_lang');
+                                    const a11yMain     = gb(go(a11yChecks, 'landmarks'), 'has_main');
+                                    const a11yScore    = gn(a11y, 'score');
 
                                     return (
                                         <div className="mb-6 space-y-3">
                                             {/* SEO */}
-                                            <AuditSection title="SEO & Schema" icon={Search} color="text-violet-600 dark:text-violet-400">
+                                            <AuditSection title={t('show.sections.seo')} icon={Search} color="text-violet-600 dark:text-violet-400">
                                                 {seo ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                                                    <MRow label="Meta Title"       value={gs(seoMeta,   'status')} ok={gs(seoMeta, 'status') === 'OK'} />
-                                                    <MRow label="Meta Description" value={gs(seoDesc,   'status')} ok={gs(seoDesc, 'status') === 'OK'} />
-                                                    <MRow label="H1 Tags"          value={`${gn(seoH1, 'count') ?? '?'} (${gs(seoH1, 'status')})`} ok={gs(seoH1, 'status') === 'OK'} />
-                                                    <MRow label="Canonical URL"    value={gs(seoCanon,  'status')} ok={gs(seoCanon, 'status') === 'OK'} />
-                                                    <MRow label="Schema Markup"    value={gb(seoSchema, 'has_valid_schema') ? 'Valid' : 'Missing/Invalid'} ok={gb(seoSchema, 'has_valid_schema') ?? undefined} />
-                                                    <MRow label="Open Graph"       value={gs(seoOg,     'status')} ok={gs(seoOg, 'status') === 'OK'} />
-                                                    <MRow label="Image Alt Text"   value={seoAlt ? `${gn(seoAlt, 'missing_alt') ?? 0} missing / ${gn(seoAlt, 'total_images') ?? '?'} total` : 'N/A'} ok={seoAlt ? gs(seoAlt, 'status') === 'OK' : undefined} />
-                                                    <MRow label="robots.txt"       value={gb(go(seoTech, 'robots_txt'), 'exists') === true ? 'Found' : 'Missing'} ok={gb(go(seoTech, 'robots_txt'), 'exists') ?? undefined} />
-                                                    <MRow label="sitemap.xml"      value={gb(go(seoTech, 'sitemap_xml'), 'exists') === true ? 'Found' : 'Missing'} ok={gb(go(seoTech, 'sitemap_xml'), 'exists') ?? undefined} />
-                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                                    <MRow label={t('show.seo.metaTitle')} value={gs(seoMeta,   'status')} ok={gs(seoMeta, 'status') === 'OK'} />
+                                                    <MRow label={t('show.seo.metaDesc')}  value={gs(seoDesc,   'status')} ok={gs(seoDesc, 'status') === 'OK'} />
+                                                    <MRow label={t('show.seo.h1')}        value={`${gn(seoH1, 'count') ?? '?'} (${gs(seoH1, 'status')})`} ok={gs(seoH1, 'status') === 'OK'} />
+                                                    <MRow label={t('show.seo.canonical')} value={gs(seoCanon,  'status')} ok={gs(seoCanon, 'status') === 'OK'} />
+                                                    <MRow label={t('show.seo.schema')}    value={gb(seoSchema, 'has_valid_schema') ? 'Valid' : 'Missing/Invalid'} ok={gb(seoSchema, 'has_valid_schema') ?? undefined} />
+                                                    <MRow label={t('show.seo.og')}        value={gs(seoOg,     'status')} ok={gs(seoOg, 'status') === 'OK'} />
+                                                    <MRow label={t('show.seo.images')}    value={seoAlt ? `${gn(seoAlt, 'missing_alt') ?? 0} / ${gn(seoAlt, 'total_images') ?? '?'}` : 'N/A'} ok={seoAlt ? gs(seoAlt, 'status') === 'OK' : undefined} />
+                                                    <MRow label={t('show.seo.robots')}    value={gb(go(seoTech, 'robots_txt'), 'exists') === true ? t('common.found') : t('common.missing')} ok={gb(go(seoTech, 'robots_txt'), 'exists') ?? undefined} />
+                                                    <MRow label={t('show.seo.sitemap')}   value={gb(go(seoTech, 'sitemap_xml'), 'exists') === true ? t('common.found') : t('common.missing')} ok={gb(go(seoTech, 'sitemap_xml'), 'exists') ?? undefined} />
+                                                </div> : <p className="text-sm text-gray-500">{t('show.noData')}</p>}
                                             </AuditSection>
 
                                             {/* Security */}
-                                            <AuditSection title="Security" icon={Shield} color="text-blue-600 dark:text-blue-400">
+                                            <AuditSection title={t('show.sections.security')} icon={Shield} color="text-blue-600 dark:text-blue-400">
                                                 {sec ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                                                    <MRow label="SSL Certificate"  value={gb(secSsl, 'ssl_valid') ? `Valid — ${gn(secSsl, 'ssl_days_left')}d left` : (gs(secSsl, 'error') || 'Invalid')} ok={gb(secSsl, 'ssl_valid') ?? undefined} />
-                                                    <MRow label="HTTPS Redirect"   value={gb(secRedirect, 'redirects_to_https') === true ? 'Yes' : 'No'} ok={gb(secRedirect, 'redirects_to_https') ?? undefined} />
-                                                    <MRow label="Mixed Content"    value={gb(secMixed, 'has_mixed_content') ? 'Detected' : 'None'} ok={gb(secMixed, 'has_mixed_content') === false} />
-                                                    <MRow label="HSTS"             value={hk(secPresent, 'Strict-Transport-Security') ? 'Present' : 'Missing'} ok={hk(secPresent, 'Strict-Transport-Security')} />
-                                                    <MRow label="CSP"              value={hk(secPresent, 'Content-Security-Policy') ? 'Present' : 'Missing'} ok={hk(secPresent, 'Content-Security-Policy')} />
-                                                    <MRow label="X-Frame-Options"  value={hk(secPresent, 'X-Frame-Options') ? 'Present' : 'Missing'} ok={hk(secPresent, 'X-Frame-Options')} />
-                                                    <MRow label="SPF Record"       value={gb(secDns, 'spf_record_exists') ? 'Present' : 'Missing'} ok={gb(secDns, 'spf_record_exists') ?? undefined} />
-                                                    <MRow label="DMARC Record"     value={gb(secDns, 'dmarc_record_exists') ? 'Present' : 'Missing'} ok={gb(secDns, 'dmarc_record_exists') ?? undefined} />
-                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                                    <MRow label={t('show.security.ssl')}      value={gb(secSsl, 'ssl_valid') ? `${t('common.valid')} — ${gn(secSsl, 'ssl_days_left')}d` : (gs(secSsl, 'error') || t('common.invalid'))} ok={gb(secSsl, 'ssl_valid') ?? undefined} />
+                                                    <MRow label={t('show.security.redirect')} value={gb(secRedirect, 'redirects_to_https') === true ? t('common.yes') : t('common.no')} ok={gb(secRedirect, 'redirects_to_https') ?? undefined} />
+                                                    <MRow label={t('show.security.mixed')}    value={gb(secMixed, 'has_mixed_content') ? t('common.detected') : t('common.none')} ok={gb(secMixed, 'has_mixed_content') === false} />
+                                                    <MRow label={t('show.security.hsts')}     value={hk(secPresent, 'Strict-Transport-Security') ? t('common.present') : t('common.missing')} ok={hk(secPresent, 'Strict-Transport-Security')} />
+                                                    <MRow label={t('show.security.csp')}      value={hk(secPresent, 'Content-Security-Policy') ? t('common.present') : t('common.missing')} ok={hk(secPresent, 'Content-Security-Policy')} />
+                                                    <MRow label={t('show.security.xFrameOptions')} value={hk(secPresent, 'X-Frame-Options') ? t('common.present') : t('common.missing')} ok={hk(secPresent, 'X-Frame-Options')} />
+                                                    <MRow label={t('show.security.spf')}      value={gb(secDns, 'spf_record_exists') ? t('common.present') : t('common.missing')} ok={gb(secDns, 'spf_record_exists') ?? undefined} />
+                                                    <MRow label={t('show.security.dmarc')}    value={gb(secDns, 'dmarc_record_exists') ? t('common.present') : t('common.missing')} ok={gb(secDns, 'dmarc_record_exists') ?? undefined} />
+                                                </div> : <p className="text-sm text-gray-500">{t('show.noData')}</p>}
                                             </AuditSection>
 
                                             {/* Performance */}
-                                            <AuditSection title="Performance" icon={BarChart3} color="text-emerald-600 dark:text-emerald-400">
+                                            <AuditSection title={t('show.sections.performance')} icon={BarChart3} color="text-emerald-600 dark:text-emerald-400">
                                                 {perf ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                                                    <MRow label="TTFB"              value={ttfb !== null ? `${ttfb} ms` : 'N/A'} ok={ttfb !== null ? ttfb < 800 : undefined} />
-                                                    <MRow label="FCP (Desktop)"     value={fcp  !== null ? `${fcp} ms`  : 'N/A'} ok={fcp  !== null ? fcp  < 1800 : undefined} />
-                                                    <MRow label="LCP (Desktop)"     value={lcp  !== null ? `${lcp} ms`  : 'N/A'} ok={lcp  !== null ? lcp  < 2500 : undefined} />
-                                                    {perfMobile && gn(perfMobile, 'fcp_ms') !== null && <MRow label="FCP (Mobile)" value={`${gn(perfMobile, 'fcp_ms')} ms`} ok={(gn(perfMobile, 'fcp_ms') ?? 9999) < 1800} />}
-                                                    {perfMobile && gn(perfMobile, 'lcp_ms') !== null && <MRow label="LCP (Mobile)" value={`${gn(perfMobile, 'lcp_ms')} ms`} ok={(gn(perfMobile, 'lcp_ms') ?? 9999) < 2500} />}
-                                                    <MRow label="Compression"       value={gb(perfPage, 'compression_enabled') === true ? 'Enabled' : 'Disabled'} ok={gb(perfPage, 'compression_enabled') ?? undefined} />
-                                                    <MRow label="Pages Tested"      value={gn(perf, 'pages_tested') ?? 'N/A'} />
-                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                                    <MRow label={t('show.performance.ttfb')} value={ttfb !== null ? `${ttfb} ms` : 'N/A'} ok={ttfb !== null ? ttfb < 800 : undefined} />
+                                                    <MRow label={`${t('show.performance.fcp')} (Desktop)`} value={fcp  !== null ? `${fcp} ms`  : 'N/A'} ok={fcp  !== null ? fcp  < 1800 : undefined} />
+                                                    <MRow label={`${t('show.performance.lcp')} (Desktop)`} value={lcp  !== null ? `${lcp} ms`  : 'N/A'} ok={lcp  !== null ? lcp  < 2500 : undefined} />
+                                                    {perfMobile && gn(perfMobile, 'fcp_ms') !== null && <MRow label={`${t('show.performance.fcp')} (Mobile)`} value={`${gn(perfMobile, 'fcp_ms')} ms`} ok={(gn(perfMobile, 'fcp_ms') ?? 9999) < 1800} />}
+                                                    {perfMobile && gn(perfMobile, 'lcp_ms') !== null && <MRow label={`${t('show.performance.lcp')} (Mobile)`} value={`${gn(perfMobile, 'lcp_ms')} ms`} ok={(gn(perfMobile, 'lcp_ms') ?? 9999) < 2500} />}
+                                                    <MRow label={t('show.performance.compression')} value={gb(perfPage, 'compression_enabled') === true ? t('show.performance.enabled') : t('show.performance.disabled')} ok={gb(perfPage, 'compression_enabled') ?? undefined} />
+                                                    <MRow label={t('show.performance.pages')} value={gn(perf, 'pages_tested') ?? 'N/A'} />
+                                                </div> : <p className="text-sm text-gray-500">{t('show.noData')}</p>}
                                             </AuditSection>
 
                                             {/* Broken Resources */}
-                                            <AuditSection title="Broken Links & Images" icon={Link2} color="text-red-600 dark:text-red-400">
+                                            <AuditSection title={t('show.sections.broken')} icon={Link2} color="text-red-600 dark:text-red-400">
                                                 {brk ? <div className="space-y-4">
                                                     <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                                                        <MRow label="Links Checked"  value={gn(brkSummary, 'total_links_checked') ?? 'N/A'} />
-                                                        <MRow label="Broken Links"   value={gn(brkSummary, 'broken_links_count') ?? 0} ok={(gn(brkSummary, 'broken_links_count') ?? 1) === 0} />
-                                                        <MRow label="Images Checked" value={gn(brkSummary, 'total_images_checked') ?? 'N/A'} />
-                                                        <MRow label="Broken Images"  value={gn(brkSummary, 'broken_images_count') ?? 0} ok={(gn(brkSummary, 'broken_images_count') ?? 1) === 0} />
+                                                        <MRow label={t('show.broken.totalLinks')}   value={gn(brkSummary, 'total_links_checked') ?? 'N/A'} />
+                                                        <MRow label={t('show.broken.brokenLinks')}  value={gn(brkSummary, 'broken_links_count') ?? 0} ok={(gn(brkSummary, 'broken_links_count') ?? 1) === 0} />
+                                                        <MRow label={t('show.broken.totalImages')}  value={gn(brkSummary, 'total_images_checked') ?? 'N/A'} />
+                                                        <MRow label={t('show.broken.brokenImages')} value={gn(brkSummary, 'broken_images_count') ?? 0} ok={(gn(brkSummary, 'broken_images_count') ?? 1) === 0} />
                                                     </div>
-                                                    {brkLinks.length > 0 && (
-                                                        <div>
-                                                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">Broken Links ({brkLinks.length})</p>
+                                                    {[{ items: brkLinks, label: t('show.broken.brokenLinks') }, { items: brkImages, label: t('show.broken.brokenImages') }].map(({ items, label }) => items.length > 0 && (
+                                                        <div key={label}>
+                                                            <p className="mb-2 text-xs font-medium uppercase tracking-wider text-gray-500">{label} ({items.length})</p>
                                                             <div className="max-h-60 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-200 dark:divide-gray-800">
-                                                                {brkLinks.map((l, i) => (
+                                                                {items.map((l, i) => (
                                                                     <div key={i} className="px-3 py-2">
                                                                         <div className="flex items-start justify-between gap-3">
                                                                             <span className="break-all text-xs text-gray-700 dark:text-gray-300">{String(l.url ?? '')}</span>
                                                                             {l.status_code != null && <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">{String(l.status_code)}</span>}
                                                                         </div>
-                                                                        {l.found_on != null && <p className="mt-0.5 text-xs text-gray-500 break-all">Found on: {String(l.found_on)}</p>}
+                                                                        {l.found_on != null && <p className="mt-0.5 text-xs text-gray-500 break-all">{t('show.broken.foundOn')}: {String(l.found_on)}</p>}
                                                                     </div>
                                                                 ))}
                                                             </div>
                                                         </div>
-                                                    )}
-                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                                    ))}
+                                                </div> : <p className="text-sm text-gray-500">{t('show.noData')}</p>}
                                             </AuditSection>
 
                                             {/* E-commerce */}
-                                            <AuditSection title="E-commerce Catalog" icon={ShoppingCart} color="text-amber-600 dark:text-amber-400">
+                                            <AuditSection title={t('show.sections.catalog')} icon={ShoppingCart} color="text-amber-600 dark:text-amber-400">
                                                 {cat ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                                                    <MRow label="Pages Crawled"    value={gn(cat, 'pages_crawled') ?? 'N/A'} />
-                                                    <MRow label="Product Pages"    value={gn(cat, 'product_pages_found') ?? 'N/A'} />
-                                                    <MRow label="Products Audited" value={gn(cat, 'products_audited') ?? 'N/A'} />
-                                                    <MRow label="Broken Products"  value={gn(cat, 'broken_products_count') ?? 0} ok={(gn(cat, 'broken_products_count') ?? 1) === 0} />
-                                                    <MRow label="Price Issues"     value={gn(cat, 'price_issues_count') ?? 0}  ok={(gn(cat, 'price_issues_count') ?? 1) === 0} />
-                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                                    <MRow label={t('show.catalog.crawled')}      value={gn(cat, 'pages_crawled') ?? 'N/A'} />
+                                                    <MRow label={t('show.catalog.productPages')} value={gn(cat, 'product_pages_found') ?? 'N/A'} />
+                                                    <MRow label={t('show.catalog.products')}     value={gn(cat, 'products_audited') ?? 'N/A'} />
+                                                    <MRow label={t('show.catalog.broken')}       value={gn(cat, 'broken_products_count') ?? 0} ok={(gn(cat, 'broken_products_count') ?? 1) === 0} />
+                                                    <MRow label={t('show.catalog.priceIssues')}  value={catPriceIssues}   ok={catPriceIssues === 0} />
+                                                    <MRow label={t('show.catalog.stockMismatches')} value={catStockMismatch} ok={catStockMismatch === 0} />
+                                                </div> : <p className="text-sm text-gray-500">{t('show.noData')}</p>}
                                             </AuditSection>
 
                                             {/* Marketing Tracking */}
-                                            <AuditSection title="Marketing Tracking" icon={Tag} color="text-pink-600 dark:text-pink-400">
+                                            <AuditSection title={t('show.sections.tracking')} icon={Tag} color="text-pink-600 dark:text-pink-400">
                                                 {trk ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                                                    <MRow label="Google Analytics 4" value={gb(trackGa4, 'detected') ? `Found (${gs(trackGa4, 'measurement_id')})` : 'Not found'} ok={gb(trackGa4, 'detected') ?? undefined} />
-                                                    <MRow label="Google Tag Manager" value={gb(trackGtm, 'detected') ? `Found (${gs(trackGtm, 'container_id')})` : 'Not found'} ok={gb(trackGtm, 'detected') ?? undefined} />
-                                                    <MRow label="Meta Pixel"         value={gb(trackFb, 'detected') ? `Found (${gs(trackFb, 'pixel_id')})` : 'Not found'} ok={gb(trackFb, 'detected') ?? undefined} />
-                                                    <MRow label="TikTok Pixel"       value={gb(trackTt, 'detected') ? 'Found' : 'Not found'} ok={gb(trackTt, 'detected') ?? undefined} />
-                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                                    <MRow label={t('show.tracking.ga4')} value={gb(trackGa4, 'detected') ? `${t('common.detected')}${trackIds(trackGa4) ? ` (${trackIds(trackGa4)})` : ''}` : t('common.notDetected')} ok={gb(trackGa4, 'detected') ?? undefined} />
+                                                    {trackGtm && <MRow label="Google Tag Manager" value={gb(trackGtm, 'detected') ? `${t('common.detected')}${trackIds(trackGtm) ? ` (${trackIds(trackGtm)})` : ''}` : t('common.notDetected')} ok={gb(trackGtm, 'detected') ?? undefined} />}
+                                                    <MRow label={t('show.tracking.fb')} value={gb(trackFb, 'detected') ? `${t('common.detected')}${trackIds(trackFb) ? ` (${trackIds(trackFb)})` : ''}` : t('common.notDetected')} ok={gb(trackFb, 'detected') ?? undefined} />
+                                                    <MRow label={t('show.tracking.tt')} value={gb(trackTt, 'detected') ? t('common.detected') : t('common.notDetected')} ok={gb(trackTt, 'detected') ?? undefined} />
+                                                </div> : <p className="text-sm text-gray-500">{t('show.noData')}</p>}
                                             </AuditSection>
 
                                             {/* Accessibility */}
-                                            <AuditSection title="Accessibility (WCAG)" icon={Accessibility} color="text-teal-600 dark:text-teal-400">
+                                            <AuditSection title={t('show.sections.accessibility')} icon={Accessibility} color="text-teal-600 dark:text-teal-400">
                                                 {a11y ? <div className="divide-y divide-gray-200 dark:divide-gray-800">
-                                                    <MRow label="Unlabelled Inputs"  value={a11yForms   ?? 0} ok={(a11yForms   ?? 1) === 0} />
-                                                    <MRow label="Images Missing Alt" value={a11yAlt     ?? 0} ok={(a11yAlt     ?? 1) === 0} />
-                                                    <MRow label="Contrast Violations"value={a11yContrast ?? 0} ok={(a11yContrast ?? 1) === 0} />
-                                                    <MRow label="HTML lang Attribute"value={a11yLang === true ? 'Present' : 'Missing'} ok={a11yLang ?? undefined} />
-                                                    <MRow label="Main Landmark"      value={a11yMain === true ? 'Present' : 'Missing'} ok={a11yMain ?? undefined} />
-                                                </div> : <p className="text-sm text-gray-500">No data</p>}
+                                                    {a11yScore !== null && <MRow label={t('show.accessibility.score')} value={`${a11yScore}/100`} ok={a11yScore >= 70} />}
+                                                    <MRow label={t('show.accessibility.unlabeledInputs')}    value={a11yForms   ?? 0} ok={(a11yForms   ?? 1) === 0} />
+                                                    <MRow label={t('show.accessibility.imageAlt')}           value={a11yAlt     ?? 0} ok={(a11yAlt     ?? 1) === 0} />
+                                                    <MRow label={t('show.accessibility.contrastViolations')} value={a11yContrast ?? 0} ok={(a11yContrast ?? 1) === 0} />
+                                                    <MRow label={t('show.accessibility.langAttr')}     value={a11yLang === true ? t('common.present') : t('common.missing')} ok={a11yLang ?? undefined} />
+                                                    <MRow label={t('show.accessibility.mainLandmark')} value={a11yMain === true ? t('common.present') : t('common.missing')} ok={a11yMain ?? undefined} />
+                                                </div> : <p className="text-sm text-gray-500">{t('show.noData')}</p>}
                                             </AuditSection>
                                         </div>
                                     );

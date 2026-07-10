@@ -219,11 +219,25 @@
         <td>Security Headers</td>
         <td><span class="pill pill-gray">{{ $sec['security_headers']['score'] ?? '-' }}/6</span></td>
         <td>
-          @foreach($sec['security_headers']['headers'] ?? [] as $hdr => $present)
-            <span class="pill {{ $present ? 'pill-green' : 'pill-red' }}">{{ $hdr }}</span>&nbsp;
+          @foreach(array_keys($sec['security_headers']['headers_present'] ?? []) as $hdr)
+            <span class="pill pill-green">{{ $hdr }}</span>&nbsp;
+          @endforeach
+          @foreach($sec['security_headers']['headers_missing'] ?? [] as $hdr)
+            <span class="pill pill-red">{{ $hdr }}</span>&nbsp;
           @endforeach
         </td>
       </tr>
+      @if(!empty($sec['security_headers']['info_disclosure']))
+      <tr>
+        <td>Information Disclosure</td>
+        <td><span class="pill pill-yellow">{{ count($sec['security_headers']['info_disclosure']) }} header(s)</span></td>
+        <td>
+          @foreach($sec['security_headers']['info_disclosure'] as $hdr => $value)
+            <span class="pill pill-yellow">{{ $hdr }}: {{ $value }}</span>&nbsp;
+          @endforeach
+        </td>
+      </tr>
+      @endif
       <tr>
         <td>SPF Record</td>
         <td><span class="pill {{ ($sec['dns_security']['spf_record_exists'] ?? false) ? 'pill-green' : 'pill-red' }}">{{ ($sec['dns_security']['spf_record_exists'] ?? false) ? 'Present' : 'Missing' }}</span></td>
@@ -268,6 +282,30 @@
           @if($lcpM !== null)<span class="pill {{ $lcpM <= 2500 ? 'pill-green' : ($lcpM <= 4000 ? 'pill-yellow' : 'pill-red') }}">{{ $lcpM <= 2500 ? 'Good' : ($lcpM <= 4000 ? 'Needs Improvement' : 'Poor') }}</span>@endif
         </td>
       </tr>
+      @php $fcpD = $perf['metrics']['desktop']['fcp_ms'] ?? null; @endphp
+      @if($fcpD !== null)
+      <tr>
+        <td>FCP (Desktop)</td>
+        <td>{{ $fcpD }} ms</td>
+        <td><span class="pill {{ $fcpD <= 1800 ? 'pill-green' : ($fcpD <= 3000 ? 'pill-yellow' : 'pill-red') }}">{{ $fcpD <= 1800 ? 'Good' : ($fcpD <= 3000 ? 'Needs Improvement' : 'Poor') }}</span></td>
+      </tr>
+      @endif
+      @php $clsD = $perf['metrics']['desktop']['cls_score'] ?? null; @endphp
+      @if($clsD !== null)
+      <tr>
+        <td>CLS (Desktop)</td>
+        <td>{{ $clsD }}</td>
+        <td><span class="pill {{ $clsD <= 0.1 ? 'pill-green' : ($clsD <= 0.25 ? 'pill-yellow' : 'pill-red') }}">{{ $clsD <= 0.1 ? 'Good' : ($clsD <= 0.25 ? 'Needs Improvement' : 'Poor') }}</span></td>
+      </tr>
+      @endif
+      @php $clsM = $perf['metrics']['mobile']['cls_score'] ?? null; @endphp
+      @if($clsM !== null)
+      <tr>
+        <td>CLS (Mobile)</td>
+        <td>{{ $clsM }}</td>
+        <td><span class="pill {{ $clsM <= 0.1 ? 'pill-green' : ($clsM <= 0.25 ? 'pill-yellow' : 'pill-red') }}">{{ $clsM <= 0.1 ? 'Good' : ($clsM <= 0.25 ? 'Needs Improvement' : 'Poor') }}</span></td>
+      </tr>
+      @endif
       <tr>
         <td>Compression</td>
         <td colspan="2">
@@ -393,13 +431,20 @@
       <tr><td>Broken Products</td><td>{{ $cat['broken_products_count'] ?? 0 }}</td></tr>
       <tr><td>Broken Percentage</td><td>{{ $cat['broken_percentage'] ?? 0 }}%</td></tr>
     </table>
-    @if(!empty($cat['broken_products']))
+    @php $brokenProducts = array_values(array_filter($cat['results'] ?? [], fn ($p) => $p['is_broken'] ?? false)); @endphp
+    @if(!empty($brokenProducts))
     <table style="margin-top:10px;">
-      <tr><th style="width:55%">Product URL</th><th>Issue</th></tr>
-      @foreach(array_slice($cat['broken_products'] ?? [], 0, 15) as $prod)
+      <tr><th style="width:45%">Product URL</th><th>Price (page / schema)</th><th>Stock</th><th>Issues</th></tr>
+      @foreach(array_slice($brokenProducts, 0, 15) as $prod)
+      @php
+        $issues = array_merge($prod['price_errors'] ?? [], $prod['stock_details'] ?? []);
+        if ($prod['cart_disabled'] ?? false) { $issues[] = 'Add-to-cart disabled'; }
+      @endphp
       <tr>
         <td class="url-cell">{{ $prod['url'] ?? '-' }}</td>
-        <td style="font-size:9px;">{{ $prod['issue'] ?? $prod['reason'] ?? '-' }}</td>
+        <td style="font-size:9px;">{{ $prod['detected_price'] ?? '-' }} / {{ $prod['schema_price'] ?? '-' }}</td>
+        <td style="font-size:9px;">{{ $prod['frontend_stock'] ?? '-' }}{{ ($prod['stock_mismatch'] ?? false) ? ' (mismatch)' : '' }}</td>
+        <td style="font-size:9px;">{{ implode('; ', $issues) ?: '-' }}</td>
       </tr>
       @endforeach
     </table>
@@ -409,34 +454,81 @@
 @endif
 
 <!-- Accessibility -->
-@if($report->accessibility_result)
-@php $acc = $report->accessibility_result; @endphp
+@if($report->accessibility_result && ($report->accessibility_result['status'] ?? '') === 'ok')
+@php $acc = $report->accessibility_result; $accChecks = $acc['checks'] ?? []; @endphp
 <div class="section">
-  <div class="section-header">Accessibility (WCAG)</div>
+  <div class="section-header">Accessibility (WCAG) &mdash; Score: {{ $acc['score'] ?? '-' }}/100</div>
   <div class="section-body">
     <table>
       <tr><th>Check</th><th>Status</th><th>Details</th></tr>
+      @php
+        $statusPill = fn ($s) => $s === 'pass' ? 'pill-green' : ($s === 'warn' ? 'pill-yellow' : 'pill-red');
+      @endphp
       <tr>
         <td>Form Labels</td>
-        <td><span class="pill {{ ($acc['form_labels']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-red' }}">{{ $acc['form_labels']['status'] ?? '-' }}</span></td>
-        <td>Missing: {{ $acc['form_labels']['missing_count'] ?? 0 }}</td>
+        <td><span class="pill {{ $statusPill($accChecks['form_labels']['status'] ?? 'fail') }}">{{ strtoupper($accChecks['form_labels']['status'] ?? '-') }}</span></td>
+        <td>{{ $accChecks['form_labels']['pass'] ?? 0 }} pass / {{ $accChecks['form_labels']['fail'] ?? 0 }} fail</td>
       </tr>
       <tr>
         <td>Image Alt Text</td>
-        <td><span class="pill {{ ($acc['image_alts']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-yellow' }}">{{ $acc['image_alts']['status'] ?? '-' }}</span></td>
-        <td>Missing: {{ $acc['image_alts']['missing_count'] ?? 0 }}</td>
+        <td><span class="pill {{ $statusPill($accChecks['image_alt']['status'] ?? 'fail') }}">{{ strtoupper($accChecks['image_alt']['status'] ?? '-') }}</span></td>
+        <td>Missing: {{ $accChecks['image_alt']['missing_count'] ?? 0 }} of {{ $accChecks['image_alt']['total'] ?? 0 }}</td>
+      </tr>
+      <tr>
+        <td>ARIA Labels</td>
+        <td><span class="pill {{ $statusPill($accChecks['aria_labels']['status'] ?? 'fail') }}">{{ strtoupper($accChecks['aria_labels']['status'] ?? '-') }}</span></td>
+        <td>{{ $accChecks['aria_labels']['fail'] ?? 0 }} violation(s)</td>
       </tr>
       <tr>
         <td>Heading Hierarchy</td>
-        <td><span class="pill {{ ($acc['heading_hierarchy']['status'] ?? '') === 'OK' ? 'pill-green' : 'pill-yellow' }}">{{ $acc['heading_hierarchy']['status'] ?? '-' }}</span></td>
-        <td></td>
+        <td><span class="pill {{ $statusPill($accChecks['heading_hierarchy']['status'] ?? 'fail') }}">{{ strtoupper($accChecks['heading_hierarchy']['status'] ?? '-') }}</span></td>
+        <td>{{ $accChecks['heading_hierarchy']['h1_count'] ?? 0 }} H1 / {{ $accChecks['heading_hierarchy']['total_headings'] ?? 0 }} headings</td>
+      </tr>
+      <tr>
+        <td>Link Text</td>
+        <td><span class="pill {{ $statusPill($accChecks['link_text']['status'] ?? 'fail') }}">{{ strtoupper($accChecks['link_text']['status'] ?? '-') }}</span></td>
+        <td>{{ $accChecks['link_text']['fail'] ?? 0 }} vague/empty link(s)</td>
+      </tr>
+      <tr>
+        <td>Color Contrast</td>
+        <td><span class="pill {{ $statusPill($accChecks['color_contrast']['status'] ?? 'fail') }}">{{ strtoupper($accChecks['color_contrast']['status'] ?? '-') }}</span></td>
+        <td>{{ $accChecks['color_contrast']['fail'] ?? 0 }} violation(s)</td>
       </tr>
       <tr>
         <td>Landmark Elements</td>
-        <td><span class="pill {{ ($acc['landmarks']['has_main'] ?? false) ? 'pill-green' : 'pill-yellow' }}">{{ ($acc['landmarks']['has_main'] ?? false) ? 'Present' : 'Missing' }}</span></td>
-        <td>Skip nav: {{ ($acc['landmarks']['has_skip_nav'] ?? false) ? 'Yes' : 'No' }}</td>
+        <td><span class="pill {{ ($accChecks['landmarks']['has_main'] ?? false) ? 'pill-green' : 'pill-yellow' }}">{{ ($accChecks['landmarks']['has_main'] ?? false) ? 'Present' : 'Missing' }}</span></td>
+        <td>lang: {{ ($accChecks['landmarks']['has_lang'] ?? false) ? 'Yes' : 'No' }} &mdash; Skip nav: {{ ($accChecks['landmarks']['has_skip_nav'] ?? false) ? 'Yes' : 'No' }}</td>
       </tr>
     </table>
+  </div>
+</div>
+@endif
+
+<!-- Fuzz Testing (opt-in) -->
+@if($report->fuzz_testing_result && ($report->fuzz_testing_result['status'] ?? '') !== 'error')
+@php $fuzz = $report->fuzz_testing_result; @endphp
+<div class="section">
+  <div class="section-header">Fuzz Testing</div>
+  <div class="section-body">
+    <table>
+      <tr><th>Metric</th><th>Value</th></tr>
+      <tr><td>Inputs Tested</td><td>{{ $fuzz['targets_tested'] ?? 0 }}</td></tr>
+      <tr><td>Requests Sent</td><td>{{ $fuzz['requests_sent'] ?? 0 }}</td></tr>
+      <tr><td>Findings</td><td>{{ $fuzz['total_findings'] ?? 0 }}</td></tr>
+    </table>
+    @if(!empty($fuzz['findings']))
+    <table style="margin-top:10px;">
+      <tr><th>Type</th><th>Severity</th><th style="width:40%">URL</th><th>Parameter</th></tr>
+      @foreach(array_slice($fuzz['findings'], 0, 20) as $f)
+      <tr>
+        <td style="font-size:9px;">{{ str_replace('_', ' ', $f['type'] ?? '-') }}</td>
+        <td><span class="pill {{ ($f['severity'] ?? '') === 'high' ? 'pill-red' : (($f['severity'] ?? '') === 'medium' ? 'pill-yellow' : 'pill-gray') }}">{{ $f['severity'] ?? '-' }}</span></td>
+        <td class="url-cell">{{ $f['url'] ?? '-' }}</td>
+        <td style="font-size:9px;">{{ $f['param'] ?? '-' }}</td>
+      </tr>
+      @endforeach
+    </table>
+    @endif
   </div>
 </div>
 @endif

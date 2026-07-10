@@ -287,16 +287,24 @@
         </td>
       </tr>
       @endif
-      @if(isset($metrics['page_size_kb']))
+      @php $lcpM = $metrics['mobile']['lcp_ms'] ?? null; @endphp
+      @if($lcpM !== null)
       <tr>
-        <td>Page Size</td>
-        <td>{{ $metrics['page_size_kb'] }} KB</td>
+        <td>LCP (Mobile)</td>
+        <td class="{{ $lcpM <= 2500 ? 'ok' : ($lcpM <= 4000 ? 'warn' : 'bad') }}">{{ $lcpM }}ms</td>
       </tr>
       @endif
-      @if(isset($metrics['requests_count']))
+      @php $clsM = $metrics['mobile']['cls_score'] ?? null; @endphp
+      @if($clsM !== null)
       <tr>
-        <td>HTTP Requests</td>
-        <td>{{ $metrics['requests_count'] }}</td>
+        <td>CLS (Mobile)</td>
+        <td class="{{ $clsM <= 0.1 ? 'ok' : ($clsM <= 0.25 ? 'warn' : 'bad') }}">{{ $clsM }}</td>
+      </tr>
+      @endif
+      @if(isset($pageAnalysis['html_size_kb']))
+      <tr>
+        <td>HTML Size</td>
+        <td>{{ $pageAnalysis['html_size_kb'] }} KB</td>
       </tr>
       @endif
       <tr>
