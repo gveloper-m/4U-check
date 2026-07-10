@@ -14,8 +14,11 @@ return new class extends Migration
             $table->timestamp('scheduled_at')->nullable()->after('published_at');
         });
 
-        // Add 'scheduled' to the status enum
-        DB::statement("ALTER TABLE blog_posts MODIFY COLUMN status ENUM('draft','published','scheduled') DEFAULT 'draft'");
+        // Add 'scheduled' to the status enum (MySQL-only syntax; sqlite stores
+        // enums as varchar so the new value is already accepted there).
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE blog_posts MODIFY COLUMN status ENUM('draft','published','scheduled') DEFAULT 'draft'");
+        }
     }
 
     public function down(): void
@@ -23,6 +26,8 @@ return new class extends Migration
         Schema::table('blog_posts', function (Blueprint $table) {
             $table->dropColumn(['locale', 'meta_description', 'scheduled_at']);
         });
-        DB::statement("ALTER TABLE blog_posts MODIFY COLUMN status ENUM('draft','published') DEFAULT 'draft'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE blog_posts MODIFY COLUMN status ENUM('draft','published') DEFAULT 'draft'");
+        }
     }
 };

@@ -19,6 +19,8 @@ class BrokenResourceController extends Controller
     private $queuedUrls = [];
     private $allLinks = [];
     private $allImages = [];
+    private $allScripts = [];
+    private $allStylesheets = [];
     private $baseHost = '';
     private int $screenshotBudget = 14;
     private array $foundOnScreenshotCache = [];
@@ -43,8 +45,10 @@ class BrokenResourceController extends Controller
 
     public function performAudit(string $pageUrl): array
     {
-        $this->allLinks  = [];
-        $this->allImages = [];
+        $this->allLinks       = [];
+        $this->allImages      = [];
+        $this->allScripts     = [];
+        $this->allStylesheets = [];
         $parsedUrl       = parse_url($pageUrl);
         $this->baseHost  = $parsedUrl['host'] ?? '';
 
@@ -100,8 +104,10 @@ class BrokenResourceController extends Controller
                 $htmlContent   = $this->fetchRenderedIfNeeded($url, $htmlContent);
                 $resources     = $this->extractResources($htmlContent, $url);
 
-                $this->allLinks  = array_merge($this->allLinks,  $resources['links']);
-                $this->allImages = array_merge($this->allImages, $resources['images']);
+                $this->allLinks       = array_merge($this->allLinks,       $resources['links']);
+                $this->allImages      = array_merge($this->allImages,      $resources['images']);
+                $this->allScripts     = array_merge($this->allScripts,     $resources['scripts']);
+                $this->allStylesheets = array_merge($this->allStylesheets, $resources['stylesheets']);
 
                 foreach ($resources['pages'] as $newPage) {
                     if (! isset($visited[$newPage]) && ! isset($inQueue[$newPage])) {
@@ -134,8 +140,30 @@ class BrokenResourceController extends Controller
         }
         $this->allImages = $uniqueImages;
 
-        $brokenLinks  = $this->checkResources($this->allLinks);
-        $brokenImages = $this->checkResources($this->allImages);
+        $seen = [];
+        $uniqueScripts = [];
+        foreach ($this->allScripts as $item) {
+            if (!isset($seen[$item['url']])) {
+                $seen[$item['url']] = true;
+                $uniqueScripts[] = $item;
+            }
+        }
+        $this->allScripts = $uniqueScripts;
+
+        $seen = [];
+        $uniqueStylesheets = [];
+        foreach ($this->allStylesheets as $item) {
+            if (!isset($seen[$item['url']])) {
+                $seen[$item['url']] = true;
+                $uniqueStylesheets[] = $item;
+            }
+        }
+        $this->allStylesheets = $uniqueStylesheets;
+
+        $brokenLinks       = $this->checkResources($this->allLinks);
+        $brokenImages      = $this->checkResources($this->allImages);
+        $brokenScripts     = $this->checkResources($this->allScripts);
+        $brokenStylesheets = $this->checkResources($this->allStylesheets);
 
         DB::table('broken_resources_audits')->insert([
             'site_url'             => $pageUrl,
@@ -146,14 +174,18 @@ class BrokenResourceController extends Controller
             'executed_at'          => now(),
         ]);
 
-        $topBrokenLinks  = array_slice($brokenLinks,  0, 20);
-        $topBrokenImages = array_slice($brokenImages, 0, 20);
+        $topBrokenLinks       = array_slice($brokenLinks,       0, 20);
+        $topBrokenImages      = array_slice($brokenImages,      0, 20);
+        $topBrokenScripts     = array_slice($brokenScripts,     0, 20);
+        $topBrokenStylesheets = array_slice($brokenStylesheets, 0, 20);
 
         // Screenshot the page each broken link/image was found on, so the report
-        // can show visual context for where the problem lives (capped across both
+        // can show visual context for where the problem lives (capped across all
         // lists to avoid launching too many Chrome instances per scan).
         $this->attachFoundOnScreenshots($topBrokenLinks);
         $this->attachFoundOnScreenshots($topBrokenImages);
+        $this->attachFoundOnScreenshots($topBrokenScripts);
+        $this->attachFoundOnScreenshots($topBrokenStylesheets);
 
         return [
             'site_url'      => $pageUrl,
@@ -167,9 +199,15 @@ class BrokenResourceController extends Controller
                 'broken_images_count'      => count($brokenImages),
                 'broken_images_percentage' => count($this->allImages) > 0
                     ? round((count($brokenImages) / count($this->allImages)) * 100, 2) : 0,
+                'total_scripts_checked'     => count($this->allScripts),
+                'broken_scripts_count'      => count($brokenScripts),
+                'total_stylesheets_checked' => count($this->allStylesheets),
+                'broken_stylesheets_count'  => count($brokenStylesheets),
             ],
-            'broken_links'  => $topBrokenLinks,
-            'broken_images' => $topBrokenImages,
+            'broken_links'        => $topBrokenLinks,
+            'broken_images'       => $topBrokenImages,
+            'broken_scripts'      => $topBrokenScripts,
+            'broken_stylesheets'  => $topBrokenStylesheets,
             'executed_at'   => now(),
         ];
     }
@@ -252,11 +290,15 @@ class BrokenResourceController extends Controller
     {
         $crawler = new Crawler($htmlContent, $baseUrl);
         
-        $links      = [];
-        $images     = [];
-        $pages      = [];
-        $seenLinks  = [];
-        $seenImages = [];
+        $links       = [];
+        $images      = [];
+        $scripts     = [];
+        $stylesheets = [];
+        $pages       = [];
+        $seenLinks       = [];
+        $seenImages      = [];
+        $seenScripts     = [];
+        $seenStylesheets = [];
 
         $aElements = $crawler->filter('a[href]');
 
@@ -303,10 +345,54 @@ class BrokenResourceController extends Controller
             }
         });
 
+        // Extract all scripts (script tags with src). A 404 script can break
+        // the whole page, so both same-origin and cross-origin http(s) ones matter.
+        $crawler->filter('script[src]')->each(function (Crawler $node) use (&$scripts, &$seenScripts, $baseUrl) {
+            $src = $node->attr('src');
+
+            if (empty($src)) {
+                return;
+            }
+
+            $absoluteUrl = $this->makeAbsoluteUrl($src, $baseUrl);
+            $scheme = parse_url($absoluteUrl, PHP_URL_SCHEME);
+            if ($scheme !== 'http' && $scheme !== 'https') {
+                return;
+            }
+
+            if (!isset($seenScripts[$absoluteUrl])) {
+                $seenScripts[$absoluteUrl] = true;
+                $scripts[] = ['url' => $absoluteUrl, 'found_on' => $baseUrl, 'selector' => $this->buildCssSelector($node)];
+            }
+        });
+
+        // Extract all stylesheets (link rel=stylesheet with href). A 404
+        // stylesheet can break the whole page's layout.
+        $crawler->filter('link[rel="stylesheet"][href]')->each(function (Crawler $node) use (&$stylesheets, &$seenStylesheets, $baseUrl) {
+            $href = $node->attr('href');
+
+            if (empty($href)) {
+                return;
+            }
+
+            $absoluteUrl = $this->makeAbsoluteUrl($href, $baseUrl);
+            $scheme = parse_url($absoluteUrl, PHP_URL_SCHEME);
+            if ($scheme !== 'http' && $scheme !== 'https') {
+                return;
+            }
+
+            if (!isset($seenStylesheets[$absoluteUrl])) {
+                $seenStylesheets[$absoluteUrl] = true;
+                $stylesheets[] = ['url' => $absoluteUrl, 'found_on' => $baseUrl, 'selector' => $this->buildCssSelector($node)];
+            }
+        });
+
         return [
-            'links'  => $links,
-            'images' => $images,
-            'pages'  => array_unique($pages),
+            'links'       => $links,
+            'images'      => $images,
+            'scripts'     => $scripts,
+            'stylesheets' => $stylesheets,
+            'pages'       => array_unique($pages),
         ];
     }
 

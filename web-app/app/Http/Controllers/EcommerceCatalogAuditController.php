@@ -109,7 +109,24 @@ class EcommerceCatalogAuditController extends Controller
                 $priceCheck         = $this->checkPriceIntegrity($crawler, $htmlContent);
                 $stockCheck         = $this->checkStockStatus($crawler, $schemaData);
                 $cartButtonDisabled = $this->isCartButtonDisabled($crawler, $htmlContent);
-                $isBroken           = $priceCheck['has_error'] || $stockCheck['is_mismatch'] || $cartButtonDisabled;
+
+                $schemaPrice        = $schemaData['price'] ?? null;
+                $detectedPrice      = $priceCheck['detected_price'] ?? null;
+                $priceErrors        = $priceCheck['error_details'];
+
+                // Price mismatch: only when BOTH prices are present, else leave alone.
+                // A confirmed mismatch is a hard fault and flows into is_broken/broken_percentage.
+                $priceMismatch    = false;
+                $normalizedSchema = $this->normalizePrice(is_string($schemaPrice) || is_numeric($schemaPrice) ? (string) $schemaPrice : null);
+                $normalizedFront  = $this->normalizePrice(is_string($detectedPrice) || is_numeric($detectedPrice) ? (string) $detectedPrice : null);
+                if ($normalizedSchema !== null && $normalizedFront !== null) {
+                    if (abs($normalizedSchema - $normalizedFront) > 0.01) {
+                        $priceMismatch = true;
+                        $priceErrors[] = "Schema price {$schemaPrice} doesn't match displayed price {$detectedPrice}";
+                    }
+                }
+
+                $isBroken = $priceCheck['has_error'] || $stockCheck['is_mismatch'] || $cartButtonDisabled || $priceMismatch;
 
                 if ($isBroken) {
                     $brokenCount++;
@@ -119,10 +136,13 @@ class EcommerceCatalogAuditController extends Controller
                     'url'             => $productUrl,
                     'is_broken'       => $isBroken,
                     'has_price_error' => $priceCheck['has_error'],
-                    'price_errors'    => $priceCheck['error_details'],
+                    'price_errors'    => $priceErrors,
+                    'price_mismatch'  => $priceMismatch,
                     'detected_price'  => $priceCheck['detected_price'],
                     'schema_stock'    => $schemaData['stock_status'] ?? null,
                     'schema_price'    => $schemaData['price'] ?? null,
+                    'schema_currency' => $schemaData['currency'] ?? null,
+                    'has_review_schema' => $schemaData['has_review'] ?? false,
                     'frontend_stock'  => $stockCheck['frontend_status'],
                     'stock_mismatch'  => $stockCheck['is_mismatch'],
                     'stock_details'   => $stockCheck['mismatch_details'],
@@ -315,12 +335,14 @@ class EcommerceCatalogAuditController extends Controller
         $schemaData = [
             'stock_status' => null,
             'price' => null,
+            'currency' => null,      // priceCurrency from the offer (display-only)
+            'has_review' => false,   // aggregateRating OR review present (display-only)
         ];
 
         try {
             $crawler->filter('script[type="application/ld+json"]')->each(function (Crawler $node) use (&$schemaData) {
                 $scriptContent = $node->text();
-                
+
                 if (empty($scriptContent)) {
                     return;
                 }
@@ -336,15 +358,27 @@ class EcommerceCatalogAuditController extends Controller
                     // Extract stock status
                     if (isset($jsonData['offers'])) {
                         $offers = is_array($jsonData['offers']) ? $jsonData['offers'] : [$jsonData['offers']];
-                        
+
                         foreach ($offers as $offer) {
+                            if (!is_array($offer)) {
+                                continue;
+                            }
                             if (isset($offer['availability'])) {
                                 $schemaData['stock_status'] = $offer['availability'];
                             }
                             if (isset($offer['price'])) {
                                 $schemaData['price'] = $offer['price'];
                             }
+                            // Offer completeness: capture currency when advertised
+                            if (isset($offer['priceCurrency']) && is_string($offer['priceCurrency'])) {
+                                $schemaData['currency'] = $offer['priceCurrency'];
+                            }
                         }
+                    }
+
+                    // Offer completeness: presence of rating/review structured data
+                    if (!empty($jsonData['aggregateRating']) || !empty($jsonData['review'])) {
+                        $schemaData['has_review'] = true;
                     }
                 }
             });
@@ -515,6 +549,57 @@ class EcommerceCatalogAuditController extends Controller
         }
 
         return false;
+    }
+
+    /**
+     * Normalize a raw price string to a float, tolerating both European
+     * ("1.234,56") and US ("1,234.56") formatting. Returns null when the
+     * value can't be parsed so callers can safely skip the comparison.
+     *
+     * @param string|null $raw
+     * @return float|null
+     */
+    private function normalizePrice(?string $raw): ?float
+    {
+        if ($raw === null) {
+            return null;
+        }
+
+        // Keep only digits and the two candidate separators.
+        $clean = preg_replace('/[^0-9,\.]/', '', $raw);
+
+        if ($clean === '' || !preg_match('/\d/', $clean)) {
+            return null;
+        }
+
+        $hasComma = str_contains($clean, ',');
+        $hasDot   = str_contains($clean, '.');
+
+        if ($hasComma && $hasDot) {
+            // Whichever separator appears last is the decimal one; the other
+            // is a thousands separator and gets stripped.
+            if (strrpos($clean, ',') > strrpos($clean, '.')) {
+                $clean = str_replace('.', '', $clean);
+                $clean = str_replace(',', '.', $clean);
+            } else {
+                $clean = str_replace(',', '', $clean);
+            }
+        } elseif ($hasComma) {
+            // Comma-only: treat as decimal when it's followed by exactly two
+            // trailing digits (e.g. "12,50"); otherwise it's a thousands sep.
+            if (preg_match('/,\d{2}$/', $clean)) {
+                $clean = str_replace(',', '.', $clean);
+            } else {
+                $clean = str_replace(',', '', $clean);
+            }
+        }
+        // Dot-only (or no separator) is already a valid float string.
+
+        if (!is_numeric($clean)) {
+            return null;
+        }
+
+        return round((float) $clean, 2);
     }
 
     /**

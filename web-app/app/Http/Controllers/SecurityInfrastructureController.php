@@ -40,6 +40,20 @@ class SecurityInfrastructureController extends Controller
         $headersResult      = $this->checkSecurityHeaders($pageUrl);
         $httpsRedirect      = $this->checkHttpsRedirect($domain, $scheme);
 
+        // Fetch the page response ONCE and share it across the header/cookie
+        // inspection checks below to avoid issuing extra HTTP requests.
+        $sharedResponse = null;
+        try {
+            $sharedResponse = Http::withHeaders($this->browserHeaders())->timeout(15)->withoutRedirecting()->get($pageUrl);
+        } catch (\Throwable) {
+            $sharedResponse = null;
+        }
+
+        $cspQuality  = $this->checkCspQuality($sharedResponse);
+        $hstsQuality = $this->checkHstsQuality($sharedResponse);
+        $cookieFlags = $this->checkCookieFlags($sharedResponse, $scheme);
+        $securityTxt = $this->checkSecurityTxt($scheme, $domain);
+
         DB::table('security_infrastructure_audits')->insert([
             'site_url'            => $pageUrl,
             'ssl_valid'           => $sslResult['ssl_valid'],
@@ -58,6 +72,10 @@ class SecurityInfrastructureController extends Controller
             'dns_security'    => $dnsResult,
             'security_headers'=> $headersResult,
             'https_redirect'  => $httpsRedirect,
+            'csp_quality'     => $cspQuality,
+            'hsts_quality'    => $hstsQuality,
+            'cookie_flags'    => $cookieFlags,
+            'security_txt'    => $securityTxt,
             'executed_at'     => now(),
         ];
     }
@@ -403,6 +421,177 @@ class SecurityInfrastructureController extends Controller
         } else {
             $result['redirects_to_https'] = null;
             $result['issues'][]           = 'Site is not using HTTPS — no redirect check performed';
+        }
+
+        return $result;
+    }
+
+    // -------------------------------------------------------------------------
+    // CSP quality: flag unsafe script sources in the Content-Security-Policy
+    // -------------------------------------------------------------------------
+
+    private function checkCspQuality($response): array
+    {
+        $result = ['present' => false, 'unsafe' => false, 'issues' => []];
+
+        try {
+            $csp = $response ? $response->header('Content-Security-Policy') : null;
+
+            // Absence of a CSP is handled by the header-presence check, so we
+            // only report on quality when one is actually present here.
+            if (! $csp) {
+                return $result;
+            }
+
+            $result['present'] = true;
+
+            // Parse the policy into directive => sources[]
+            $directives = [];
+            foreach (explode(';', $csp) as $part) {
+                $tokens = preg_split('/\s+/', trim($part), -1, PREG_SPLIT_NO_EMPTY);
+                if (empty($tokens)) {
+                    continue;
+                }
+                $name              = strtolower(array_shift($tokens));
+                $directives[$name] = $tokens;
+            }
+
+            // script-src governs scripts; fall back to default-src when absent
+            $which   = isset($directives['script-src']) ? 'script-src' : 'default-src';
+            $sources = $directives[$which] ?? [];
+
+            foreach ($sources as $source) {
+                $lower = strtolower(trim($source, "'"));
+                if ($lower === 'unsafe-inline') {
+                    $result['unsafe']   = true;
+                    $result['issues'][] = "{$which} allows 'unsafe-inline'";
+                } elseif ($lower === 'unsafe-eval') {
+                    $result['unsafe']   = true;
+                    $result['issues'][] = "{$which} allows 'unsafe-eval'";
+                } elseif (trim($source) === '*') {
+                    $result['unsafe']   = true;
+                    $result['issues'][] = "{$which} uses a bare wildcard '*' source";
+                }
+            }
+        } catch (\Throwable $e) {
+            $result['issues'][] = 'CSP quality check error: ' . $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    // -------------------------------------------------------------------------
+    // HSTS quality: parse Strict-Transport-Security directives (informational)
+    // -------------------------------------------------------------------------
+
+    private function checkHstsQuality($response): array
+    {
+        $result = [
+            'present'             => false,
+            'max_age'             => null,
+            'includes_subdomains' => false,
+            'preload'             => false,
+            'adequate'            => false,
+            'issues'              => [],
+        ];
+
+        try {
+            $hsts = $response ? $response->header('Strict-Transport-Security') : null;
+            if (! $hsts) {
+                return $result;
+            }
+
+            $result['present'] = true;
+
+            if (preg_match('/max-age\s*=\s*"?(\d+)"?/i', $hsts, $m)) {
+                $result['max_age'] = (int) $m[1];
+            }
+            $result['includes_subdomains'] = (bool) preg_match('/includeSubDomains/i', $hsts);
+            $result['preload']             = (bool) preg_match('/preload/i', $hsts);
+
+            // Adequate = present with at least a 180-day (15552000s) max-age
+            $result['adequate'] = $result['max_age'] !== null && $result['max_age'] >= 15552000;
+
+            if ($result['max_age'] === null || $result['max_age'] < 15552000) {
+                $result['issues'][] = 'HSTS max-age is below the recommended 180 days (15552000 seconds)';
+            }
+            if (! $result['includes_subdomains']) {
+                $result['issues'][] = 'HSTS is missing includeSubDomains';
+            }
+        } catch (\Throwable $e) {
+            $result['issues'][] = 'HSTS quality check error: ' . $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    // -------------------------------------------------------------------------
+    // Cookie flags: inspect Set-Cookie headers for Secure / HttpOnly / SameSite
+    // -------------------------------------------------------------------------
+
+    private function checkCookieFlags($response, string $scheme): array
+    {
+        $result = ['cookies' => [], 'insecure_session' => false, 'issues' => []];
+
+        try {
+            // Some HTTP clients hide Set-Cookie; degrade gracefully when absent.
+            $setCookies = $response ? ($response->headers()['Set-Cookie'] ?? []) : [];
+            if (empty($setCookies)) {
+                return $result;
+            }
+
+            $isHttps = ($scheme === 'https');
+
+            foreach ($setCookies as $cookie) {
+                if (count($result['cookies']) >= 20) {
+                    break;
+                }
+
+                // The cookie name is the token before the first '='
+                $name     = trim((string) strtok((string) $cookie, '='));
+                $secure   = (bool) preg_match('/;\s*Secure/i', $cookie);
+                $httpOnly = (bool) preg_match('/;\s*HttpOnly/i', $cookie);
+                $sameSite = null;
+                if (preg_match('/;\s*SameSite\s*=\s*(\w+)/i', $cookie, $m)) {
+                    $sameSite = $m[1];
+                }
+
+                $result['cookies'][] = [
+                    'name'     => $name,
+                    'secure'   => $secure,
+                    'httponly' => $httpOnly,
+                    'samesite' => $sameSite,
+                ];
+
+                // Heuristically identify session cookies and flag missing flags
+                if ($isHttps && preg_match('/sess|sid|token|auth|csrf|xsrf|laravel_session|phpsessid/i', $name)) {
+                    if (! $secure || ! $httpOnly) {
+                        $result['insecure_session'] = true;
+                        $result['issues'][]         = "Session cookie '{$name}' is missing Secure or HttpOnly";
+                    }
+                }
+            }
+        } catch (\Throwable $e) {
+            $result['issues'][] = 'Cookie flags check error: ' . $e->getMessage();
+        }
+
+        return $result;
+    }
+
+    // -------------------------------------------------------------------------
+    // security.txt: probe /.well-known/security.txt (informational)
+    // -------------------------------------------------------------------------
+
+    private function checkSecurityTxt(string $scheme, string $domain): array
+    {
+        $result = ['present' => false];
+
+        try {
+            $url               = "{$scheme}://{$domain}/.well-known/security.txt";
+            $response          = Http::withHeaders($this->browserHeaders())->timeout(10)->get($url);
+            $result['present'] = $response->status() === 200;
+        } catch (\Throwable) {
+            $result['present'] = false;
         }
 
         return $result;

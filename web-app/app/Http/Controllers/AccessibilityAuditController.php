@@ -78,6 +78,10 @@ class AccessibilityAuditController extends Controller
                 'link_text'         => $this->checkLinkText($dom, $xpath),
                 'landmarks'         => $this->checkLandmarks($dom, $xpath),
                 'color_contrast'    => $this->checkColorContrast($html, $xpath, $dom, $url),
+                'zoom_disabled'     => $this->checkZoomDisabled($dom, $xpath),
+                'duplicate_ids'     => $this->checkDuplicateIds($dom, $xpath),
+                'positive_tabindex' => $this->checkPositiveTabindex($dom, $xpath),
+                'autoplay_media'    => $this->checkAutoplayMedia($dom, $xpath),
             ];
 
             $score = $this->computeScore($checks);
@@ -628,6 +632,187 @@ class AccessibilityAuditController extends Controller
         return ($lighter + 0.05) / ($darker + 0.05);
     }
 
+    // ─── Check 8: Zoom Disabled (viewport) ───────────────────────────────────
+
+    private function checkZoomDisabled(DOMDocument $dom, DOMXPath $xpath): array
+    {
+        $disabled = false;
+        $viewport = null;
+        $issue    = null;
+
+        // There may be several <meta name="viewport"> tags; inspect them all and
+        // fail if any one of them disables or over-constrains user scaling.
+        foreach ($xpath->query('//meta[@name="viewport"]') as $meta) {
+            if (! $meta instanceof \DOMElement) {
+                continue;
+            }
+            $content = strtolower(trim($meta->getAttribute('content')));
+            if ($content === '') {
+                continue;
+            }
+            // Keep the first non-empty content string for reporting.
+            if ($viewport === null) {
+                $viewport = $content;
+            }
+
+            if (str_contains(str_replace(' ', '', $content), 'user-scalable=no')) {
+                $disabled = true;
+                $issue    = 'Viewport sets user-scalable=no, preventing pinch zoom';
+                break;
+            }
+
+            // Parse the number after maximum-scale= and flag values below 2.
+            if (preg_match('/maximum-scale\s*=\s*([0-9]*\.?[0-9]+)/', $content, $m)) {
+                if ((float) $m[1] < 2.0) {
+                    $disabled = true;
+                    $issue    = "Viewport sets maximum-scale={$m[1]} (below 2), limiting zoom";
+                    break;
+                }
+            }
+        }
+
+        return [
+            'status'   => $disabled ? 'fail' : 'pass',
+            'disabled' => $disabled,
+            'viewport' => $viewport,
+            'issue'    => $issue,
+        ];
+    }
+
+    // ─── Check 9: Duplicate IDs ───────────────────────────────────────────────
+
+    private function checkDuplicateIds(DOMDocument $dom, DOMXPath $xpath): array
+    {
+        // Tally every id attribute on the page.
+        $counts = [];
+        foreach ($xpath->query('//*[@id]') as $el) {
+            if (! $el instanceof \DOMElement) {
+                continue;
+            }
+            $id = $el->getAttribute('id');
+            if ($id === '') {
+                continue;
+            }
+            $counts[$id] = ($counts[$id] ?? 0) + 1;
+        }
+
+        // Keep only ids that appear more than once.
+        $duplicates = [];
+        foreach ($counts as $id => $count) {
+            if ($count > 1) {
+                $duplicates[$id] = $count;
+            }
+        }
+
+        // Collect ids that are referenced as a label/description target, since a
+        // duplicate id in that position genuinely breaks the association.
+        $referenced = [];
+        foreach ($xpath->query('//label[@for]') as $label) {
+            if ($label instanceof \DOMElement) {
+                $referenced[$label->getAttribute('for')] = true;
+            }
+        }
+        foreach ($xpath->query('//*[@aria-labelledby or @aria-describedby]') as $el) {
+            if (! $el instanceof \DOMElement) {
+                continue;
+            }
+            $tokens = preg_split('/\s+/', trim(
+                $el->getAttribute('aria-labelledby') . ' ' . $el->getAttribute('aria-describedby')
+            ));
+            foreach ($tokens as $token) {
+                if ($token !== '') {
+                    $referenced[$token] = true;
+                }
+            }
+        }
+
+        $breaksLabels = false;
+        $issues       = [];
+        foreach ($duplicates as $id => $count) {
+            if (isset($referenced[$id])) {
+                $breaksLabels = true;
+                $issues[]     = "Duplicate id \"{$id}\" ({$count}x) is a label/aria target — breaks the association";
+            } else {
+                $issues[] = "Duplicate id \"{$id}\" used {$count} times";
+            }
+        }
+
+        $duplicateList = [];
+        foreach ($duplicates as $id => $count) {
+            $duplicateList[] = ['id' => $id, 'count' => $count];
+        }
+
+        return [
+            'status'           => $breaksLabels ? 'fail' : (count($duplicates) > 0 ? 'warn' : 'pass'),
+            'duplicate_ids'    => array_slice($duplicateList, 0, 30),
+            'total_duplicates' => count($duplicates),
+            'breaks_labels'    => $breaksLabels,
+            'issues'           => array_slice($issues, 0, 30),
+        ];
+    }
+
+    // ─── Check 10: Positive tabindex (informational) ──────────────────────────
+
+    private function checkPositiveTabindex(DOMDocument $dom, DOMXPath $xpath): array
+    {
+        $elements = [];
+        foreach ($xpath->query('//*[@tabindex]') as $el) {
+            if (! $el instanceof \DOMElement) {
+                continue;
+            }
+            $tabindex = $el->getAttribute('tabindex');
+            // Only a positive tabindex is the anti-pattern; 0 and -1 are fine.
+            if (! preg_match('/^\s*\+?\d+\s*$/', $tabindex)) {
+                continue;
+            }
+            $value = (int) $tabindex;
+            if ($value > 0) {
+                $elements[] = ['tag' => $el->nodeName, 'tabindex' => $value];
+            }
+        }
+
+        $count = count($elements);
+
+        return [
+            'status'   => $count > 0 ? 'warn' : 'pass',
+            'count'    => $count,
+            'elements' => array_slice($elements, 0, 20),
+        ];
+    }
+
+    // ─── Check 11: Autoplay media (informational) ─────────────────────────────
+
+    private function checkAutoplayMedia(DOMDocument $dom, DOMXPath $xpath): array
+    {
+        $elements = [];
+        // Autoplaying video/audio is acceptable only when also muted.
+        foreach ($xpath->query('//video[@autoplay]|//audio[@autoplay]') as $media) {
+            if (! $media instanceof \DOMElement) {
+                continue;
+            }
+            if ($media->hasAttribute('muted')) {
+                continue;
+            }
+            // src may live on the element itself or on a child <source>.
+            $src = $media->getAttribute('src');
+            if ($src === '') {
+                $source = $xpath->query('.//source[@src]', $media)->item(0);
+                if ($source instanceof \DOMElement) {
+                    $src = $source->getAttribute('src');
+                }
+            }
+            $elements[] = ['tag' => $media->nodeName, 'src' => $src ?: '(no src)'];
+        }
+
+        $count = count($elements);
+
+        return [
+            'status'   => $count > 0 ? 'warn' : 'pass',
+            'count'    => $count,
+            'elements' => array_slice($elements, 0, 20),
+        ];
+    }
+
     // ─── Score computation ────────────────────────────────────────────────────
 
     private function computeScore(array $checks): int
@@ -641,6 +826,8 @@ class AccessibilityAuditController extends Controller
         $linkFail  = $checks['link_text']['fail']          ?? 0;
         $lmIssues  = count($checks['landmarks']['issues']  ?? []);
         $csFail    = $checks['color_contrast']['fail']     ?? 0;
+        $zoomOff   = ($checks['zoom_disabled']['disabled'] ?? false) === true;
+        $idBreaks  = ($checks['duplicate_ids']['breaks_labels'] ?? false) === true;
 
         $score -= min(25, $formFail  * 7);
         $score -= min(20, $imgFail   * 6);
@@ -649,6 +836,8 @@ class AccessibilityAuditController extends Controller
         $score -= min(10, $linkFail  * 2);
         $score -= min(20, $lmIssues  * 5);
         $score -= min(15, $csFail    * 4);
+        $score -= $zoomOff  ? 8 : 0;
+        $score -= $idBreaks ? 5 : 0;
 
         return max(0, $score);
     }

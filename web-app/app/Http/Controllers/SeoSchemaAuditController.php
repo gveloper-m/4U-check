@@ -44,6 +44,10 @@ class SeoSchemaAuditController extends Controller
         $pageContent      = $this->checkPageContent($crawler);
         $headingStructure = $this->checkHeadingStructure($crawler);
         $internalLinking  = $this->checkInternalLinking($crawler, $pageUrl);
+        $hreflang         = $this->checkHreflang($crawler);
+        $xRobotsTag       = $this->checkXRobotsTag($pageUrl);
+        $favicon          = $this->checkFavicon($crawler);
+        $twitterCard      = $this->checkTwitterCard($crawler);
 
         DB::table('seo_schema_audits')->insert([
             'site_url'                => $pageUrl,
@@ -71,6 +75,10 @@ class SeoSchemaAuditController extends Controller
             'page_content'     => $pageContent,
             'heading_structure'=> $headingStructure,
             'internal_linking' => $internalLinking,
+            'hreflang'         => $hreflang,
+            'x_robots_tag'     => $xRobotsTag,
+            'favicon'          => $favicon,
+            'twitter_card'     => $twitterCard,
             'executed_at'      => now(),
         ];
     }
@@ -730,16 +738,35 @@ class SeoSchemaAuditController extends Controller
                 foreach ($schemas as $schema) {
                     if (!is_array($schema)) continue;
                     $type  = $schema['@type'] ?? null;
+
+                    // @type may be an array (e.g. ["Product","Thing"]) — pick the
+                    // first entry that has a known required-field ruleset, otherwise
+                    // fall back to the first element so lookups behave like the string case.
+                    $matchType = $type;
+                    if (is_array($type)) {
+                        $matchType = null;
+                        foreach ($type as $candidate) {
+                            if (is_string($candidate) && isset($requiredFields[$candidate])) {
+                                $matchType = $candidate;
+                                break;
+                            }
+                        }
+                        if ($matchType === null) {
+                            $first = reset($type);
+                            $matchType = is_string($first) ? $first : null;
+                        }
+                    }
+
                     $entry = ['type' => $type, 'is_valid' => true, 'missing_keys' => []];
 
                     if ($type) {
                         $result['has_valid_schema'] = true;
-                        if (isset($requiredFields[$type])) {
-                            foreach ($requiredFields[$type] as $key) {
+                        if ($matchType !== null && isset($requiredFields[$matchType])) {
+                            foreach ($requiredFields[$matchType] as $key) {
                                 if (empty($schema[$key])) {
                                     $entry['is_valid']       = false;
                                     $entry['missing_keys'][] = $key;
-                                    $result['errors'][]      = "Schema '{$type}' missing required field: {$key}";
+                                    $result['errors'][]      = "Schema '{$matchType}' missing required field: {$key}";
                                 }
                             }
                         }
@@ -806,5 +833,140 @@ class SeoSchemaAuditController extends Controller
         } catch (\Throwable) {
             return ['detected' => false, 'scope_count' => 0, 'types' => []];
         }
+    }
+
+    // ── Hreflang alternate tags ───────────────────────────────────────────────
+    // Informational — hreflang signals language/region targeting. Values must be
+    // valid ISO patterns (or x-default) and hrefs should be absolute for crawlers.
+
+    private function checkHreflang(Crawler $crawler): array
+    {
+        $tags        = [];
+        $hasXDefault = false;
+        $issues      = [];
+
+        try {
+            $crawler->filter('link[rel="alternate"][hreflang]')->each(
+                function (Crawler $link) use (&$tags, &$hasXDefault, &$issues) {
+                    $hreflang = trim($link->attr('hreflang') ?? '');
+                    $href     = trim($link->attr('href') ?? '');
+                    if ($hreflang === '') return;
+
+                    if (count($tags) < 30) {
+                        $tags[] = ['hreflang' => $hreflang, 'href' => $href ?: null];
+                    }
+
+                    if (strtolower($hreflang) === 'x-default') {
+                        $hasXDefault = true;
+                    } elseif (!preg_match('/^[a-z]{2}(-[A-Z]{2})?$/', $hreflang)) {
+                        $issues[] = "Invalid hreflang value '{$hreflang}' — use a language code like 'en' or 'en-US', or 'x-default'";
+                    }
+
+                    // hreflang hrefs should be absolute so crawlers resolve them unambiguously
+                    if ($href !== '' && !filter_var($href, FILTER_VALIDATE_URL)) {
+                        $issues[] = "hreflang '{$hreflang}' uses a relative href ('{$href}') — use an absolute URL";
+                    }
+                }
+            );
+        } catch (\Throwable) {
+            // Malformed DOM — return whatever was collected before the failure
+        }
+
+        return [
+            'present'       => count($tags) > 0,
+            'count'         => count($tags),
+            'tags'          => $tags,
+            'has_x_default' => $hasXDefault,
+            'issues'        => $issues,
+        ];
+    }
+
+    // ── X-Robots-Tag response header ──────────────────────────────────────────
+    // Scored — a noindex/nofollow in the HTTP header is invisible in the DOM but
+    // still de-indexes the page. One request, fully wrapped so it never throws.
+
+    private function checkXRobotsTag(string $pageUrl): array
+    {
+        try {
+            $res    = Http::withHeaders($this->browserHeaders())->timeout(10)->get($pageUrl);
+            $header = $res->header('X-Robots-Tag');
+            $header = $header !== '' ? $header : null;
+
+            return [
+                'is_noindex'  => $header !== null && stripos($header, 'noindex') !== false,
+                'is_nofollow' => $header !== null && stripos($header, 'nofollow') !== false,
+                'header'      => $header,
+                'checked'     => true,
+            ];
+        } catch (\Throwable) {
+            return ['is_noindex' => false, 'is_nofollow' => false, 'header' => null, 'checked' => false];
+        }
+    }
+
+    // ── Favicon ───────────────────────────────────────────────────────────────
+    // Informational, DOM-only — matches any rel containing "icon" (icon,
+    // shortcut icon, apple-touch-icon). No extra HTTP request is made.
+
+    private function checkFavicon(Crawler $crawler): array
+    {
+        $present = false;
+        $href    = null;
+
+        try {
+            $node = $crawler->filter('link[rel~="icon"]');
+            if ($node->count() > 0) {
+                $present = true;
+                $value   = trim($node->first()->attr('href') ?? '');
+                $href    = $value !== '' ? $value : null;
+            }
+        } catch (\Throwable) {
+            // Malformed DOM — treat as absent
+        }
+
+        return ['present' => $present, 'href' => $href];
+    }
+
+    // ── Twitter/X card ────────────────────────────────────────────────────────
+    // Informational — a complete card needs at least a card type, title and image
+    // for a rich preview when the page is shared.
+
+    private function checkTwitterCard(Crawler $crawler): array
+    {
+        $get = function (string $name) use ($crawler): ?string {
+            try {
+                $node = $crawler->filter("meta[name=\"{$name}\"]");
+                if ($node->count() > 0) {
+                    $value = trim($node->first()->attr('content') ?? '');
+                    return $value !== '' ? $value : null;
+                }
+            } catch (\Throwable) {
+                // Malformed DOM — treat as absent
+            }
+            return null;
+        };
+
+        $card        = $get('twitter:card');
+        $title       = $get('twitter:title');
+        $description = $get('twitter:description');
+        $image       = $get('twitter:image');
+
+        $issues = [];
+        if ($card !== null) {
+            if ($title === null) {
+                $issues[] = 'twitter:card is present but twitter:title is missing';
+            }
+            if ($image === null) {
+                $issues[] = 'twitter:card is present but twitter:image is missing';
+            }
+        }
+
+        return [
+            'card'            => $card,
+            'has_title'       => $title !== null,
+            'has_description' => $description !== null,
+            'has_image'       => $image !== null,
+            'complete'        => $card !== null && $title !== null && $image !== null,
+            'issues'          => $issues,
+        ];
     }
 }
