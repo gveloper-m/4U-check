@@ -219,6 +219,7 @@ const nl = {
       compression: 'Compressie',
       enabled: 'Ingeschakeld',
       disabled: 'Uitgeschakeld',
+      compressionNotNeeded: 'niet de moeite waard voor zo\'n kleine pagina',
       renderBlocking: 'Render-blokkering',
       resources: 'resources',
     },

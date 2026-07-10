@@ -219,6 +219,7 @@ const en = {
       compression: 'Compression',
       enabled: 'Enabled',
       disabled: 'Disabled',
+      compressionNotNeeded: 'not worth enabling for a page this small',
       renderBlocking: 'Render Blocking',
       resources: 'resources',
     },

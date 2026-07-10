@@ -219,6 +219,7 @@ const el = {
       compression: 'Συμπίεση',
       enabled: 'Ενεργοποιημένη',
       disabled: 'Απενεργοποιημένη',
+      compressionNotNeeded: 'δεν αξίζει τον κόπο για τόσο μικρή σελίδα',
       renderBlocking: 'Αποκλεισμός Απόδοσης',
       resources: 'πόροι',
     },

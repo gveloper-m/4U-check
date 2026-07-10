@@ -219,6 +219,7 @@ const es = {
       compression: 'Compresión',
       enabled: 'Activada',
       disabled: 'Desactivada',
+      compressionNotNeeded: 'no merece la pena para una página tan pequeña',
       renderBlocking: 'Bloqueo de renderizado',
       resources: 'recursos',
     },

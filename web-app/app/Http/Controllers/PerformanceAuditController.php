@@ -423,13 +423,14 @@ class PerformanceAuditController extends Controller
     private function analyzePageResources(string $url, ?string $encoding = null, ?string $html = null): array
     {
         $result = [
-            'html_size_kb'            => null,
-            'compression_enabled'     => false,
-            'content_encoding'        => null,
-            'render_blocking_scripts' => [],
-            'render_blocking_styles'  => [],
-            'total_render_blocking'   => 0,
-            'issues'                  => [],
+            'html_size_kb'               => null,
+            'compression_enabled'        => false,
+            'compression_worth_flagging' => false,
+            'content_encoding'           => null,
+            'render_blocking_scripts'    => [],
+            'render_blocking_styles'     => [],
+            'total_render_blocking'      => 0,
+            'issues'                     => [],
         ];
 
         try {
@@ -462,7 +463,17 @@ class PerformanceAuditController extends Controller
             $result['compression_enabled'] = ! empty($encoding);
             $result['content_encoding']   = $encoding ?: 'none';
 
-            if (empty($encoding)) {
+            // Below ~10KB, gzip/brotli would save a few hundred bytes at
+            // most — not something worth flagging as a real issue, let alone
+            // scoring against. A tiny, simple page skipping an optimization
+            // that wouldn't meaningfully change its real-world load time
+            // isn't "unhealthy"; it's proportionate. Same principle as not
+            // scoring against missing marketing pixels — don't penalize a
+            // site for skipping something that plainly doesn't matter at
+            // its actual scale.
+            $result['compression_worth_flagging'] = empty($encoding) && $result['html_size_kb'] > 10;
+
+            if ($result['compression_worth_flagging']) {
                 $result['issues'][] = 'HTML response is not compressed (enable gzip or brotli)';
             }
             if ($result['html_size_kb'] > 100) {

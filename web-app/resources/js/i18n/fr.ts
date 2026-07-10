@@ -219,6 +219,7 @@ const fr = {
       compression: 'Compression',
       enabled: 'Activée',
       disabled: 'Désactivée',
+      compressionNotNeeded: "ne vaut pas la peine pour une page aussi petite",
       renderBlocking: 'Blocage du rendu',
       resources: 'ressources',
     },

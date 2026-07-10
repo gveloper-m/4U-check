@@ -219,6 +219,7 @@ const cs = {
       compression: 'Komprese',
       enabled: 'Povoleno',
       disabled: 'Zakázáno',
+      compressionNotNeeded: 'u tak malé stránky se nevyplatí',
       renderBlocking: 'Blokování vykreslování',
       resources: 'zdrojů',
     },

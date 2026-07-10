@@ -212,6 +212,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
   const perfFcp         = getNum(perfDesktop, 'fcp_ms') ?? getNum(perfMobile, 'fcp_ms');
   const perfLcp         = getNum(perfDesktop, 'lcp_ms') ?? getNum(perfMobile, 'lcp_ms');
   const perfCompression = getBool(perfPageAnalysis, 'compression_enabled');
+  const perfCompressionMatters = getBool(perfPageAnalysis, 'compression_worth_flagging');
 
   // Broken
   const brokenSummary = getObj(broken, 'summary');
@@ -436,7 +437,18 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     {perfMobile && getNum(perfMobile, 'lcp_ms') !== null && (
                       <MetaRow label={`${t('show.performance.lcp')} (Mobile)`} help={t('explain.performance.lcp')} value={`${getNum(perfMobile, 'lcp_ms')} ms`} ok={(getNum(perfMobile, 'lcp_ms') ?? 9999) < 2500} />
                     )}
-                    <MetaRow label={t('show.performance.compression')} help={t('explain.performance.compression')} value={perfCompression === true ? t('show.performance.enabled') : perfCompression === false ? t('show.performance.disabled') : t('common.na')} ok={perfCompression ?? undefined} />
+                    <MetaRow
+                      label={t('show.performance.compression')}
+                      help={t('explain.performance.compression')}
+                      value={
+                        perfCompression === true
+                          ? t('show.performance.enabled')
+                          : perfCompression === false
+                            ? (perfCompressionMatters ? t('show.performance.disabled') : `${t('show.performance.disabled')} — ${t('show.performance.compressionNotNeeded')}`)
+                            : t('common.na')
+                      }
+                      ok={perfCompression === false && !perfCompressionMatters ? true : (perfCompression ?? undefined)}
+                    />
                     {perfPageAnalysis && (getArr(perfPageAnalysis, 'render_blocking_scripts').length + getArr(perfPageAnalysis, 'render_blocking_styles').length) > 0 && (
                       <MetaRow label={t('show.performance.renderBlocking')} help={t('explain.performance.renderBlocking')} value={`${getNum(perfPageAnalysis, 'total_render_blocking') ?? 0} ${t('show.performance.resources')}`} ok={getNum(perfPageAnalysis, 'total_render_blocking') === 0} />
                     )}

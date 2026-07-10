@@ -421,6 +421,7 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
   const perfFcp         = getNum(perfDesktop, 'fcp_ms') ?? getNum(perfMobile, 'fcp_ms');
   const perfLcp         = getNum(perfDesktop, 'lcp_ms') ?? getNum(perfMobile, 'lcp_ms');
   const perfCompression = getBool(perfPageAnalysis, 'compression_enabled');
+  const perfCompressionMatters = getBool(perfPageAnalysis, 'compression_worth_flagging');
 
   // Broken resources helpers
   const brokenSummary = getObj(broken, 'summary');
@@ -932,8 +933,14 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                 <MetaRow
                   label={t('show.performance.compression')}
                   help={t('explain.performance.compression')}
-                  value={perfCompression === true ? t('show.performance.enabled') : perfCompression === false ? t('show.performance.disabled') : t('common.na')}
-                  ok={perfCompression ?? undefined}
+                  value={
+                    perfCompression === true
+                      ? t('show.performance.enabled')
+                      : perfCompression === false
+                        ? (perfCompressionMatters ? t('show.performance.disabled') : `${t('show.performance.disabled')} — ${t('show.performance.compressionNotNeeded')}`)
+                        : t('common.na')
+                  }
+                  ok={perfCompression === false && !perfCompressionMatters ? true : (perfCompression ?? undefined)}
                 />
                 {perfPageAnalysis && (getArr(perfPageAnalysis, 'render_blocking_scripts').length + getArr(perfPageAnalysis, 'render_blocking_styles').length) > 0 && (
                   <MetaRow
