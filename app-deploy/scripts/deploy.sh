@@ -79,6 +79,10 @@ docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan migr
 info "Ensuring admin account..."
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T php-fpm php artisan app:ensure-admin
 
+# ── Seed hero blog article (one-off, checks by title – safe on every deploy) ─
+info "Seeding hero blog article..."
+docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec -T php-fpm php artisan blog:seed-hero-article
+
 # ── Cache Laravel config / routes / views ───────────────────────────────────
 info "Caching Laravel application..."
 docker compose -f "$DEPLOY_DIR/docker-compose.yml" exec php-fpm php artisan config:cache
