@@ -46,7 +46,7 @@ class TrackingAuditController extends Controller
         $queue       = [$pageUrl];
         $pagesCrawled = 0;
         $deadline     = microtime(true) + 120; // hard 2-minute budget
-        $maxPages     = 20;
+        $maxPages     = 60;
 
         while (! empty($queue) && $pagesCrawled < $maxPages && microtime(true) < $deadline) {
             // Pull up to 20 unvisited URLs for concurrent fetch

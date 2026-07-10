@@ -79,7 +79,7 @@ class PerformanceAuditController extends Controller
         // Cap pages to avoid timeout on large sites. TTFB is a plain HTTP
         // HEAD request (cheap), so it can cover a much wider slice of the
         // site than the full Browsershot-based metrics/screenshot pass below.
-        $pagesToTest = array_slice($pagesToTest, 0, 30);
+        $pagesToTest = array_slice($pagesToTest, 0, 50);
 
         // TTFB: quick HTTP HEAD check across all pages
         foreach ($pagesToTest as $testUrl) {
@@ -89,13 +89,13 @@ class PerformanceAuditController extends Controller
             }
         }
 
-        // Browsershot: sample the first 8 pages for real metrics + a
+        // Browsershot: sample the first 12 pages for real metrics + a
         // full-page screenshot of each. Kept well below $pagesToTest's count
         // to limit both bot-detection risk (many Chrome hits from one host)
         // and per-job wall-clock time — each page here costs up to 3 Chrome
         // launches (desktop metrics, mobile metrics, screenshot), all
         // serialized system-wide via withChromeLock().
-        $browsershotSample = array_slice($pagesToTest, 0, 8);
+        $browsershotSample = array_slice($pagesToTest, 0, 12);
         $pageScreenshots   = [];
 
         foreach ($browsershotSample as $testUrl) {

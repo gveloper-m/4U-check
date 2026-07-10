@@ -178,55 +178,77 @@ trait FetchesWebPages
             . sha1($url . '|' . $selector . '|' . microtime(true)) . '.png';
         $absolute = storage_path('app/public/' . $relative);
 
-        try {
-            if (! is_dir(dirname($absolute))) {
-                mkdir(dirname($absolute), 0755, true);
+        // Up to 2 short, bounded retries specifically when the lock was BUSY
+        // (not when a capture actually ran and failed — retrying an actual
+        // failure, e.g. a selector that never matches, would just waste the
+        // same time again). More modules now compete for the same system-wide
+        // Chrome lock than when this was written (SPA-detection rendering
+        // added several more callers), so screenshots — the highest-value
+        // visual feature — were losing that race often enough to matter.
+        // Bounded to ~3s total worst case, nowhere near enough to risk the
+        // 600s job timeout the non-blocking design originally protected.
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            if ($attempt > 0) {
+                usleep(random_int(500000, 1500000));
             }
 
-            $captured = $this->withChromeLock(function () use ($url, $selector, $chromePath, $absolute): bool {
-                $shot = Browsershot::url($url)
-                    ->setChromePath($chromePath)
-                    ->noSandbox()
-                    ->timeout(20)
-                    ->windowSize(1280, 800)
-                    ->addChromiumArguments([
-                        'disable-dev-shm-usage',
-                        'disable-gpu',
-                        'disable-setuid-sandbox',
-                        'disable-extensions',
-                        'disable-background-networking',
-                        'disable-default-apps',
-                        'disable-sync',
-                        'disable-translate',
-                        'mute-audio',
-                        'no-first-run',
-                        'no-zygote',
-                        'renderer-process-limit=1',
-                        'js-flags=--max-old-space-size=256',
-                    ]);
-
-                if ($selector) {
-                    $shot->select($selector);
+            try {
+                if (! is_dir(dirname($absolute))) {
+                    mkdir(dirname($absolute), 0755, true);
                 }
 
-                $shot->save($absolute);
+                $captured = $this->withChromeLock(function () use ($url, $selector, $chromePath, $absolute): bool {
+                    $shot = Browsershot::url($url)
+                        ->setChromePath($chromePath)
+                        ->noSandbox()
+                        ->timeout(20)
+                        ->windowSize(1280, 800)
+                        ->addChromiumArguments([
+                            'disable-dev-shm-usage',
+                            'disable-gpu',
+                            'disable-setuid-sandbox',
+                            'disable-extensions',
+                            'disable-background-networking',
+                            'disable-default-apps',
+                            'disable-sync',
+                            'disable-translate',
+                            'mute-audio',
+                            'no-first-run',
+                            'no-zygote',
+                            'renderer-process-limit=1',
+                            'js-flags=--max-old-space-size=256',
+                        ]);
 
-                return file_exists($absolute);
-            });
-        } catch (\Throwable $e) {
-            Log::warning('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage(), [
-                'chrome_path' => $chromePath,
-                'exception'   => get_class($e),
-            ]);
-            return null;
+                    if ($selector) {
+                        $shot->select($selector);
+                    }
+
+                    $shot->save($absolute);
+
+                    return file_exists($absolute);
+                });
+            } catch (\Throwable $e) {
+                Log::warning('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ': ' . $e->getMessage(), [
+                    'chrome_path' => $chromePath,
+                    'exception'   => get_class($e),
+                ]);
+                return null; // a real failure (e.g. selector never matched) — retrying won't help
+            }
+
+            if ($captured === true) {
+                return $relative;
+            }
+
+            if ($captured === false) {
+                Log::warning('Screenshot capture failed for ' . $url . ($selector ? " [{$selector}]" : '') . ' — Chrome ran but the file was not written.');
+                return null; // capture actually ran and failed — not a lock/contention issue
+            }
+
+            // $captured === null: lock was busy, nothing ran — worth retrying.
         }
 
-        if ($captured === null || $captured === false) {
-            Log::warning('Screenshot capture skipped or failed for ' . $url . ($selector ? " [{$selector}]" : '') . ' — Chrome was busy with another capture, or the file was not written.');
-            return null;
-        }
-
-        return $relative;
+        Log::warning('Screenshot capture skipped for ' . $url . ($selector ? " [{$selector}]" : '') . ' — Chrome stayed busy across all retry attempts.');
+        return null;
     }
 
     private const RENDER_FAILED_SENTINEL = '__render_failed__';

@@ -20,7 +20,7 @@ class BrokenResourceController extends Controller
     private $allLinks = [];
     private $allImages = [];
     private $baseHost = '';
-    private int $screenshotBudget = 6;
+    private int $screenshotBudget = 14;
     private array $foundOnScreenshotCache = [];
 
     /**
@@ -57,7 +57,7 @@ class BrokenResourceController extends Controller
         // cap just stops the BFS queue from growing unbounded in memory on
         // very large sites. Raised so mid-size sites get fully crawled
         // instead of stopping early on link/image checks.
-        $maxPages       = 150;
+        $maxPages       = 250;
 
         while (! empty($queue) && $pagesProcessed < $maxPages && microtime(true) < $deadline) {
             // Pull up to 20 unvisited URLs for concurrent fetch
@@ -175,9 +175,14 @@ class BrokenResourceController extends Controller
     }
 
     /**
-     * Attach a screenshot of the page each item was found on. Screenshots are
-     * cached per found_on URL (several broken items often share the same page)
-     * and capped by $this->screenshotBudget across the whole audit run.
+     * Attach a screenshot cropped to the specific broken element (via its
+     * CSS selector from extractResources()) rather than the whole page it
+     * was found on — a full-page shot doesn't show a reader which link/image
+     * on that page is actually broken. Falls back to a full-page shot only
+     * when no selector was captured (defensive — extractResources() always
+     * sets one today). Cached per (page, selector) pair since several
+     * broken items can share both, and capped by $this->screenshotBudget
+     * across the whole audit run (links + images combined).
      */
     private function attachFoundOnScreenshots(array &$items): void
     {
@@ -187,17 +192,20 @@ class BrokenResourceController extends Controller
                 continue;
             }
 
-            if (! array_key_exists($page, $this->foundOnScreenshotCache)) {
+            $selector = $item['selector'] ?? null;
+            $cacheKey = $page . '|' . ($selector ?? '');
+
+            if (! array_key_exists($cacheKey, $this->foundOnScreenshotCache)) {
                 if ($this->screenshotBudget <= 0) {
-                    $this->foundOnScreenshotCache[$page] = null;
+                    $this->foundOnScreenshotCache[$cacheKey] = null;
                     continue;
                 }
-                $this->foundOnScreenshotCache[$page] = $this->captureScreenshot($page);
+                $this->foundOnScreenshotCache[$cacheKey] = $this->captureScreenshot($page, $selector);
                 $this->screenshotBudget--;
             }
 
-            if ($this->foundOnScreenshotCache[$page]) {
-                $item['screenshot'] = $this->foundOnScreenshotCache[$page];
+            if ($this->foundOnScreenshotCache[$cacheKey]) {
+                $item['screenshot'] = $this->foundOnScreenshotCache[$cacheKey];
             }
         }
         unset($item);
@@ -276,7 +284,7 @@ class BrokenResourceController extends Controller
 
             if (!isset($seenLinks[$absoluteUrl])) {
                 $seenLinks[$absoluteUrl] = true;
-                $links[] = ['url' => $absoluteUrl, 'found_on' => $baseUrl];
+                $links[] = ['url' => $absoluteUrl, 'found_on' => $baseUrl, 'selector' => $this->buildCssSelector($node)];
             }
         });
 
@@ -291,7 +299,7 @@ class BrokenResourceController extends Controller
             $absoluteUrl = $this->makeAbsoluteUrl($src, $baseUrl);
             if (!isset($seenImages[$absoluteUrl])) {
                 $seenImages[$absoluteUrl] = true;
-                $images[] = ['url' => $absoluteUrl, 'found_on' => $baseUrl];
+                $images[] = ['url' => $absoluteUrl, 'found_on' => $baseUrl, 'selector' => $this->buildCssSelector($node)];
             }
         });
 
@@ -300,6 +308,56 @@ class BrokenResourceController extends Controller
             'images' => $images,
             'pages'  => array_unique($pages),
         ];
+    }
+
+    /**
+     * Build a best-effort CSS selector for a matched <a>/<img> node, so its
+     * screenshot can be cropped to the element itself (via Browsershot's
+     * ->select()) instead of capturing the whole page — same convention
+     * AccessibilityAuditController uses for color-contrast violations.
+     * Symfony's Crawler has no node-to-selector helper (selectors only go
+     * the other way: selector -> matched nodes), so this is built by hand:
+     * prefer #id, then tag.class, then fall back to a parent-scoped
+     * nth-of-type index. None of these are guaranteed globally unique —
+     * good enough for a representative crop, not pixel-perfect precision.
+     */
+    private function buildCssSelector(Crawler $node): string
+    {
+        $el = $node->getNode(0);
+        if (! $el instanceof \DOMElement) {
+            return $node->nodeName() ?: 'body';
+        }
+
+        $tag = $el->nodeName;
+
+        $id = $el->getAttribute('id');
+        if ($id !== '') {
+            return $tag . '#' . $id;
+        }
+
+        $class = trim($el->getAttribute('class'));
+        if ($class !== '') {
+            $firstClass = explode(' ', $class)[0];
+            if ($firstClass !== '') {
+                return $tag . '.' . $firstClass;
+            }
+        }
+
+        // Fallback: how many same-tag siblings precede this element, scoped
+        // to the immediate parent's tag name for a bit more specificity than
+        // a bare, page-wide "tag:nth-of-type(n)" would give.
+        $index = 1;
+        for ($sibling = $el->previousSibling; $sibling !== null; $sibling = $sibling->previousSibling) {
+            if ($sibling instanceof \DOMElement && $sibling->nodeName === $tag) {
+                $index++;
+            }
+        }
+
+        $parentTag = ($el->parentNode instanceof \DOMElement) ? $el->parentNode->nodeName : null;
+
+        return $parentTag
+            ? "{$parentTag} > {$tag}:nth-of-type({$index})"
+            : "{$tag}:nth-of-type({$index})";
     }
 
     /**
