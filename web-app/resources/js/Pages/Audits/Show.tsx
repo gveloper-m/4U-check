@@ -41,12 +41,23 @@ import {
   Bot,
   WifiOff,
   RefreshCw,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  GitCompare,
 } from 'lucide-react';
+
+interface HistoryPoint {
+  id: number;
+  health_score: number | null;
+  created_at: string;
+}
 
 interface ShowProps extends PageProps {
   report: FullAuditReport;
   matchedSiteId?: number | null;
   siteAgent?: { id: number; is_online: boolean } | null;
+  history?: HistoryPoint[];
 }
 
 function healthColor(score?: number): string {
@@ -353,10 +364,18 @@ function FixWithAiCard({
   );
 }
 
-export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProps) {
+export default function AuditShow({ report, matchedSiteId, siteAgent, history = [] }: ShowProps) {
   const { t } = useTranslation();
   const [progress, setProgress] = useState<StatusResponse['progress'] | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Trend: history is newest-first and includes this report once completed.
+  const scoredHistory = history.filter((h) => h.health_score !== null);
+  const previous = scoredHistory.find((h) => h.id !== report.id) ?? null;
+  const delta =
+    report.health_score != null && previous?.health_score != null
+      ? report.health_score - previous.health_score
+      : null;
 
   useEffect(() => {
     if (report.status !== 'running') return;
@@ -403,6 +422,16 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
   const seoTech = getObj(seo, 'technical_seo');
   const seoRobots = getObj(seoTech, 'robots_txt');
   const seoSitemap = getObj(seoTech, 'sitemap_xml');
+  // SEO — new checks (gate each on presence for back-compat)
+  const seoRobotsDirectives = getObj(seo, 'robots_directives');
+  const seoXRobots          = getObj(seo, 'x_robots_tag');
+  const seoPageContent      = getObj(seo, 'page_content');
+  const seoUrlQuality       = getObj(seo, 'url_quality');
+  const seoHeadingStructure = getObj(seo, 'heading_structure');
+  const seoInternalLinking  = getObj(seo, 'internal_linking');
+  const seoHreflang         = getObj(seo, 'hreflang');
+  const seoFavicon          = getObj(seo, 'favicon');
+  const seoTwitterCard      = getObj(seo, 'twitter_card');
 
   // Security helpers — data lives in nested objects
   const secSsl      = getObj(sec, 'ssl');
@@ -411,6 +440,11 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
   const secDns      = getObj(sec, 'dns_security');
   const secRedirect = getObj(sec, 'https_redirect');
   const secHdrsPresent = getObj(secHeaders, 'headers_present');
+  // Security — new checks (gate each on presence for back-compat)
+  const secCspQuality  = getObj(sec, 'csp_quality');
+  const secHstsQuality = getObj(sec, 'hsts_quality');
+  const secCookieFlags = getObj(sec, 'cookie_flags');
+  const secSecurityTxt = getObj(sec, 'security_txt');
 
   // Performance helpers — real keys: metrics.ttfb_ms, metrics.desktop.fcp_ms, page_analysis.*
   const perfMetrics     = getObj(perf, 'metrics');
@@ -428,6 +462,8 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
   const brokenSummary = getObj(broken, 'summary');
   const brokenLinks   = getArr(broken, 'broken_links');
   const brokenImages  = getArr(broken, 'broken_images');
+  const brokenScripts     = getArr(broken, 'broken_scripts');
+  const brokenStylesheets = getArr(broken, 'broken_stylesheets');
 
   // Catalog helpers
   const catalogBrokenPct    = getNum(catalog, 'broken_percentage');
@@ -570,6 +606,21 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                 <span className="text-xs text-gray-500">
                   {new Date(report.created_at).toLocaleString()}
                 </span>
+                {delta !== null && (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                      delta > 0
+                        ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400'
+                        : delta < 0
+                          ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-400'
+                          : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'
+                    }`}
+                    title={t('show.trend.vsPrevious')}
+                  >
+                    {delta > 0 ? <TrendingUp className="h-3 w-3" /> : delta < 0 ? <TrendingDown className="h-3 w-3" /> : <Minus className="h-3 w-3" />}
+                    {delta > 0 ? `+${delta}` : delta}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -595,6 +646,47 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
             </div>
           )}
         </div>
+
+        {/* Score trend — history for this site, oldest → newest, clickable */}
+        {scoredHistory.length >= 2 && (
+          <div className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 p-5">
+            <div className="mb-3 flex items-center gap-2">
+              <TrendingUp className="h-4 w-4 text-violet-500" />
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{t('show.trend.title')}</h3>
+            </div>
+            <div className="flex flex-wrap items-end gap-2">
+              {[...scoredHistory].reverse().map((h) => {
+                const isCurrent = h.id === report.id;
+                return (
+                  <Link
+                    key={h.id}
+                    href={`/audits/${h.id}`}
+                    title={new Date(h.created_at).toLocaleDateString()}
+                    className={`flex flex-col items-center gap-1 rounded-lg border px-2.5 py-1.5 transition-colors ${
+                      isCurrent
+                        ? 'border-violet-400 dark:border-violet-500 bg-violet-50 dark:bg-violet-950/40'
+                        : 'border-gray-200 dark:border-gray-800 hover:border-gray-400 dark:hover:border-gray-600'
+                    }`}
+                  >
+                    <span className={`text-sm font-bold ${healthColor(h.health_score ?? undefined)}`}>{h.health_score}</span>
+                    <span className="text-[10px] text-gray-500 whitespace-nowrap">
+                      {new Date(h.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+            {previous && (
+              <Link
+                href={`/audits/compare?ids[]=${report.id}&ids[]=${previous.id}`}
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline"
+              >
+                <GitCompare className="h-3.5 w-3.5" />
+                {t('show.trend.comparePrevious')}
+              </Link>
+            )}
+          </div>
+        )}
 
         {/* Share link — agency users only */}
         {isAgency && report.status === 'completed' && (
@@ -724,6 +816,7 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
             help={t('explain.sections.seo')}
           >
             {seo ? (
+              <>
               <div className="divide-y divide-gray-800">
                 <MetaRow
                   label={t('show.seo.metaTitle')}
@@ -781,7 +874,86 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                   value={getBool(seoSitemap, 'exists') === true ? t('common.found') : getBool(seoSitemap, 'exists') === false ? t('common.missing') : t('common.na')}
                   ok={getBool(seoSitemap, 'exists') ?? undefined}
                 />
+                {/* Indexability — highest-signal SEO row */}
+                {seoRobotsDirectives && (
+                  <MetaRow
+                    label={t('show.seo.indexable')}
+                    value={getBool(seoRobotsDirectives, 'is_noindex') ? t('common.no') : t('common.yes')}
+                    ok={!getBool(seoRobotsDirectives, 'is_noindex')}
+                  />
+                )}
+                {seoXRobots && getBool(seoXRobots, 'checked') && (
+                  <MetaRow
+                    label={t('show.seo.xRobots')}
+                    value={getBool(seoXRobots, 'is_noindex') ? t('common.no') : t('common.yes')}
+                    ok={!getBool(seoXRobots, 'is_noindex')}
+                  />
+                )}
+                {seoPageContent && (
+                  <MetaRow
+                    label={t('show.seo.contentDepth')}
+                    value={`${getStr(seoPageContent, 'content_depth')} (${getNum(seoPageContent, 'word_count') ?? 0} words)`}
+                    ok={getStr(seoPageContent, 'content_depth') !== 'thin'}
+                  />
+                )}
+                {seoUrlQuality && (
+                  <MetaRow
+                    label={t('show.seo.urlQuality')}
+                    value={getStr(seoUrlQuality, 'status')}
+                    ok={getStr(seoUrlQuality, 'status') === 'OK'}
+                  />
+                )}
+                {seoHeadingStructure && (
+                  <MetaRow
+                    label={t('show.seo.headingStructure')}
+                    value={getArr(seoHeadingStructure, 'issues').length === 0 ? getStr(seoHeadingStructure, 'status') : `${getArr(seoHeadingStructure, 'issues').length} issue(s)`}
+                    ok={getArr(seoHeadingStructure, 'issues').length === 0}
+                  />
+                )}
+                {seoInternalLinking && (
+                  <MetaRow
+                    label={t('show.seo.internalLinks')}
+                    value={`${getNum(seoInternalLinking, 'internal_links') ?? 0} internal / ${getNum(seoInternalLinking, 'external_links') ?? 0} external`}
+                  />
+                )}
+                {seoHreflang && (
+                  <MetaRow
+                    label={t('show.seo.hreflang')}
+                    value={getBool(seoHreflang, 'present') ? `${getNum(seoHreflang, 'count') ?? 0} tag(s)` : t('common.missing')}
+                    ok={getBool(seoHreflang, 'present') ? getArr(seoHreflang, 'issues').length === 0 : undefined}
+                  />
+                )}
+                {seoFavicon && (
+                  <MetaRow
+                    label={t('show.seo.favicon')}
+                    value={getBool(seoFavicon, 'present') ? t('common.found') : t('common.missing')}
+                    ok={getBool(seoFavicon, 'present') ?? undefined}
+                  />
+                )}
+                {seoTwitterCard && (
+                  <MetaRow
+                    label={t('show.seo.twitterCard')}
+                    value={getStr(seoTwitterCard, 'card') !== 'N/A' ? getStr(seoTwitterCard, 'card') : t('common.missing')}
+                    ok={getBool(seoTwitterCard, 'complete') ?? undefined}
+                  />
+                )}
               </div>
+              {seoHeadingStructure && getArr(seoHeadingStructure, 'issues').length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                    {t('show.seo.headingStructure')} ({getArr(seoHeadingStructure, 'issues').length})
+                  </p>
+                  <div className="space-y-1">
+                    {getArr(seoHeadingStructure, 'issues').map((issue, i) => (
+                      <div key={i} className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-300">
+                        <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                        {String(issue)}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              </>
             ) : (
               <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
@@ -797,6 +969,7 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
             help={t('explain.sections.security')}
           >
             {sec ? (
+              <>
               <div className="divide-y divide-gray-800">
                 {/* SSL */}
                 <MetaRow
@@ -865,7 +1038,94 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                   value={getBool(secDns, 'dkim_found') ? t('show.security.dkimFound', { selector: getStr(secDns, 'dkim_selector') }) : t('show.security.dkimNotFound')}
                   ok={getBool(secDns, 'dkim_found') ?? undefined}
                 />
+                {/* Header score (out of 6) */}
+                {hasKey(secHeaders, 'score') && (
+                  <MetaRow
+                    label={t('show.security.score')}
+                    value={`${getNum(secHeaders, 'score') ?? 0}/6`}
+                    ok={(getNum(secHeaders, 'score') ?? 0) >= 5}
+                  />
+                )}
+                {secCspQuality && (
+                  <MetaRow
+                    label={t('show.security.cspQuality')}
+                    value={getBool(secCspQuality, 'unsafe') ? `${t('common.no')} (unsafe-inline/eval)` : t('common.yes')}
+                    ok={!getBool(secCspQuality, 'unsafe')}
+                  />
+                )}
+                {secHstsQuality && (
+                  <MetaRow
+                    label={t('show.security.hstsQuality')}
+                    value={`max-age=${getNum(secHstsQuality, 'max_age') ?? 0}${getBool(secHstsQuality, 'includes_subdomains') ? '; includeSubDomains' : ''}${getBool(secHstsQuality, 'preload') ? '; preload' : ''}`}
+                    ok={getBool(secHstsQuality, 'adequate') ?? undefined}
+                  />
+                )}
+                {secCookieFlags && (
+                  <MetaRow
+                    label={t('show.security.cookies')}
+                    value={getBool(secCookieFlags, 'insecure_session') ? 'Session cookie missing Secure/HttpOnly' : 'OK'}
+                    ok={!getBool(secCookieFlags, 'insecure_session')}
+                  />
+                )}
+                {secSecurityTxt && (
+                  <MetaRow
+                    label={t('show.security.securityTxt')}
+                    value={getBool(secSecurityTxt, 'present') ? t('common.found') : t('common.missing')}
+                    ok={getBool(secSecurityTxt, 'present') ? true : undefined}
+                  />
+                )}
               </div>
+              {getArr(secHeaders, 'headers_missing').length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                    {t('show.security.missingHeaders')} ({getArr(secHeaders, 'headers_missing').length})
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {getArr(secHeaders, 'headers_missing').map((h, i) => (
+                      <span key={i} className="rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">{String(h)}</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {(() => {
+                const info = getObj(secHeaders, 'info_disclosure');
+                const keys = info ? Object.keys(info) : [];
+                if (keys.length === 0) return null;
+                return (
+                  <div className="mt-4">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      {t('show.security.infoDisclosure')} ({keys.length})
+                    </p>
+                    <div className="space-y-1">
+                      {keys.map((k) => (
+                        <div key={k} className="flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2 text-xs text-amber-300">
+                          <span className="break-all font-mono">{k}: {String(info![k])}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+              {getArr(secMixed, 'mixed_content_items').length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                    {t('show.security.mixedItems')} ({getArr(secMixed, 'mixed_content_items').length})
+                  </p>
+                  <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
+                    {getArr(secMixed, 'mixed_content_items').map((it, i) => {
+                      const m = it as Record<string, unknown>;
+                      return (
+                        <div key={i} className="px-3 py-2 text-xs">
+                          <span className="text-gray-500">{String(m.element ?? '')}</span>
+                          <span className="mx-1 text-gray-400">→</span>
+                          <span className="break-all text-gray-700 dark:text-gray-300">{String(m.url ?? '')}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+              </>
             ) : (
               <p className="text-sm text-gray-500">{t('show.noData')}</p>
             )}
@@ -947,7 +1207,69 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                     ok={false}
                   />
                 )}
+                {hasKey(perfDesktop, 'cls_score') && (
+                  <MetaRow
+                    label={`${t('show.performance.cls')} (Desktop)`}
+                    value={getNum(perfDesktop, 'cls_score') !== null ? String(getNum(perfDesktop, 'cls_score')) : t('common.na')}
+                    ok={getNum(perfDesktop, 'cls_score') !== null ? (getNum(perfDesktop, 'cls_score')! <= 0.1) : undefined}
+                  />
+                )}
+                {hasKey(perfMobile, 'cls_score') && (
+                  <MetaRow
+                    label={`${t('show.performance.cls')} (Mobile)`}
+                    value={getNum(perfMobile, 'cls_score') !== null ? String(getNum(perfMobile, 'cls_score')) : t('common.na')}
+                    ok={getNum(perfMobile, 'cls_score') !== null ? (getNum(perfMobile, 'cls_score')! <= 0.1) : undefined}
+                  />
+                )}
+                {hasKey(perfPageAnalysis, 'html_size_kb') && (
+                  <MetaRow
+                    label={t('show.performance.htmlSize')}
+                    value={`${getNum(perfPageAnalysis, 'html_size_kb') ?? 0} KB`}
+                  />
+                )}
                 </div>
+                {getArr(perfPageAnalysis, 'render_blocking_scripts').length > 0 && (
+                  <div>
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      {t('show.performance.renderBlockingScripts')} ({getArr(perfPageAnalysis, 'render_blocking_scripts').length})
+                    </p>
+                    <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
+                      {getArr(perfPageAnalysis, 'render_blocking_scripts').map((u, i) => (
+                        <div key={i} className="break-all px-3 py-2 text-xs text-gray-700 dark:text-gray-300">{String(u)}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {getArr(perfPageAnalysis, 'render_blocking_styles').length > 0 && (
+                  <div>
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      {t('show.performance.renderBlockingStyles')} ({getArr(perfPageAnalysis, 'render_blocking_styles').length})
+                    </p>
+                    <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
+                      {getArr(perfPageAnalysis, 'render_blocking_styles').map((u, i) => (
+                        <div key={i} className="break-all px-3 py-2 text-xs text-gray-700 dark:text-gray-300">{String(u)}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {getArr(perfPageAnalysis, 'unminified_assets').length > 0 && (
+                  <div>
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      {t('show.performance.unminifiedAssets')} ({getArr(perfPageAnalysis, 'unminified_assets').length})
+                    </p>
+                    <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
+                      {getArr(perfPageAnalysis, 'unminified_assets').map((a, i) => {
+                        const asset = a as Record<string, unknown>;
+                        return (
+                          <div key={i} className="flex items-start justify-between gap-3 px-3 py-2">
+                            <span className="break-all text-xs text-gray-700 dark:text-gray-300">{String(asset.url ?? '')}</span>
+                            <span className="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-xs font-medium text-amber-400">{String(asset.type ?? '').toUpperCase()} — {String(asset.size_kb ?? '')}KB</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-sm text-gray-500">{t('show.noData')}</p>
@@ -1001,6 +1323,20 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                     })()}
                     ok={(getNum(brokenSummary, 'broken_images_count') ?? 1) === 0}
                   />
+                  {hasKey(brokenSummary, 'broken_scripts_count') && (
+                    <MetaRow
+                      label={t('show.broken.brokenScripts')}
+                      value={getNum(brokenSummary, 'broken_scripts_count') ?? t('common.na')}
+                      ok={(getNum(brokenSummary, 'broken_scripts_count') ?? 1) === 0}
+                    />
+                  )}
+                  {hasKey(brokenSummary, 'broken_stylesheets_count') && (
+                    <MetaRow
+                      label={t('show.broken.brokenStylesheets')}
+                      value={getNum(brokenSummary, 'broken_stylesheets_count') ?? t('common.na')}
+                      ok={(getNum(brokenSummary, 'broken_stylesheets_count') ?? 1) === 0}
+                    />
+                  )}
                 </div>
 
                 {brokenLinks.length > 0 && (
@@ -1064,6 +1400,66 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                     </div>
                   </div>
                 )}
+
+                {brokenScripts.length > 0 && (
+                  <div>
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      {t('show.broken.brokenScripts')} ({brokenScripts.length})
+                    </p>
+                    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
+                      {brokenScripts.map((res, i) => {
+                        const l = res as Record<string, unknown>;
+                        return (
+                          <div key={i} className="px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="break-all text-xs text-gray-700 dark:text-gray-300">{String(l.url ?? res)}</span>
+                              {l.status_code != null && (
+                                <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">
+                                  {String(l.status_code)}
+                                </span>
+                              )}
+                            </div>
+                            {l.found_on != null && (
+                              <p className="mt-1 text-xs text-gray-600 break-all">
+                                {t('show.broken.foundOn')}: <span className="text-gray-500">{String(l.found_on)}</span>
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {brokenStylesheets.length > 0 && (
+                  <div>
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                      {t('show.broken.brokenStylesheets')} ({brokenStylesheets.length})
+                    </p>
+                    <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
+                      {brokenStylesheets.map((res, i) => {
+                        const l = res as Record<string, unknown>;
+                        return (
+                          <div key={i} className="px-3 py-2.5">
+                            <div className="flex items-start justify-between gap-3">
+                              <span className="break-all text-xs text-gray-700 dark:text-gray-300">{String(l.url ?? res)}</span>
+                              {l.status_code != null && (
+                                <span className="shrink-0 rounded bg-red-500/10 px-1.5 py-0.5 text-xs font-medium text-red-400">
+                                  {String(l.status_code)}
+                                </span>
+                              )}
+                            </div>
+                            {l.found_on != null && (
+                              <p className="mt-1 text-xs text-gray-600 break-all">
+                                {t('show.broken.foundOn')}: <span className="text-gray-500">{String(l.found_on)}</span>
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-sm text-gray-500">{t('show.noData')}</p>
@@ -1115,6 +1511,44 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                   </>
                 )}
                 </div>
+                {(() => {
+                  const brokenProducts = catalogResults.filter((r) => r.is_broken === true);
+                  const auditedCount = getNum(catalog, 'products_audited') ?? 0;
+                  if (brokenProducts.length > 0) {
+                    return (
+                      <div>
+                        <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                          {t('show.catalog.brokenList')} ({brokenProducts.length})
+                        </p>
+                        <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800 divide-y divide-gray-800">
+                          {brokenProducts.slice(0, 30).map((p, i) => {
+                            const priceErrors = getArr(p, 'price_errors').map(String);
+                            const stockDetails = getArr(p, 'stock_details').map(String);
+                            const reasons = [...priceErrors, ...stockDetails];
+                            if (p.cart_disabled === true) reasons.push('add-to-cart disabled');
+                            const detected = getStr(p, 'detected_price');
+                            const schema = getStr(p, 'schema_price');
+                            return (
+                              <div key={i} className="px-3 py-2.5">
+                                <span className="break-all text-xs text-gray-700 dark:text-gray-300">{getStr(p, 'url')}</span>
+                                {reasons.length > 0 && <p className="mt-1 text-xs text-red-400">{reasons.join('; ')}</p>}
+                                {(detected !== 'N/A' || schema !== 'N/A') && (
+                                  <p className="mt-1 text-xs text-gray-500">
+                                    {t('show.catalog.detectedPrice')}: {detected} · {t('show.catalog.schemaPrice')}: {schema}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    );
+                  }
+                  if (auditedCount > 0) {
+                    return <p className="text-sm text-emerald-400">{t('show.catalog.allGood')}</p>;
+                  }
+                  return null;
+                })()}
               </div>
             ) : (
               <p className="text-sm text-gray-500">{t('show.noData')}</p>
@@ -1164,7 +1598,50 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                   })()}
                   ok={getBool(trackTt, 'detected') ?? undefined}
                 />
+                {([
+                  ['google_tag_manager', 'gtm'],
+                  ['linkedin_insight', 'linkedin'],
+                  ['twitter_pixel', 'twitter'],
+                  ['pinterest_tag', 'pinterest'],
+                  ['snapchat_pixel', 'snapchat'],
+                  ['microsoft_uet', 'microsoftUet'],
+                  ['hotjar', 'hotjar'],
+                  ['clarity', 'clarity'],
+                ] as [string, string][]).map(([key, label]) => {
+                  const obj = getObj(trackScripts, key);
+                  if (!obj) return null;
+                  const detected = getBool(obj, 'detected');
+                  const ids = getArr(obj, 'ids');
+                  return (
+                    <MetaRow
+                      key={key}
+                      label={t(`show.tracking.${label}`)}
+                      value={detected ? `${t('common.detected')}${ids.length ? ` (${ids.join(', ')})` : ''}` : t('common.notDetected')}
+                      ok={detected ? true : undefined}
+                    />
+                  );
+                })}
                 </div>
+                {(() => {
+                  const coverage = getObj(tracking, 'coverage');
+                  const pagesCrawled = getNum(coverage, 'pages_crawled') ?? 0;
+                  const trackers = getObj(coverage, 'trackers');
+                  if (!coverage || pagesCrawled <= 1 || !trackers) return null;
+                  const entries = Object.entries(trackers).filter(([, pct]) => typeof pct === 'number');
+                  if (entries.length === 0) return null;
+                  return (
+                    <div className="mt-2">
+                      <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                        {t('show.tracking.coverage')}
+                      </p>
+                      <div className="space-y-0.5">
+                        {entries.map(([family, pct]) => (
+                          <p key={family} className="text-xs text-gray-500">{family}: {String(pct)}% of pages</p>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             ) : (
               <p className="text-sm text-gray-500">{t('show.noData')}</p>
@@ -1193,6 +1670,10 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                   const linkTxt  = getObj(checks, 'link_text');
                   const lmarks   = getObj(checks, 'landmarks');
                   const contrast = getObj(checks, 'color_contrast');
+                  const zoom     = getObj(checks, 'zoom_disabled');
+                  const dupIds   = getObj(checks, 'duplicate_ids');
+                  const posTab   = getObj(checks, 'positive_tabindex');
+                  const autoplay = getObj(checks, 'autoplay_media');
 
                   const statusOk = (s: string | null | undefined) => s === 'pass' ? true : s === 'fail' ? false : undefined;
 
@@ -1270,6 +1751,34 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                           value={contrast ? `${getNum(contrast,'fail') ?? 0} violation(s) found` : t('common.na')}
                           ok={statusOk(getStr(contrast, 'status'))}
                         />
+                        {zoom && (
+                          <MetaRow
+                            label={t('show.accessibility.zoom')}
+                            value={getBool(zoom, 'disabled') ? t('common.no') : t('common.yes')}
+                            ok={!getBool(zoom, 'disabled')}
+                          />
+                        )}
+                        {dupIds && (
+                          <MetaRow
+                            label={t('show.accessibility.duplicateIds')}
+                            value={getNum(dupIds, 'total_duplicates') ?? 0}
+                            ok={!getBool(dupIds, 'breaks_labels') && (getNum(dupIds, 'total_duplicates') ?? 0) === 0}
+                          />
+                        )}
+                        {posTab && (
+                          <MetaRow
+                            label={t('show.accessibility.positiveTabindex')}
+                            value={getNum(posTab, 'count') ?? 0}
+                            ok={(getNum(posTab, 'count') ?? 0) === 0}
+                          />
+                        )}
+                        {autoplay && (
+                          <MetaRow
+                            label={t('show.accessibility.autoplayMedia')}
+                            value={getNum(autoplay, 'count') ?? 0}
+                            ok={(getNum(autoplay, 'count') ?? 0) === 0}
+                          />
+                        )}
                       </div>
 
                       {/* Heading issues */}
@@ -1357,6 +1866,46 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                           </div>
                         </div>
                       )}
+
+                      {/* Image alt violations */}
+                      {getArr(imgAlt, 'violations').length > 0 && (
+                        <div>
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('show.accessibility.imageAltList')} ({getArr(imgAlt, 'violations').length})
+                          </p>
+                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
+                            {getArr(imgAlt, 'violations').map((v, i) => {
+                              const vv = v as Record<string, unknown>;
+                              return (
+                                <div key={i} className="border-b border-gray-200 dark:border-gray-800 px-3 py-2 last:border-0">
+                                  <p className="break-all text-xs text-gray-700 dark:text-gray-300">{String(vv.src ?? '')}</p>
+                                  {!!vv.issue && <p className="text-xs text-red-400">{String(vv.issue)}</p>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Link text violations */}
+                      {getArr(linkTxt, 'violations').length > 0 && (
+                        <div>
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-500">
+                            {t('show.accessibility.linkTextList')} ({getArr(linkTxt, 'violations').length})
+                          </p>
+                          <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 dark:border-gray-800">
+                            {getArr(linkTxt, 'violations').map((v, i) => {
+                              const vv = v as Record<string, unknown>;
+                              return (
+                                <div key={i} className="border-b border-gray-200 dark:border-gray-800 px-3 py-2 last:border-0">
+                                  <p className="break-all text-xs text-gray-700 dark:text-gray-300">{String(vv.text ?? vv.href ?? '')}</p>
+                                  {!!vv.issue && <p className="text-xs text-red-400">{String(vv.issue)}</p>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                     </>
                   );
                 })()}
@@ -1407,6 +1956,38 @@ export default function AuditShow({ report, matchedSiteId, siteAgent }: ShowProp
                             value={getNum(fuzzSummary, 'total_findings') ?? 0}
                             ok={(getNum(fuzzSummary, 'total_findings') ?? 0) === 0}
                           />
+                          {fuzzSummary && (getNum(fuzzSummary, 'total_findings') ?? 0) > 0 && (
+                            <>
+                              {hasKey(fuzzSummary, 'reflected_input') && (
+                                <MetaRow
+                                  label={t('show.fuzz.reflectedInput')}
+                                  value={getNum(fuzzSummary, 'reflected_input') ?? 0}
+                                  ok={(getNum(fuzzSummary, 'reflected_input') ?? 0) === 0}
+                                />
+                              )}
+                              {hasKey(fuzzSummary, 'server_error') && (
+                                <MetaRow
+                                  label={t('show.fuzz.serverError')}
+                                  value={getNum(fuzzSummary, 'server_error') ?? 0}
+                                  ok={(getNum(fuzzSummary, 'server_error') ?? 0) === 0}
+                                />
+                              )}
+                              {hasKey(fuzzSummary, 'error_disclosure') && (
+                                <MetaRow
+                                  label={t('show.fuzz.errorDisclosure')}
+                                  value={getNum(fuzzSummary, 'error_disclosure') ?? 0}
+                                  ok={(getNum(fuzzSummary, 'error_disclosure') ?? 0) === 0}
+                                />
+                              )}
+                              {hasKey(fuzzSummary, 'slow_response') && (
+                                <MetaRow
+                                  label={t('show.fuzz.slowResponse')}
+                                  value={getNum(fuzzSummary, 'slow_response') ?? 0}
+                                  ok={(getNum(fuzzSummary, 'slow_response') ?? 0) === 0}
+                                />
+                              )}
+                            </>
+                          )}
                         </div>
 
                         {fuzzFindings.length === 0 ? (

@@ -194,6 +194,16 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
   const seoTech     = getObj(seo, 'technical_seo');
   const seoRobots   = getObj(seoTech, 'robots_txt');
   const seoSitemap  = getObj(seoTech, 'sitemap_xml');
+  // SEO — new checks (gated on presence for back-compat)
+  const seoRobotsDirectives = getObj(seo, 'robots_directives');
+  const seoXRobots          = getObj(seo, 'x_robots_tag');
+  const seoPageContent      = getObj(seo, 'page_content');
+  const seoUrlQuality       = getObj(seo, 'url_quality');
+  const seoHeadingStructure = getObj(seo, 'heading_structure');
+  const seoInternalLinking  = getObj(seo, 'internal_linking');
+  const seoHreflang         = getObj(seo, 'hreflang');
+  const seoFavicon          = getObj(seo, 'favicon');
+  const seoTwitterCard      = getObj(seo, 'twitter_card');
 
   // Security
   const secSsl         = getObj(sec, 'ssl');
@@ -202,6 +212,11 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
   const secDns         = getObj(sec, 'dns_security');
   const secRedirect    = getObj(sec, 'https_redirect');
   const secHdrsPresent = getObj(secHeaders, 'headers_present');
+  // Security — new checks (gated on presence for back-compat)
+  const secCspQuality  = getObj(sec, 'csp_quality');
+  const secHstsQuality = getObj(sec, 'hsts_quality');
+  const secCookieFlags = getObj(sec, 'cookie_flags');
+  const secSecurityTxt = getObj(sec, 'security_txt');
 
   // Performance
   const perfMetrics     = getObj(perf, 'metrics');
@@ -219,6 +234,8 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
   const brokenSummary = getObj(broken, 'summary');
   const brokenLinks   = getArr(broken, 'broken_links');
   const brokenImages  = getArr(broken, 'broken_images');
+  const brokenScripts     = getArr(broken, 'broken_scripts');
+  const brokenStylesheets = getArr(broken, 'broken_stylesheets');
 
   // Catalog
   const catalogBrokenPct       = getNum(catalog, 'broken_percentage');
@@ -381,6 +398,7 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
             {/* SEO */}
             <Section title={t('show.sections.seo')} icon={Search} color="text-violet-600" bg="bg-violet-100" border="border-violet-200" defaultOpen={true} help={t('explain.sections.seo')}>
               {seo ? (
+                <>
                 <div className="divide-y divide-gray-100">
                   <MetaRow label={t('show.seo.metaTitle')} help={t('explain.seo.metaTitle')} value={getStr(seoMeta, 'status')} ok={getStr(seoMeta, 'status') === 'OK'} />
                   <MetaRow label={t('show.seo.metaDesc')} help={t('explain.seo.metaDesc')} value={getStr(seoDesc, 'status')} ok={getStr(seoDesc, 'status') === 'OK'} />
@@ -391,13 +409,57 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                   <MetaRow label={t('show.seo.images')} help={t('explain.seo.images')} value={seoAlt ? `${getNum(seoAlt, 'missing_alt') ?? 0} missing / ${getNum(seoAlt, 'total_images') ?? '?'} total` : t('common.na')} ok={seoAlt ? getStr(seoAlt, 'status') === 'OK' : undefined} />
                   <MetaRow label={t('show.seo.robots')} help={t('explain.seo.robots')} value={getBool(seoRobots, 'exists') === true ? t('common.found') : getBool(seoRobots, 'exists') === false ? t('common.missing') : t('common.na')} ok={getBool(seoRobots, 'exists') ?? undefined} />
                   <MetaRow label={t('show.seo.sitemap')} help={t('explain.seo.sitemap')} value={getBool(seoSitemap, 'exists') === true ? t('common.found') : getBool(seoSitemap, 'exists') === false ? t('common.missing') : t('common.na')} ok={getBool(seoSitemap, 'exists') ?? undefined} />
+                  {seoRobotsDirectives && (
+                    <MetaRow label={t('show.seo.indexable')} value={getBool(seoRobotsDirectives, 'is_noindex') ? t('common.no') : t('common.yes')} ok={!getBool(seoRobotsDirectives, 'is_noindex')} />
+                  )}
+                  {seoXRobots && getBool(seoXRobots, 'checked') && (
+                    <MetaRow label={t('show.seo.xRobots')} value={getBool(seoXRobots, 'is_noindex') ? t('common.no') : t('common.yes')} ok={!getBool(seoXRobots, 'is_noindex')} />
+                  )}
+                  {seoPageContent && (
+                    <MetaRow label={t('show.seo.contentDepth')} value={`${getStr(seoPageContent, 'content_depth')} (${getNum(seoPageContent, 'word_count') ?? 0} words)`} ok={getStr(seoPageContent, 'content_depth') !== 'thin'} />
+                  )}
+                  {seoUrlQuality && (
+                    <MetaRow label={t('show.seo.urlQuality')} value={getStr(seoUrlQuality, 'status')} ok={getStr(seoUrlQuality, 'status') === 'OK'} />
+                  )}
+                  {seoHeadingStructure && (
+                    <MetaRow label={t('show.seo.headingStructure')} value={getArr(seoHeadingStructure, 'issues').length === 0 ? getStr(seoHeadingStructure, 'status') : `${getArr(seoHeadingStructure, 'issues').length} issue(s)`} ok={getArr(seoHeadingStructure, 'issues').length === 0} />
+                  )}
+                  {seoInternalLinking && (
+                    <MetaRow label={t('show.seo.internalLinks')} value={`${getNum(seoInternalLinking, 'internal_links') ?? 0} internal / ${getNum(seoInternalLinking, 'external_links') ?? 0} external`} />
+                  )}
+                  {seoHreflang && (
+                    <MetaRow label={t('show.seo.hreflang')} value={getBool(seoHreflang, 'present') ? `${getNum(seoHreflang, 'count') ?? 0} tag(s)` : t('common.missing')} ok={getBool(seoHreflang, 'present') ? getArr(seoHreflang, 'issues').length === 0 : undefined} />
+                  )}
+                  {seoFavicon && (
+                    <MetaRow label={t('show.seo.favicon')} value={getBool(seoFavicon, 'present') ? t('common.found') : t('common.missing')} ok={getBool(seoFavicon, 'present') ?? undefined} />
+                  )}
+                  {seoTwitterCard && (
+                    <MetaRow label={t('show.seo.twitterCard')} value={getStr(seoTwitterCard, 'card') ? getStr(seoTwitterCard, 'card') : t('common.missing')} ok={getBool(seoTwitterCard, 'complete') ?? undefined} />
+                  )}
                 </div>
+                {seoHeadingStructure && getArr(seoHeadingStructure, 'issues').length > 0 && (
+                  <div className="p-4">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                      {t('show.seo.headingStructure')} ({getArr(seoHeadingStructure, 'issues').length})
+                    </p>
+                    <div className="space-y-1">
+                      {getArr(seoHeadingStructure, 'issues').map((issue, i) => (
+                        <div key={i} className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                          <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+                          {String(issue)}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                </>
               ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t('show.noData')}</p>}
             </Section>
 
             {/* Security */}
             <Section title={t('show.sections.security')} icon={Shield} color="text-blue-600" bg="bg-blue-100" border="border-blue-200" help={t('explain.sections.security')}>
               {sec ? (
+                <>
                 <div className="divide-y divide-gray-100">
                   <MetaRow label={t('show.security.ssl')} help={t('explain.security.ssl')} value={getBool(secSsl, 'ssl_valid') ? `${t('common.valid')} — ${getStr(secSsl, 'ssl_issuer')} (${getNum(secSsl, 'ssl_days_left')} days left, expires ${getStr(secSsl, 'ssl_expiry')})` : getStr(secSsl, 'error') || t('common.na')} ok={getBool(secSsl, 'ssl_valid') ?? undefined} />
                   <MetaRow label={t('show.security.redirect')} help={t('explain.security.httpsRedirect')} value={getBool(secRedirect, 'redirects_to_https') === true ? t('common.yes') : getBool(secRedirect, 'redirects_to_https') === false ? t('common.no') : t('common.na')} ok={getBool(secRedirect, 'redirects_to_https') ?? undefined} />
@@ -408,7 +470,73 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                   <MetaRow label={t('show.security.spf')} help={t('explain.security.spf')} value={getBool(secDns, 'spf_record_exists') ? getStr(secDns, 'spf_record') : t('common.missing')} ok={getBool(secDns, 'spf_record_exists') ?? undefined} />
                   <MetaRow label={t('show.security.dmarc')} help={t('explain.security.dmarc')} value={getBool(secDns, 'dmarc_record_exists') ? t('common.present') : t('common.missing')} ok={getBool(secDns, 'dmarc_record_exists') ?? undefined} />
                   <MetaRow label={t('show.security.dkim')} help={t('explain.security.dkim')} value={getBool(secDns, 'dkim_found') ? t('show.security.dkimFound', { selector: getStr(secDns, 'dkim_selector') }) : t('show.security.dkimNotFound')} ok={getBool(secDns, 'dkim_found') ?? undefined} />
+                  {hasKey(secHeaders, 'score') && (
+                    <MetaRow label={t('show.security.score')} value={`${getNum(secHeaders, 'score') ?? 0}/6`} ok={(getNum(secHeaders, 'score') ?? 0) >= 5} />
+                  )}
+                  {secCspQuality && (
+                    <MetaRow label={t('show.security.cspQuality')} value={getBool(secCspQuality, 'unsafe') ? `${t('common.no')} (unsafe-inline/eval)` : t('common.yes')} ok={!getBool(secCspQuality, 'unsafe')} />
+                  )}
+                  {secHstsQuality && (
+                    <MetaRow label={t('show.security.hstsQuality')} value={`max-age=${getNum(secHstsQuality, 'max_age') ?? 0}${getBool(secHstsQuality, 'includes_subdomains') ? '; includeSubDomains' : ''}${getBool(secHstsQuality, 'preload') ? '; preload' : ''}`} ok={getBool(secHstsQuality, 'adequate') ?? undefined} />
+                  )}
+                  {secCookieFlags && (
+                    <MetaRow label={t('show.security.cookies')} value={getBool(secCookieFlags, 'insecure_session') ? 'Session cookie missing Secure/HttpOnly' : 'OK'} ok={!getBool(secCookieFlags, 'insecure_session')} />
+                  )}
+                  {secSecurityTxt && (
+                    <MetaRow label={t('show.security.securityTxt')} value={getBool(secSecurityTxt, 'present') ? t('common.found') : t('common.missing')} ok={getBool(secSecurityTxt, 'present') ? true : undefined} />
+                  )}
                 </div>
+                {getArr(secHeaders, 'headers_missing').length > 0 && (
+                  <div className="p-4">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                      {t('show.security.missingHeaders')} ({getArr(secHeaders, 'headers_missing').length})
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {getArr(secHeaders, 'headers_missing').map((h, i) => (
+                        <span key={i} className="rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">{String(h)}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(() => {
+                  const info = getObj(secHeaders, 'info_disclosure');
+                  const keys = info ? Object.keys(info) : [];
+                  if (keys.length === 0) return null;
+                  return (
+                    <div className="p-4">
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                        {t('show.security.infoDisclosure')} ({keys.length})
+                      </p>
+                      <div className="space-y-1">
+                        {keys.map((k) => (
+                          <div key={k} className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                            <span className="break-all font-mono">{k}: {String(info![k])}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+                {getArr(secMixed, 'mixed_content_items').length > 0 && (
+                  <div className="p-4">
+                    <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                      {t('show.security.mixedItems')} ({getArr(secMixed, 'mixed_content_items').length})
+                    </p>
+                    <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                      {getArr(secMixed, 'mixed_content_items').map((it, i) => {
+                        const m = it as Record<string, unknown>;
+                        return (
+                          <div key={i} className="px-3 py-2 text-xs">
+                            <span className="text-gray-500">{String(m.element ?? '')}</span>
+                            <span className="mx-1 text-gray-400">→</span>
+                            <span className="break-all text-gray-700">{String(m.url ?? '')}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                </>
               ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t('show.noData')}</p>}
             </Section>
 
@@ -446,7 +574,58 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     {perfPageAnalysis && getArr(perfPageAnalysis, 'unminified_assets').length > 0 && (
                       <MetaRow label={t('show.performance.minification')} help={t('explain.performance.minification')} value={`${getArr(perfPageAnalysis, 'unminified_assets').length} ${t('show.performance.filesOver10kb')}`} ok={false} />
                     )}
+                    {hasKey(perfDesktop, 'cls_score') && (
+                      <MetaRow label={`${t('show.performance.cls')} (Desktop)`} value={getNum(perfDesktop, 'cls_score') !== null ? String(getNum(perfDesktop, 'cls_score')) : t('common.na')} ok={getNum(perfDesktop, 'cls_score') !== null ? (getNum(perfDesktop, 'cls_score')! <= 0.1) : undefined} />
+                    )}
+                    {hasKey(perfMobile, 'cls_score') && (
+                      <MetaRow label={`${t('show.performance.cls')} (Mobile)`} value={getNum(perfMobile, 'cls_score') !== null ? String(getNum(perfMobile, 'cls_score')) : t('common.na')} ok={getNum(perfMobile, 'cls_score') !== null ? (getNum(perfMobile, 'cls_score')! <= 0.1) : undefined} />
+                    )}
+                    {hasKey(perfPageAnalysis, 'html_size_kb') && (
+                      <MetaRow label={t('show.performance.htmlSize')} value={`${getNum(perfPageAnalysis, 'html_size_kb') ?? 0} KB`} />
+                    )}
                   </div>
+                  {getArr(perfPageAnalysis, 'render_blocking_scripts').length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                        {t('show.performance.renderBlockingScripts')} ({getArr(perfPageAnalysis, 'render_blocking_scripts').length})
+                      </p>
+                      <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                        {getArr(perfPageAnalysis, 'render_blocking_scripts').map((u, i) => (
+                          <div key={i} className="break-all px-3 py-2 text-xs text-gray-700">{String(u)}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {getArr(perfPageAnalysis, 'render_blocking_styles').length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                        {t('show.performance.renderBlockingStyles')} ({getArr(perfPageAnalysis, 'render_blocking_styles').length})
+                      </p>
+                      <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                        {getArr(perfPageAnalysis, 'render_blocking_styles').map((u, i) => (
+                          <div key={i} className="break-all px-3 py-2 text-xs text-gray-700">{String(u)}</div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {getArr(perfPageAnalysis, 'unminified_assets').length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                        {t('show.performance.unminifiedAssets')} ({getArr(perfPageAnalysis, 'unminified_assets').length})
+                      </p>
+                      <div className="max-h-48 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                        {getArr(perfPageAnalysis, 'unminified_assets').map((a, i) => {
+                          const asset = a as Record<string, unknown>;
+                          return (
+                            <div key={i} className="flex items-start justify-between gap-3 px-3 py-2">
+                              <span className="break-all text-xs text-gray-700">{String(asset.url ?? '')}</span>
+                              <span className="shrink-0 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-700">{String(asset.type ?? '').toUpperCase()} — {String(asset.size_kb ?? '')}KB</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t('show.noData')}</p>}
             </Section>
@@ -461,6 +640,12 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     <MetaRow label={t('show.broken.brokenLinks')} help={t('explain.broken.brokenLinks')} value={(() => { const count = getNum(brokenSummary, 'broken_links_count'); const total = getNum(brokenSummary, 'total_links_checked'); if (count === null) return t('common.na'); if (total && total > 0) return `${count} (${Math.round((count / total) * 100)}%)`; return String(count); })()} ok={(getNum(brokenSummary, 'broken_links_count') ?? 1) === 0} />
                     <MetaRow label={t('show.broken.totalImages')} help={t('explain.broken.totalImages')} value={getNum(brokenSummary, 'total_images_checked') ?? t('common.na')} />
                     <MetaRow label={t('show.broken.brokenImages')} help={t('explain.broken.brokenImages')} value={getNum(brokenSummary, 'broken_images_count') ?? t('common.na')} ok={(getNum(brokenSummary, 'broken_images_count') ?? 1) === 0} />
+                    {hasKey(brokenSummary, 'broken_scripts_count') && (
+                      <MetaRow label={t('show.broken.brokenScripts')} value={getNum(brokenSummary, 'broken_scripts_count') ?? t('common.na')} ok={(getNum(brokenSummary, 'broken_scripts_count') ?? 1) === 0} />
+                    )}
+                    {hasKey(brokenSummary, 'broken_stylesheets_count') && (
+                      <MetaRow label={t('show.broken.brokenStylesheets')} value={getNum(brokenSummary, 'broken_stylesheets_count') ?? t('common.na')} ok={(getNum(brokenSummary, 'broken_stylesheets_count') ?? 1) === 0} />
+                    )}
                   </div>
                   {brokenLinks.length > 0 && (
                     <div>
@@ -514,6 +699,56 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                       </div>
                     </div>
                   )}
+                  {brokenScripts.length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                        {t('show.broken.brokenScripts')} ({brokenScripts.length})
+                      </p>
+                      <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                        {brokenScripts.map((res, i) => {
+                          const l = res as Record<string, unknown>;
+                          return (
+                            <div key={i} className="px-3 py-2.5">
+                              <div className="flex items-start justify-between gap-3">
+                                <span className="break-all text-xs text-gray-700">{String(l.url ?? res)}</span>
+                                {l.status_code != null && <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">{String(l.status_code)}</span>}
+                              </div>
+                              {l.found_on != null && (
+                                <p className="mt-1 text-xs text-gray-600 break-all">
+                                  {t('show.broken.foundOn')}: <span className="text-gray-500">{String(l.found_on)}</span>
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {brokenStylesheets.length > 0 && (
+                    <div>
+                      <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                        {t('show.broken.brokenStylesheets')} ({brokenStylesheets.length})
+                      </p>
+                      <div className="max-h-72 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                        {brokenStylesheets.map((res, i) => {
+                          const l = res as Record<string, unknown>;
+                          return (
+                            <div key={i} className="px-3 py-2.5">
+                              <div className="flex items-start justify-between gap-3">
+                                <span className="break-all text-xs text-gray-700">{String(l.url ?? res)}</span>
+                                {l.status_code != null && <span className="shrink-0 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-600">{String(l.status_code)}</span>}
+                              </div>
+                              {l.found_on != null && (
+                                <p className="mt-1 text-xs text-gray-600 break-all">
+                                  {t('show.broken.foundOn')}: <span className="text-gray-500">{String(l.found_on)}</span>
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t('show.noData')}</p>}
             </Section>
@@ -536,6 +771,44 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                       </>
                     )}
                   </div>
+                  {(() => {
+                    const brokenProducts = catalogResults.filter((r) => r.is_broken === true);
+                    const auditedCount = getNum(catalog, 'products_audited') ?? 0;
+                    if (brokenProducts.length > 0) {
+                      return (
+                        <div>
+                          <p className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                            {t('show.catalog.brokenList')} ({brokenProducts.length})
+                          </p>
+                          <div className="max-h-96 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+                            {brokenProducts.slice(0, 30).map((p, i) => {
+                              const priceErrors = getArr(p, 'price_errors').map(String);
+                              const stockDetails = getArr(p, 'stock_details').map(String);
+                              const reasons = [...priceErrors, ...stockDetails];
+                              if (p.cart_disabled === true) reasons.push('add-to-cart disabled');
+                              const detected = getStr(p, 'detected_price');
+                              const schema = getStr(p, 'schema_price');
+                              return (
+                                <div key={i} className="px-3 py-2.5">
+                                  <span className="break-all text-xs text-gray-700">{getStr(p, 'url')}</span>
+                                  {reasons.length > 0 && <p className="mt-1 text-xs text-red-500">{reasons.join('; ')}</p>}
+                                  {(detected || schema) && (
+                                    <p className="mt-1 text-xs text-gray-500">
+                                      {t('show.catalog.detectedPrice')}: {detected ?? t('common.na')} · {t('show.catalog.schemaPrice')}: {schema ?? t('common.na')}
+                                    </p>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    }
+                    if (auditedCount > 0) {
+                      return <p className="text-sm text-emerald-600">{t('show.catalog.allGood')}</p>;
+                    }
+                    return null;
+                  })()}
                 </div>
               ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t('show.noData')}</p>}
             </Section>
@@ -549,7 +822,50 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     <MetaRow label={t('show.tracking.ga4')} help={t('explain.tracking.ga4')} value={(() => { if (!trackGa4) return t('common.na'); const ids = getArr(trackGa4, 'ids'); return getBool(trackGa4, 'detected') ? `${t('common.yes')}${ids.length ? ` (${ids.join(', ')})` : ''}` : t('common.notDetected'); })()} ok={getBool(trackGa4, 'detected') ?? undefined} />
                     <MetaRow label={t('show.tracking.fb')} help={t('explain.tracking.fb')} value={(() => { if (!trackFb) return t('common.na'); const ids = getArr(trackFb, 'ids'); return getBool(trackFb, 'detected') ? `${t('common.yes')}${ids.length ? ` (${ids.join(', ')})` : ''}` : t('common.notDetected'); })()} ok={getBool(trackFb, 'detected') ?? undefined} />
                     <MetaRow label={t('show.tracking.tt')} help={t('explain.tracking.tt')} value={(() => { if (!trackTt) return t('common.na'); const ids = getArr(trackTt, 'ids'); return getBool(trackTt, 'detected') ? `${t('common.yes')}${ids.length ? ` (${ids.join(', ')})` : ''}` : t('common.notDetected'); })()} ok={getBool(trackTt, 'detected') ?? undefined} />
+                    {([
+                      ['google_tag_manager', 'gtm'],
+                      ['linkedin_insight', 'linkedin'],
+                      ['twitter_pixel', 'twitter'],
+                      ['pinterest_tag', 'pinterest'],
+                      ['snapchat_pixel', 'snapchat'],
+                      ['microsoft_uet', 'microsoftUet'],
+                      ['hotjar', 'hotjar'],
+                      ['clarity', 'clarity'],
+                    ] as [string, string][]).map(([key, label]) => {
+                      const obj = getObj(trackScripts, key);
+                      if (!obj) return null;
+                      const detected = getBool(obj, 'detected');
+                      const ids = getArr(obj, 'ids');
+                      return (
+                        <MetaRow
+                          key={key}
+                          label={t(`show.tracking.${label}`)}
+                          value={detected ? `${t('common.detected')}${ids.length ? ` (${ids.join(', ')})` : ''}` : t('common.notDetected')}
+                          ok={detected ? true : undefined}
+                        />
+                      );
+                    })}
                   </div>
+                  {(() => {
+                    const coverage = getObj(tracking, 'coverage');
+                    const pagesCrawled = getNum(coverage, 'pages_crawled') ?? 0;
+                    const trackers = getObj(coverage, 'trackers');
+                    if (!coverage || pagesCrawled <= 1 || !trackers) return null;
+                    const entries = Object.entries(trackers).filter(([, pct]) => typeof pct === 'number');
+                    if (entries.length === 0) return null;
+                    return (
+                      <div className="mt-2">
+                        <p className="mb-1 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider text-gray-600">
+                          {t('show.tracking.coverage')}
+                        </p>
+                        <div className="space-y-0.5">
+                          {entries.map(([family, pct]) => (
+                            <p key={family} className="text-xs text-gray-500">{family}: {String(pct)}% of pages</p>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               ) : <p className="px-4 py-3 text-sm text-gray-600 dark:text-gray-400">{t('show.noData')}</p>}
             </Section>
@@ -569,6 +885,10 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                     const linkTxt  = getObj(checks, 'link_text');
                     const lmarks   = getObj(checks, 'landmarks');
                     const contrast = getObj(checks, 'color_contrast');
+                    const zoom     = getObj(checks, 'zoom_disabled');
+                    const dupIds   = getObj(checks, 'duplicate_ids');
+                    const posTab   = getObj(checks, 'positive_tabindex');
+                    const autoplay = getObj(checks, 'autoplay_media');
                     const statusOk = (s: string | null | undefined) => s === 'pass' ? true : s === 'fail' ? false : undefined;
 
                     return (
@@ -592,6 +912,18 @@ export default function SharedReport({ report, agency }: SharedReportProps) {
                           <MetaRow label={t('show.accessibility.mainLandmark')} help={t('explain.accessibility.mainLandmark')} value={lmarks ? (getBool(lmarks,'has_main') ? t('common.present') : t('common.missing')) : t('common.na')} ok={getBool(lmarks,'has_main') ?? undefined} />
                           <MetaRow label={t('show.accessibility.skipNav')} help={t('explain.accessibility.skipNav')} value={lmarks ? (getBool(lmarks,'has_skip_nav') ? t('common.found') : t('common.notFound')) : t('common.na')} ok={getBool(lmarks,'has_skip_nav') ?? undefined} />
                           <MetaRow label={t('show.accessibility.colorContrast')} help={t('explain.accessibility.colorContrast')} value={contrast ? `${getNum(contrast,'fail') ?? 0} violation(s) found` : t('common.na')} ok={statusOk(getStr(contrast, 'status'))} />
+                          {zoom && (
+                            <MetaRow label={t('show.accessibility.zoom')} value={getBool(zoom, 'disabled') ? t('common.no') : t('common.yes')} ok={!getBool(zoom, 'disabled')} />
+                          )}
+                          {dupIds && (
+                            <MetaRow label={t('show.accessibility.duplicateIds')} value={getNum(dupIds, 'total_duplicates') ?? 0} ok={!getBool(dupIds, 'breaks_labels') && (getNum(dupIds, 'total_duplicates') ?? 0) === 0} />
+                          )}
+                          {posTab && (
+                            <MetaRow label={t('show.accessibility.positiveTabindex')} value={getNum(posTab, 'count') ?? 0} ok={(getNum(posTab, 'count') ?? 0) === 0} />
+                          )}
+                          {autoplay && (
+                            <MetaRow label={t('show.accessibility.autoplayMedia')} value={getNum(autoplay, 'count') ?? 0} ok={(getNum(autoplay, 'count') ?? 0) === 0} />
+                          )}
                         </div>
 
                         {getArr(headings, 'issues').length > 0 && (

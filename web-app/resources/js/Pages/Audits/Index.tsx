@@ -1,11 +1,11 @@
 import AppLayout from '@/Layouts/AppLayout';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { PageProps, FullAuditReport, PaginatedData } from '@/types';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Search, CheckCircle2, XCircle, Loader2, ExternalLink, FileDown,
-  Trash2, ChevronLeft, ChevronRight, Infinity, Zap, Globe, Bug,
+  Trash2, ChevronLeft, ChevronRight, Infinity, Zap, Globe, Bug, GitCompare,
 } from 'lucide-react';
 import InfoTooltip from '@/Components/InfoTooltip';
 
@@ -93,6 +93,15 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
     if (!confirm(t('audits.deleteConfirm'))) return;
     router.delete(`/audits/${id}`);
   };
+
+  // Compare selection — pick 2–3 completed scans to diff on the Compare page.
+  const [compareIds, setCompareIds] = useState<number[]>([]);
+  const toggleCompare = (id: number) => {
+    setCompareIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length >= 3 ? prev : [...prev, id],
+    );
+  };
+  const compareHref = '/audits/compare?' + compareIds.map((id) => `ids[]=${id}`).join('&');
 
   return (
     <AppLayout>
@@ -278,6 +287,15 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                 {reports.total}
               </span>
             </h2>
+            {compareIds.length >= 2 && (
+              <Link
+                href={compareHref}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+              >
+                <GitCompare className="h-3.5 w-3.5" />
+                {t('audits.compareSelected', { count: compareIds.length })}
+              </Link>
+            )}
           </div>
 
           {reports.data.length === 0 ? (
@@ -294,6 +312,7 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b border-gray-200 dark:border-gray-800">
+                      <th className="w-8 px-3 py-3" aria-label={t('audits.compare')}></th>
                       <th className="px-5 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                         {t('audits.site')}
                       </th>
@@ -314,6 +333,18 @@ export default function AuditsIndex({ reports, flash, scansUsed, scanLimit, isUn
                   <tbody className="divide-y divide-gray-800">
                     {reports.data.map((report) => (
                       <tr key={report.id} className="hover:bg-gray-100/40 dark:hover:bg-gray-100/40 dark:bg-gray-800/40 transition-colors">
+                        <td className="px-3 py-3.5">
+                          {report.status === 'completed' && (
+                            <input
+                              type="checkbox"
+                              aria-label={t('audits.compare')}
+                              checked={compareIds.includes(report.id)}
+                              disabled={!compareIds.includes(report.id) && compareIds.length >= 3}
+                              onChange={() => toggleCompare(report.id)}
+                              className="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-violet-600 focus:ring-violet-500"
+                            />
+                          )}
+                        </td>
                         <td className="px-5 py-3.5">
                           <div>
                             <p className="font-medium text-gray-900 dark:text-white truncate max-w-[220px]">

@@ -139,6 +139,17 @@ class AuditController extends Controller
             ? McpAgent::where('monitored_site_id', $matchedSite->id)->first()
             : null;
 
+        // Score-over-time for the same site (same owner), newest first. Powers
+        // the trend strip + "compare with previous" link on the results page.
+        // Keyed on the raw site_url string since reports have no site FK.
+        $history = FullAuditReport::where('user_id', $report->user_id)
+            ->where('site_url', $report->site_url)
+            ->where('status', 'completed')
+            ->whereNotNull('health_score')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get(['id', 'health_score', 'created_at']);
+
         return Inertia::render('Audits/Show', [
             'report'       => $report,
             'matchedSiteId' => $matchedSite?->id,
@@ -146,6 +157,7 @@ class AuditController extends Controller
                 'id'        => $mcpAgent->id,
                 'is_online' => $mcpAgent->isOnline(),
             ] : null,
+            'history'      => $history,
         ]);
     }
 
