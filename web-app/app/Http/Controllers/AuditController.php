@@ -333,6 +333,19 @@ class AuditController extends Controller
                 fputcsv($handle, ['Images Missing Alt',      $seo['image_alt_text']['missing_alt'] ?? '']);
                 fputcsv($handle, ['robots.txt',              ($seo['technical_seo']['robots_txt']['exists'] ?? false) ? 'Found' : 'Missing']);
                 fputcsv($handle, ['sitemap.xml',             ($seo['technical_seo']['sitemap_xml']['exists'] ?? false) ? 'Found' : 'Missing']);
+                if (isset($seo['robots_directives']) || isset($seo['x_robots_tag'])) {
+                    $noindex = ($seo['robots_directives']['is_noindex'] ?? false) || ($seo['x_robots_tag']['is_noindex'] ?? false);
+                    fputcsv($handle, ['Indexable', $noindex ? 'No (noindex)' : 'Yes']);
+                }
+                if (isset($seo['hreflang'])) {
+                    fputcsv($handle, ['hreflang Tags', ($seo['hreflang']['present'] ?? false) ? ($seo['hreflang']['count'] ?? 0) : 'None']);
+                }
+                if (isset($seo['favicon'])) {
+                    fputcsv($handle, ['Favicon', ($seo['favicon']['present'] ?? false) ? 'Present' : 'Missing']);
+                }
+                if (isset($seo['twitter_card'])) {
+                    fputcsv($handle, ['Twitter Card', ($seo['twitter_card']['complete'] ?? false) ? 'Complete' : ($seo['twitter_card']['card'] ?? 'Missing')]);
+                }
                 foreach ($seo['schema_validation']['errors'] ?? [] as $err) {
                     fputcsv($handle, ['Schema Error', $err]);
                 }
@@ -368,6 +381,15 @@ class AuditController extends Controller
                 }
                 foreach ($sec['mixed_content']['mixed_content_items'] ?? [] as $item) {
                     fputcsv($handle, ['Mixed Content Item', $item['element'] ?? '', $item['url'] ?? '']);
+                }
+                if (isset($sec['csp_quality'])) {
+                    fputcsv($handle, ['CSP Quality', ($sec['csp_quality']['unsafe'] ?? false) ? 'Unsafe (inline/eval)' : 'OK']);
+                }
+                if (isset($sec['cookie_flags'])) {
+                    fputcsv($handle, ['Cookie Flags', ($sec['cookie_flags']['insecure_session'] ?? false) ? 'Insecure session cookie' : 'OK']);
+                }
+                if (isset($sec['security_txt'])) {
+                    fputcsv($handle, ['security.txt', ($sec['security_txt']['present'] ?? false) ? 'Present' : 'Missing']);
                 }
                 fputcsv($handle, []);
             }
@@ -406,6 +428,20 @@ class AuditController extends Controller
                 fputcsv($handle, ['Facebook IDs',      implode(', ', $trk['tracking_scripts']['facebook_pixel']['ids'] ?? [])]);
                 fputcsv($handle, ['TikTok Detected',   ($trk['tracking_scripts']['tiktok_pixel']['detected']  ?? false) ? 'Yes' : 'No']);
                 fputcsv($handle, ['TikTok IDs',        implode(', ', $trk['tracking_scripts']['tiktok_pixel']['ids']   ?? [])]);
+                // Additional trackers (only those the module now detects)
+                $extraTrackers = [
+                    'google_tag_manager' => 'Google Tag Manager', 'linkedin_insight' => 'LinkedIn Insight',
+                    'twitter_pixel' => 'X/Twitter Pixel', 'pinterest_tag' => 'Pinterest Tag',
+                    'snapchat_pixel' => 'Snapchat Pixel', 'microsoft_uet' => 'Microsoft UET',
+                    'hotjar' => 'Hotjar', 'clarity' => 'Microsoft Clarity',
+                ];
+                foreach ($extraTrackers as $tkey => $tlabel) {
+                    if (isset($trk['tracking_scripts'][$tkey])) {
+                        $det = $trk['tracking_scripts'][$tkey]['detected'] ?? false;
+                        $ids = implode(', ', $trk['tracking_scripts'][$tkey]['ids'] ?? []);
+                        fputcsv($handle, [$tlabel, $det ? 'Yes' : 'No', $ids]);
+                    }
+                }
                 fputcsv($handle, []);
             }
 
@@ -434,6 +470,19 @@ class AuditController extends Controller
                         fputcsv($handle, [$item['url'] ?? '', $item['status_code'] ?? ($item['error'] ?? ''), $item['found_on'] ?? '']);
                     }
                 }
+                if (isset($br['summary']['broken_scripts_count'])) {
+                    fputcsv($handle, ['Broken Scripts Count',     $br['summary']['broken_scripts_count']     ?? 0]);
+                    fputcsv($handle, ['Broken Stylesheets Count', $br['summary']['broken_stylesheets_count'] ?? 0]);
+                }
+                foreach (['broken_scripts' => 'Broken Script', 'broken_stylesheets' => 'Broken Stylesheet'] as $k => $label) {
+                    if (! empty($br[$k])) {
+                        fputcsv($handle, []);
+                        fputcsv($handle, ["{$label} — URL", 'Status', 'Found On Page']);
+                        foreach ($br[$k] as $item) {
+                            fputcsv($handle, [$item['url'] ?? '', $item['status_code'] ?? ($item['error'] ?? ''), $item['found_on'] ?? '']);
+                        }
+                    }
+                }
                 fputcsv($handle, []);
             }
 
@@ -448,13 +497,15 @@ class AuditController extends Controller
                 fputcsv($handle, ['Broken %',             $cat['broken_percentage']       ?? '']);
                 if (! empty($cat['results'])) {
                     fputcsv($handle, []);
-                    fputcsv($handle, ['Product URL', 'Broken', 'Price Error', 'Detected Price', 'Schema Stock', 'Cart Disabled', 'Stock Mismatch']);
+                    fputcsv($handle, ['Product URL', 'Broken', 'Price Error', 'Detected Price', 'Schema Price', 'Price Mismatch', 'Schema Stock', 'Cart Disabled', 'Stock Mismatch']);
                     foreach ($cat['results'] as $item) {
                         fputcsv($handle, [
                             $item['url']              ?? '',
                             ($item['is_broken']       ?? false) ? 'Yes' : 'No',
                             ($item['has_price_error'] ?? false) ? 'Yes' : 'No',
                             $item['detected_price']   ?? '',
+                            $item['schema_price']     ?? '',
+                            ($item['price_mismatch']  ?? false) ? 'Yes' : 'No',
                             $item['schema_stock']     ?? '',
                             ($item['cart_disabled']   ?? false) ? 'Yes' : 'No',
                             ($item['stock_mismatch']  ?? false) ? 'Yes' : 'No',
@@ -479,6 +530,12 @@ class AuditController extends Controller
                 fputcsv($handle, ['Main Landmark',       ($a11y['checks']['landmarks']['has_main']  ?? false) ? 'Present' : 'Missing']);
                 fputcsv($handle, ['Skip Nav',            ($a11y['checks']['landmarks']['has_skip_nav'] ?? false) ? 'Present' : 'Missing']);
                 fputcsv($handle, ['Color Contrast Fail', $a11y['checks']['color_contrast']['fail']       ?? '']);
+                if (isset($a11y['checks']['zoom_disabled'])) {
+                    fputcsv($handle, ['Pinch-Zoom', ($a11y['checks']['zoom_disabled']['disabled'] ?? false) ? 'Disabled' : 'Enabled']);
+                }
+                if (isset($a11y['checks']['duplicate_ids'])) {
+                    fputcsv($handle, ['Duplicate IDs', $a11y['checks']['duplicate_ids']['total_duplicates'] ?? 0]);
+                }
 
                 // Unlabeled inputs
                 if (! empty($a11y['checks']['form_labels']['violations'])) {
